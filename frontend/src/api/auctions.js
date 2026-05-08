@@ -1,0 +1,27 @@
+import client from './client';
+
+export const auctionApi = {
+    getAll: () => client.get('/api/auctions'),
+    getById: (id) => client.get(`/api/auctions/${id}`),
+    search: (params) => client.get('/api/auctions/search', { params }),
+    create: (data) => client.post('/api/auctions', data),
+    update: (id, data) => client.put(`/api/auctions/${id}`, data),
+    activate: (id) => client.post(`/api/auctions/${id}/activate`),
+    cancel: (id) => client.post(`/api/auctions/${id}/cancel`),
+    close: (id) => client.post(`/api/auctions/${id}/close`),
+    monitorActive: (params) => client.get('/api/auctions/monitor/active', { params }),
+    monitorPlanned: (params) => client.get('/api/auctions/monitor/planned', { params }),
+    monitorClosed: (params) => client.get('/api/auctions/monitor/closed', { params }),
+    monitorCancelled: (params) => client.get('/api/auctions/monitor/cancelled', { params }),
+    getBids: (id) => client.get(`/api/auctions/${id}/bids`),
+    cancelBid: (bidId) => client.post(`/api/auctions/bids/${bidId}/cancel`),
+    getInvitations: (id) => client.get(`/api/auctions/${id}/invitations`),
+    createInvitation: (id, data) => client.post(`/api/auctions/${id}/invitations`, data),
+    cancelInvitation: (invId) => client.post(`/api/auctions/invitations/${invId}/cancel`),
+    closeInvitation: (invId) => client.post(`/api/auctions/invitations/${invId}/close`),
+    getParticipants: (id) => client.get(`/api/auctions/${id}/participants`),
+    setWinner: (participantId) => client.post(`/api/auctions/participants/${participantId}/win`),
+    getComments: (id) => client.get(`/api/auctions/${id}/comments`),
+    approveComment: (commentId) => client.post(`/api/auctions/comments/${commentId}/approve`),
+    cancelComment: (commentId) => client.post(`/api/auctions/comments/${commentId}/cancel`),
+};
