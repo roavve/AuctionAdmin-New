@@ -4,10 +4,16 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import Login from './pages/Login';
 import Layout from './components/Layout';
 import Auctions from './pages/Auctions';
+import AuctionDetail from './pages/AuctionDetail';
 import Monitor from './pages/Monitor';
 import Companies from './pages/Companies';
+import CompanyDetail from './pages/CompanyDetail';
 import Users from './pages/Users';
+import UserDetail from './pages/UserDetail';
 import Projects from './pages/Projects';
+import Registrations from './pages/Registrations';
+import Categories from './pages/Categories';
+import Dictionary from './pages/Dictionary';
 
 const PrivateRoute = ({ children }) => {
   const { user } = useAuth();
@@ -25,13 +31,18 @@ function App() {
             }>
               <Route index element={<Navigate to="/auctions" />} />
               <Route path="auctions" element={<Auctions />} />
+              <Route path="auctions/new" element={<AuctionDetail />} />
+              <Route path="auctions/:id" element={<AuctionDetail />} />
               <Route path="monitor" element={<Monitor />} />
               <Route path="companies" element={<Companies />} />
+              <Route path="companies/new" element={<CompanyDetail />} />
+              <Route path="companies/:id" element={<CompanyDetail />} />
               <Route path="users" element={<Users />} />
+              <Route path="users/:id" element={<UserDetail />} />
               <Route path="projects" element={<Projects />} />
-              <Route path="registrations" element={<div>Registrations coming soon</div>} />
-              <Route path="categories" element={<div>Categories coming soon</div>} />
-              <Route path="dictionary" element={<div>Dictionary coming soon</div>} />
+              <Route path="registrations" element={<Registrations />} />
+              <Route path="categories" element={<Categories />} />
+              <Route path="dictionary" element={<Dictionary />} />
             </Route>
           </Routes>
         </BrowserRouter>
