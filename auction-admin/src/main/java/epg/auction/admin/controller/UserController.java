@@ -3,21 +3,30 @@ package epg.auction.admin.controller;
 import epg.auction.admin.entity.User;
 import epg.auction.admin.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/users")
 public class UserController {
 
-    @Autowired
-    private UserService userService;
+    @Autowired private UserService userService;
 
     @GetMapping
-    public List<User> getAll() {
-        return userService.getAll();
+    public Page<User> search(
+            @RequestParam(required = false) String email,
+            @RequestParam(required = false) Integer companyId,
+            @RequestParam(required = false) Boolean internal,
+            @RequestParam(required = false) Boolean active,
+            @RequestParam(required = false) Boolean locked,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+        return userService.searchUsers(email, companyId, internal, active, locked, page, size);
     }
 
     @GetMapping("/{id}")
@@ -27,21 +36,49 @@ public class UserController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    @PutMapping("/{id}")
-    public ResponseEntity<User> update(@PathVariable Integer id, @RequestBody User user) {
-        if (userService.getById(id).isEmpty()) {
-            return ResponseEntity.notFound().build();
-        }
-        user.setId(id);
-        return ResponseEntity.ok(userService.save(user));
+    @PostMapping
+    public ResponseEntity<User> create(@RequestBody User user, Authentication auth) {
+        return ResponseEntity.ok(userService.createUser(user, auth.getName()));
     }
 
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable Integer id) {
-        if (userService.getById(id).isEmpty()) {
-            return ResponseEntity.notFound().build();
-        }
-        userService.delete(id);
-        return ResponseEntity.ok().build();
+    @PutMapping("/{id}")
+    public ResponseEntity<User> update(@PathVariable Integer id,
+                                       @RequestBody User user, Authentication auth) {
+        return ResponseEntity.ok(userService.updateUser(id, user, auth.getName()));
+    }
+
+    @PostMapping("/{id}/lock")
+    public ResponseEntity<?> lock(@PathVariable Integer id, Authentication auth) {
+        userService.lockUser(id, auth.getName());
+        return ResponseEntity.ok(Map.of("success", true));
+    }
+
+    @PostMapping("/{id}/unlock")
+    public ResponseEntity<?> unlock(@PathVariable Integer id, Authentication auth) {
+        userService.unlockUser(id, auth.getName());
+        return ResponseEntity.ok(Map.of("success", true));
+    }
+
+    @PostMapping("/{id}/cancel")
+    public ResponseEntity<?> cancel(@PathVariable Integer id, Authentication auth) {
+        userService.cancelUser(id, auth.getName());
+        return ResponseEntity.ok(Map.of("success", true));
+    }
+
+    @PostMapping("/{id}/changePassword")
+    public ResponseEntity<?> changePassword(@PathVariable Integer id,
+                                            @RequestBody Map<String, String> body, Authentication auth) {
+        userService.changePassword(id, body.get("password"), auth.getName());
+        return ResponseEntity.ok(Map.of("success", true));
+    }
+
+    @GetMapping("/monitoring")
+    public List<User> getMonitoringUsers() {
+        return userService.getMonitoringUsers();
+    }
+
+    @PostMapping("/monitoring")
+    public ResponseEntity<User> createMonitoringUser(@RequestBody User user, Authentication auth) {
+        return ResponseEntity.ok(userService.createMonitoringUser(user, auth.getName()));
     }
 }

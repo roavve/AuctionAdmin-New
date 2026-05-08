@@ -1,24 +1,24 @@
 package epg.auction.admin.controller;
 
 import epg.auction.admin.entity.Company;
+import epg.auction.admin.entity.User;
 import epg.auction.admin.service.CompanyService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/companies")
 public class CompanyController {
 
-    @Autowired
-    private CompanyService companyService;
+    @Autowired private CompanyService companyService;
 
     @GetMapping
-    public List<Company> getAll() {
-        return companyService.getAll();
-    }
+    public List<Company> getAll() { return companyService.getAll(); }
 
     @GetMapping("/{id}")
     public ResponseEntity<Company> getById(@PathVariable Integer id) {
@@ -28,25 +28,30 @@ public class CompanyController {
     }
 
     @PostMapping
-    public Company create(@RequestBody Company company) {
-        return companyService.save(company);
+    public ResponseEntity<Company> create(@RequestBody Company company, Authentication auth) {
+        return ResponseEntity.ok(companyService.createCompany(company, auth.getName()));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Company> update(@PathVariable Integer id, @RequestBody Company company) {
-        if (companyService.getById(id).isEmpty()) {
-            return ResponseEntity.notFound().build();
-        }
-        company.setId(id);
-        return ResponseEntity.ok(companyService.save(company));
+    public ResponseEntity<Company> update(@PathVariable Integer id,
+                                          @RequestBody Company company, Authentication auth) {
+        return ResponseEntity.ok(companyService.updateCompany(id, company, auth.getName()));
+    }
+
+    @PostMapping("/{id}/cancel")
+    public ResponseEntity<?> cancel(@PathVariable Integer id, Authentication auth) {
+        companyService.cancelCompany(id, auth.getName());
+        return ResponseEntity.ok(Map.of("success", true));
+    }
+
+    @GetMapping("/{id}/users")
+    public List<User> getUsers(@PathVariable Integer id) {
+        return companyService.getUsersByCompany(id);
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable Integer id) {
-        if (companyService.getById(id).isEmpty()) {
-            return ResponseEntity.notFound().build();
-        }
+    public ResponseEntity<?> delete(@PathVariable Integer id) {
         companyService.delete(id);
-        return ResponseEntity.ok().build();
+        return ResponseEntity.ok(Map.of("success", true));
     }
 }

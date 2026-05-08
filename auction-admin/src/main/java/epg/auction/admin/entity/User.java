@@ -61,6 +61,11 @@ public class User extends MainEntity implements Serializable {
     @Column(name = "IS_LOCKED")
     private Boolean locked;
 
+    @Column(name = "LOCK_DATE")
+    private Date lockDate;
+
+    @Column(name = "CANCELL_DATE")
+    private Date cancelledDate;
     @Column(name = "LOGIN_DATE")
     private Date loginDate;
 
@@ -111,6 +116,10 @@ public class User extends MainEntity implements Serializable {
     public void setLoginDate(Date loginDate) { this.loginDate = loginDate; }
     public Boolean getCancelled() { return cancelled; }
     public void setCancelled(Boolean cancelled) { this.cancelled = cancelled; }
+    public Date getLockDate() { return lockDate; }
+    public void setLockDate(Date lockDate) { this.lockDate = lockDate; }
+    public Date getCancelledDate() { return cancelledDate; }
+    public void setCancelledDate(Date cancelledDate) { this.cancelledDate = cancelledDate; }
     public int getStatus() { return status; }
     public void setStatus(int status) { this.status = status; }
     public Boolean getExternal() { return external; }
