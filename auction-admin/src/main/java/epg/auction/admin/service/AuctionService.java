@@ -22,10 +22,25 @@ public class AuctionService {
     @Autowired private AuctionParticipantRepository participantRepository;
     @Autowired private AuctionCommentRepository commentRepository;
     @Autowired private DictionaryItemRepository dictionaryItemRepository;
+    @Autowired private SysAuditRepository sysAuditRepository;
 
     private DictionaryItem getStatusByKey(String key) {
         return dictionaryItemRepository.findByKey(key)
                 .orElseThrow(() -> new RuntimeException("Status not found: " + key));
+    }
+
+    private void audit(String action, String objectName, Integer objectId, String userId) {
+        try {
+            SysAudit log = new SysAudit();
+            log.setAction(action);
+            log.setObjectName(objectName);
+            log.setObjectId(objectId);
+            log.setUserId(userId);
+            log.setAuditDate(new Date());
+            sysAuditRepository.save(log);
+        } catch (Exception e) {
+            // never let audit failure break the main action
+        }
     }
 
     // =================== AUCTION CRUD ===================
@@ -66,8 +81,11 @@ public class AuctionService {
             auction.setProject(project);
         }
 
-        return auctionRepository.save(auction);
+        Auction saved = auctionRepository.save(auction);
+        audit("CREATE", "AUCTION", saved.getId(), userId);
+        return saved;
     }
+
     @Transactional
     public Auction updateAuction(Integer id, Auction auction, String userId) {
         Auction original = auctionRepository.findById(id)
@@ -101,7 +119,6 @@ public class AuctionService {
         original.setModifyDate(new Date());
         original.setModifyUserId(userId);
 
-        // resolve dictionary items by key
         if (auction.getAuctionType() != null && auction.getAuctionType().getKey() != null) {
             dictionaryItemRepository.findByKey(auction.getAuctionType().getKey())
                     .ifPresent(original::setAuctionType);
@@ -118,15 +135,15 @@ public class AuctionService {
             dictionaryItemRepository.findByKey(auction.getCurrency().getKey())
                     .ifPresent(original::setCurrency);
         }
-
-        // resolve project by id
         if (auction.getProject() != null && auction.getProject().getId() != null) {
             AuctionProject project = new AuctionProject();
             project.setId(auction.getProject().getId());
             original.setProject(project);
         }
 
-        return auctionRepository.save(original);
+        Auction saved = auctionRepository.save(original);
+        audit("UPDATE", "AUCTION", saved.getId(), userId);
+        return saved;
     }
 
     @Transactional
@@ -140,6 +157,7 @@ public class AuctionService {
         auction.setActivateDate(new Date());
         auction.setModifyUserId(userId);
         auctionRepository.save(auction);
+        audit("ACTIVATE", "AUCTION", id, userId);
     }
 
     @Transactional
@@ -153,6 +171,7 @@ public class AuctionService {
         auction.setCancelDate(new Date());
         auction.setModifyUserId(userId);
         auctionRepository.save(auction);
+        audit("CANCEL", "AUCTION", id, userId);
     }
 
     @Transactional
@@ -166,6 +185,7 @@ public class AuctionService {
         auction.setCloseDate(new Date());
         auction.setModifyUserId(userId);
         auctionRepository.save(auction);
+        audit("CLOSE", "AUCTION", id, userId);
     }
 
     // =================== MONITOR ===================
@@ -288,6 +308,7 @@ public class AuctionService {
         winner.setWinner(true);
         winner.setModifyUserId(userId);
         participantRepository.save(winner);
+        audit("SET_WINNER", "PARTICIPANT", participantId, userId);
     }
 
     @Transactional
@@ -337,6 +358,7 @@ public class AuctionService {
         comment.setStatus(getStatusByKey("key.coment.approved"));
         comment.setModifyUserId(userId);
         commentRepository.save(comment);
+        audit("APPROVE", "COMMENT", id, userId);
     }
 
     @Transactional
@@ -346,7 +368,9 @@ public class AuctionService {
         comment.setStatus(getStatusByKey("key.coment.cancelled"));
         comment.setModifyUserId(userId);
         commentRepository.save(comment);
+        audit("CANCEL", "COMMENT", id, userId);
     }
+
     @Transactional
     public void inviteCompanies(Integer auctionId, List<Integer> companyIds, String userId) {
         Auction auction = auctionRepository.findById(auctionId)
@@ -372,5 +396,6 @@ public class AuctionService {
             invitation.setCreateUserId(userId);
             invitationRepository.save(invitation);
         }
+        audit("INVITE", "AUCTION", auctionId, userId);
     }
 }
