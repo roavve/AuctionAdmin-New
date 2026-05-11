@@ -9,7 +9,7 @@ import java.util.Date;
 public class AuctionLog extends MainEntity implements Serializable {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
     @Column(name = "RECORDKEY")

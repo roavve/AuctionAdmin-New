@@ -3,7 +3,8 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { auctionApi } from '../api/auctions';
 import {
   Box, Typography, Button, Chip, Tabs, Tab, CircularProgress,
-  Alert, Grid, Paper, TextField, FormControlLabel, Switch
+  Alert, Grid, Paper, Dialog, DialogTitle, DialogContent,
+  DialogActions, List, ListItem, ListItemText, ListItemButton, Checkbox
 } from '@mui/material';
 import { DataGrid } from '@mui/x-data-grid';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
@@ -31,7 +32,7 @@ export default function AuctionDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const isNew = !id || id === 'new';
-  console.log('AuctionDetail id:', id, 'isNew:', isNew);
+
   const [auction, setAuction] = useState(null);
   const [bids, setBids] = useState([]);
   const [invitations, setInvitations] = useState([]);
@@ -41,6 +42,10 @@ export default function AuctionDetail() {
   const [loading, setLoading] = useState(!isNew);
   const [error, setError] = useState('');
   const [actionMsg, setActionMsg] = useState('');
+  const [inviteDialog, setInviteDialog] = useState(false);
+  const [allCompanies, setAllCompanies] = useState([]);
+  const [selectedCompanies, setSelectedCompanies] = useState([]);
+  const [inviteLoading, setInviteLoading] = useState(false);
 
   const load = async () => {
     setLoading(true);
@@ -60,6 +65,16 @@ export default function AuctionDetail() {
       if (t === 2) setInvitations((await auctionApi.getInvitations(id)).data);
       if (t === 3) setParticipants((await auctionApi.getParticipants(id)).data);
       if (t === 4) setComments((await auctionApi.getComments(id)).data);
+    } catch {}
+  };
+
+  const loadCompanies = async () => {
+    try {
+      const res = await fetch('http://localhost:8080/api/companies', {
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+      });
+      const data = await res.json();
+      setAllCompanies(data);
     } catch {}
   };
 
@@ -83,6 +98,29 @@ export default function AuctionDetail() {
     }
   };
 
+  const handleInvite = async () => {
+    if (selectedCompanies.length === 0) return;
+    setInviteLoading(true);
+    try {
+      const res = await fetch(`http://localhost:8080/api/auctions/${id}/invite-companies`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify({ companyIds: selectedCompanies })
+      });
+      const data = await res.json();
+      setActionMsg(`${data.count} companies invited successfully`);
+      setInviteDialog(false);
+      setSelectedCompanies([]);
+      loadTab(2);
+    } catch {
+      setActionMsg('Failed to invite companies');
+    } finally {
+      setInviteLoading(false);
+    }
+  };
 
   // NEW AUCTION FORM
   if (isNew) {
@@ -96,12 +134,13 @@ export default function AuctionDetail() {
           </Box>
           <Paper sx={{ p: 3 }}>
             <Typography variant="body1" color="text.secondary">
-              New auction form coming soon. Use the existing system to create auctions for now.
+              New auction form coming soon.
             </Typography>
           </Paper>
         </Box>
     );
   }
+
   if (loading) return (
       <Box display="flex" justifyContent="center" mt={4}>
         <CircularProgress />
@@ -109,7 +148,6 @@ export default function AuctionDetail() {
   );
 
   if (error) return <Alert severity="error">{error}</Alert>;
-
   if (!auction) return null;
 
   const statusKey = auction.status?.key;
@@ -201,13 +239,8 @@ export default function AuctionDetail() {
           <Button startIcon={<ArrowBackIcon />} onClick={() => navigate('/auctions')}>
             Back
           </Button>
-          <Typography variant="h5" sx={{ flexGrow: 1 }}>
-            {auction.name}
-          </Typography>
-          <Chip
-              label={auction.status?.name || ''}
-              color={STATUS_COLORS[statusKey] || 'default'}
-          />
+          <Typography variant="h5" sx={{ flexGrow: 1 }}>{auction.name}</Typography>
+          <Chip label={auction.status?.name || ''} color={STATUS_COLORS[statusKey] || 'default'} />
           {statusKey === 'key.auctionStatus.draft' &&
               <Button variant="contained" color="success"
                       onClick={() => handleAction('activate')}>Activate</Button>}
@@ -220,9 +253,7 @@ export default function AuctionDetail() {
         </Box>
 
         {actionMsg && (
-            <Alert severity="info" sx={{ mb: 2 }} onClose={() => setActionMsg('')}>
-              {actionMsg}
-            </Alert>
+            <Alert severity="info" sx={{ mb: 2 }} onClose={() => setActionMsg('')}>{actionMsg}</Alert>
         )}
 
         <Tabs value={tab} onChange={(_, v) => setTab(v)} sx={{ mb: 2 }}>
@@ -281,18 +312,69 @@ export default function AuctionDetail() {
             <DataGrid rows={bids} columns={bidColumns} autoHeight
                       pageSizeOptions={[10, 20, 50]} disableRowSelectionOnClick />
         )}
+
         {tab === 2 && (
-            <DataGrid rows={invitations} columns={invColumns} autoHeight
-                      pageSizeOptions={[10, 20, 50]} disableRowSelectionOnClick />
+            <Box>
+              <Box mb={2} display="flex" gap={2} alignItems="center">
+                <Typography variant="subtitle1">Invitations</Typography>
+                <Button variant="contained" size="small"
+                        onClick={() => { loadCompanies(); setInviteDialog(true); }}>
+                  Invite Companies
+                </Button>
+              </Box>
+              <DataGrid rows={invitations} columns={invColumns} autoHeight
+                        pageSizeOptions={[10, 20, 50]} disableRowSelectionOnClick />
+            </Box>
         )}
+
         {tab === 3 && (
             <DataGrid rows={participants} columns={partColumns} autoHeight
                       pageSizeOptions={[10, 20, 50]} disableRowSelectionOnClick />
         )}
+
         {tab === 4 && (
             <DataGrid rows={comments} columns={commentColumns} autoHeight
                       pageSizeOptions={[10, 20, 50]} disableRowSelectionOnClick />
         )}
+
+        <Dialog open={inviteDialog} onClose={() => setInviteDialog(false)} maxWidth="md" fullWidth>
+          <DialogTitle>
+            Invite Companies to Auction
+            <Typography variant="body2" color="text.secondary">
+              {selectedCompanies.length} selected
+            </Typography>
+          </DialogTitle>
+          <DialogContent dividers>
+            <List dense sx={{ maxHeight: 400, overflow: 'auto' }}>
+              {allCompanies.map(company => (
+                  <ListItem key={company.id} disablePadding>
+                    <ListItemButton onClick={() => {
+                      setSelectedCompanies(prev =>
+                          prev.includes(company.id)
+                              ? prev.filter(cid => cid !== company.id)
+                              : [...prev, company.id]
+                      );
+                    }}>
+                      <Checkbox checked={selectedCompanies.includes(company.id)} size="small" />
+                      <ListItemText
+                          primary={company.companyName}
+                          secondary={`${company.taxId || ''} | ${company.contactEmail || ''}`}
+                      />
+                    </ListItemButton>
+                  </ListItem>
+              ))}
+            </List>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => { setInviteDialog(false); setSelectedCompanies([]); }}>
+              Cancel
+            </Button>
+            <Button variant="contained" onClick={handleInvite}
+                    disabled={selectedCompanies.length === 0 || inviteLoading}>
+              {inviteLoading ? 'Inviting...' : `Invite ${selectedCompanies.length} Companies`}
+            </Button>
+          </DialogActions>
+        </Dialog>
       </Box>
   );
 }

@@ -301,4 +301,30 @@ public class AuctionService {
         comment.setModifyUserId(userId);
         commentRepository.save(comment);
     }
+    @Transactional
+    public void inviteCompanies(Integer auctionId, List<Integer> companyIds, String userId) {
+        Auction auction = auctionRepository.findById(auctionId)
+                .orElseThrow(() -> new RuntimeException("Auction not found"));
+
+        DictionaryItem invitedStatus = getStatusByKey("key.auctionInvitation.invited");
+
+        for (Integer companyId : companyIds) {
+            Long existing = invitationRepository.countActiveInvitation(auctionId, companyId);
+            if (existing > 0) continue;
+
+            AuctionInvitation invitation = new AuctionInvitation();
+            invitation.setRecordKey(java.util.UUID.randomUUID().toString());
+            invitation.setAuction(auction);
+
+            epg.auction.admin.entity.Company company = new epg.auction.admin.entity.Company();
+            company.setId(companyId);
+            invitation.setCompany(company);
+
+            invitation.setStatus(invitedStatus);
+            invitation.setDateInvited(new java.util.Date());
+            invitation.setDateSelected(new java.util.Date());
+            invitation.setCreateUserId(userId);
+            invitationRepository.save(invitation);
+        }
+    }
 }

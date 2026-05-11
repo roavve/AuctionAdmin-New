@@ -8,7 +8,7 @@ import java.io.Serializable;
 public class AuctionProject extends MainEntity implements Serializable {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
     @Column(name = "NAME")

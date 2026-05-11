@@ -149,7 +149,17 @@ public class AuctionController {
         auctionService.closeInvitation(invId, auth.getName());
         return ResponseEntity.ok(Map.of("success", true));
     }
-
+    @PostMapping("/{id}/invite-companies")
+    public ResponseEntity<?> inviteCompanies(@PathVariable Integer id,
+                                             @RequestBody Map<String, List<Integer>> body, Authentication auth) {
+        try {
+            List<Integer> companyIds = body.get("companyIds");
+            auctionService.inviteCompanies(id, companyIds, auth.getName());
+            return ResponseEntity.ok(Map.of("success", true, "count", companyIds.size()));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
     // =================== PARTICIPANTS ===================
 
     @GetMapping("/{id}/participants")
