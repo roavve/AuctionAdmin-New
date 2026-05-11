@@ -253,6 +253,7 @@ export default function AuctionDetail() {
   const [editing, setEditing] = useState(isNew);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState('');
+  const [revisions, setRevisions] = useState([]);
   const [revisionFiles, setRevisionFiles] = useState([]);
   const [internalFiles, setInternalFiles] = useState([]);
   const [uploadingFile, setUploadingFile] = useState(false);
@@ -301,6 +302,7 @@ export default function AuctionDetail() {
       if (t === 2) setInvitations((await auctionApi.getInvitations(id)).data);
       if (t === 3) setParticipants((await auctionApi.getParticipants(id)).data);
       if (t === 4) setComments((await auctionApi.getComments(id)).data);
+
       if (t === 5) {
         const res = await fetch(`http://localhost:8080/api/auctions/${id}/files`, { headers });
         setRevisionFiles(await res.json());
@@ -308,6 +310,10 @@ export default function AuctionDetail() {
       if (t === 6) {
         const res = await fetch(`http://localhost:8080/api/auctions/${id}/internal-files`, { headers });
         setInternalFiles(await res.json());
+      }
+      if (t === 7) {
+        const res = await fetch(`http://localhost:8080/api/auctions/${id}/revisions`, { headers });
+        setRevisions(await res.json());
       }
     } catch {}
   };
@@ -580,6 +586,7 @@ export default function AuctionDetail() {
           <Tab label="Comments" />
           <Tab label="Files" />
           <Tab label="Internal Files" />
+          <Tab label="Revisions" />
         </Tabs>
 
         {tab === 0 && (
@@ -774,6 +781,24 @@ export default function AuctionDetail() {
             </Button>
           </DialogActions>
         </Dialog>
+        {tab === 7 && (
+            <Box>
+              <Typography variant="subtitle1" mb={2}>Revisions</Typography>
+              <DataGrid
+                  rows={revisions}
+                  columns={[
+                    { field: 'id', headerName: 'ID', width: 70 },
+                    { field: 'revisionNum', headerName: 'Revision #', width: 110 },
+                    { field: 'revisionDate', headerName: 'Date', width: 180,
+                      renderCell: p => p.value ? new Date(p.value).toLocaleString() : '-' },
+                    { field: 'current', headerName: 'Current', width: 100,
+                      renderCell: p => p.value ? <Chip label="Current" color="success" size="small" /> : null },
+                    { field: 'createUserId', headerName: 'Created By', width: 150 },
+                  ]}
+                  autoHeight pageSizeOptions={[10, 20]} disableRowSelectionOnClick
+              />
+            </Box>
+        )}
       </Box>
   );
 }

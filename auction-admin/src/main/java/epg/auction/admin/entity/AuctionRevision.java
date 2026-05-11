@@ -45,4 +45,5 @@ public class AuctionRevision extends MainEntity implements Serializable {
     public void setCurrent(Boolean current) { this.current = current; }
     public String getCreateUser() { return createUser; }
     public void setCreateUser(String createUser) { this.createUser = createUser; }
+
 }

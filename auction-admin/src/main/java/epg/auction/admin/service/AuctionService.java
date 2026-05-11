@@ -23,6 +23,7 @@ public class AuctionService {
     @Autowired private AuctionCommentRepository commentRepository;
     @Autowired private DictionaryItemRepository dictionaryItemRepository;
     @Autowired private SysAuditRepository sysAuditRepository;
+    @Autowired private epg.auction.admin.repository.AuctionRevisionRepository auctionRevisionRepository;
 
     private DictionaryItem getStatusByKey(String key) {
         return dictionaryItemRepository.findByKey(key)
@@ -82,9 +83,21 @@ public class AuctionService {
         }
 
         Auction saved = auctionRepository.save(auction);
+
+// Create initial revision #1
+        AuctionRevision revision = new AuctionRevision();
+        revision.setRecordKey(java.util.UUID.randomUUID().toString());
+        revision.setAuction(saved);
+        revision.setRevisionNum(1);
+        revision.setRevisionDate(new Date());
+        revision.setCurrent(true);
+        revision.setCreateUserId(userId);
+        revision.setCreateDate(new Date());
+        revision.setCreateUser(userId);
+        auctionRevisionRepository.save(revision);
+
         audit("CREATE", "AUCTION", saved.getId(), userId);
-        return saved;
-    }
+        return saved;}
 
     @Transactional
     public Auction updateAuction(Integer id, Auction auction, String userId) {

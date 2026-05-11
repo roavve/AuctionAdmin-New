@@ -17,14 +17,17 @@ public class AuctionController {
 
     @Autowired
     private AuctionService auctionService;
-
+    @Autowired private epg.auction.admin.repository.AuctionRevisionRepository auctionRevisionRepository;
     // =================== AUCTION CRUD ===================
 
     @GetMapping
     public List<Auction> getAll() {
         return auctionService.getAll();
     }
-
+    @GetMapping("/{id}/revisions")
+    public ResponseEntity<List<epg.auction.admin.entity.AuctionRevision>> getRevisions(@PathVariable Integer id) {
+        return ResponseEntity.ok(auctionRevisionRepository.findByAuctionId(id));
+    }
     @GetMapping("/{id}")
     public ResponseEntity<Auction> getById(@PathVariable Integer id) {
         return auctionService.getById(id)
