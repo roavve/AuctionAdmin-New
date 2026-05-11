@@ -41,7 +41,7 @@ public class UserService {
         user.setStatus(1);
         user.setCreateUserId(createdBy);
         if (user.getPassword() != null) {
-            user.setPassword(sha1(user.getPassword()));
+            user.setPassword(hashPassword(user.getPassword()));
         }
         return userRepository.save(user);
     }
@@ -54,6 +54,7 @@ public class UserService {
         original.setLastName(user.getLastName());
         original.setRole(user.getRole());
         original.setInternal(user.getInternal());
+        original.setExternal(user.getExternal());
         original.setContactEmail(user.getContactEmail());
         original.setContactPhone(user.getContactPhone());
         original.setContactMobile(user.getContactMobile());
@@ -98,7 +99,7 @@ public class UserService {
     public void changePassword(Integer id, String newPassword, String modifiedBy) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("User not found"));
-        user.setPassword(sha1(newPassword));
+        user.setPassword(hashPassword(newPassword));
         user.setModifyUserId(modifiedBy);
         userRepository.save(user);
     }
@@ -113,7 +114,7 @@ public class UserService {
         return createUser(user, createdBy);
     }
 
-    private String sha1(String input) {
+    public static String hashPassword(String input) {
         try {
             MessageDigest md = MessageDigest.getInstance("SHA-1");
             byte[] result = md.digest(input.getBytes("UTF-8"));
