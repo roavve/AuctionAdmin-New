@@ -645,6 +645,12 @@ export default function AuctionDetail() {
                         onClick={() => { loadCompanies(); setInviteDialog(true); }}>
                   Invite Companies
                 </Button>
+                <Button variant="outlined" size="small" color="success"
+                        onClick={() => downloadFile(
+                            `http://localhost:8080/api/export/auction/${id}/invitations`,
+                            `invitations_${id}.xlsx`)}>
+                  Export Excel
+                </Button>
               </Box>
               <DataGrid rows={invitations} columns={invColumns} autoHeight
                         pageSizeOptions={[10, 20, 50]} disableRowSelectionOnClick />
@@ -652,8 +658,19 @@ export default function AuctionDetail() {
         )}
 
         {tab === 3 && (
-            <DataGrid rows={participants} columns={partColumns} autoHeight
-                      pageSizeOptions={[10, 20, 50]} disableRowSelectionOnClick />
+            <Box>
+              <Box mb={2} display="flex" gap={2} alignItems="center">
+                <Typography variant="subtitle1">Participants</Typography>
+                <Button variant="outlined" size="small" color="success"
+                        onClick={() => downloadFile(
+                            `http://localhost:8080/api/export/auction/${id}/participants`,
+                            `participants_${id}.xlsx`)}>
+                  Export Excel
+                </Button>
+              </Box>
+              <DataGrid rows={participants} columns={partColumns} autoHeight
+                        pageSizeOptions={[10, 20, 50]} disableRowSelectionOnClick />
+            </Box>
         )}
 
         {tab === 4 && (
@@ -781,24 +798,59 @@ export default function AuctionDetail() {
             </Button>
           </DialogActions>
         </Dialog>
-        {tab === 7 && (
-            <Box>
-              <Typography variant="subtitle1" mb={2}>Revisions</Typography>
-              <DataGrid
-                  rows={revisions}
-                  columns={[
-                    { field: 'id', headerName: 'ID', width: 70 },
-                    { field: 'revisionNum', headerName: 'Revision #', width: 110 },
-                    { field: 'revisionDate', headerName: 'Date', width: 180,
-                      renderCell: p => p.value ? new Date(p.value).toLocaleString() : '-' },
-                    { field: 'current', headerName: 'Current', width: 100,
-                      renderCell: p => p.value ? <Chip label="Current" color="success" size="small" /> : null },
-                    { field: 'createUserId', headerName: 'Created By', width: 150 },
-                  ]}
-                  autoHeight pageSizeOptions={[10, 20]} disableRowSelectionOnClick
-              />
+              {tab === 7 && (
+                  <Box>
+                    <Typography variant="subtitle1" mb={2}>Revisions</Typography>
+                    <DataGrid
+                        rows={revisions}
+                        columns={[
+                          { field: 'id', headerName: 'ID', width: 70 },
+                          { field: 'revisionNum', headerName: 'Revision #', width: 110 },
+                          { field: 'revisionDate', headerName: 'Date', width: 180,
+                            renderCell: p => p.value ? new Date(p.value).toLocaleString() : '-' },
+                          { field: 'current', headerName: 'Current', width: 100,
+                            renderCell: p => p.value ? <Chip label="Current" color="success" size="small" /> : null },
+                          { field: 'createUserId', headerName: 'Created By', width: 150 },
+                        ]}
+                        autoHeight pageSizeOptions={[10, 20]} disableRowSelectionOnClick
+                    />
+                  </Box>
+              )}
+
+              <Dialog open={inviteDialog} onClose={() => setInviteDialog(false)} maxWidth="md" fullWidth>
+                <DialogTitle>
+                  Invite Companies to Auction
+                  <Typography variant="body2" color="text.secondary">{selectedCompanies.length} selected</Typography>
+                </DialogTitle>
+                <DialogContent dividers>
+                  <List dense sx={{ maxHeight: 400, overflow: 'auto' }}>
+                    {allCompanies.map(company => (
+                        <ListItem key={company.id} disablePadding>
+                          <ListItemButton onClick={() => {
+                            setSelectedCompanies(prev =>
+                                prev.includes(company.id)
+                                    ? prev.filter(cid => cid !== company.id)
+                                    : [...prev, company.id]
+                            );
+                          }}>
+                            <Checkbox checked={selectedCompanies.includes(company.id)} size="small" />
+                            <ListItemText
+                                primary={company.companyName}
+                                secondary={`${company.taxId || ''} | ${company.contactEmail || ''}`}
+                            />
+                          </ListItemButton>
+                        </ListItem>
+                    ))}
+                  </List>
+                </DialogContent>
+                <DialogActions>
+                  <Button onClick={() => { setInviteDialog(false); setSelectedCompanies([]); }}>Cancel</Button>
+                  <Button variant="contained" onClick={handleInvite}
+                          disabled={selectedCompanies.length === 0 || inviteLoading}>
+                    {inviteLoading ? 'Inviting...' : `Invite ${selectedCompanies.length} Companies`}
+                  </Button>
+                </DialogActions>
+              </Dialog>
             </Box>
-        )}
-      </Box>
-  );
-}
+        );
+        }
