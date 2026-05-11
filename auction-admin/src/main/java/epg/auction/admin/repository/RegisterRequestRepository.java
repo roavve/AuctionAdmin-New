@@ -10,12 +10,12 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface RegisterRequestRepository extends JpaRepository<RegisterRequest, Integer> {
 
-    @Query("SELECT r FROM RegisterRequest r WHERE r.status.key = 'key.registrationRequest.new' ORDER BY r.requestDate DESC")
+    @Query("SELECT r FROM RegisterRequest r WHERE r.status.key = 'key.registration.new' ORDER BY r.requestDate DESC")
     Page<RegisterRequest> findNewRequests(Pageable pageable);
 
-    @Query("SELECT r FROM RegisterRequest r WHERE r.status.key = 'key.registrationRequest.processed' ORDER BY r.requestDate DESC")
+    @Query("SELECT r FROM RegisterRequest r WHERE r.status.key = 'key.registration.processed' ORDER BY r.requestDate DESC")
     Page<RegisterRequest> findProcessedRequests(Pageable pageable);
 
-    @Query("SELECT r FROM RegisterRequest r WHERE r.status.key = 'key.registrationRequest.cancelled' ORDER BY r.requestDate DESC")
+    @Query("SELECT r FROM RegisterRequest r WHERE r.status.key = 'key.registration.cancelled' ORDER BY r.requestDate DESC")
     Page<RegisterRequest> findCancelledRequests(Pageable pageable);
 }
