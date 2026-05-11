@@ -17,6 +17,11 @@ import ExpandLess from '@mui/icons-material/ExpandLess';
 import ExpandMore from '@mui/icons-material/ExpandMore';
 import AppRegistrationIcon from '@mui/icons-material/AppRegistration';
 import DashboardIcon from '@mui/icons-material/Dashboard';
+import HistoryIcon from '@mui/icons-material/History';
+import NotificationsIcon from '@mui/icons-material/Notifications';
+import ArticleIcon from '@mui/icons-material/Article';
+
+
 const DRAWER_WIDTH = 240;
 
 const menuItems = [
@@ -29,6 +34,9 @@ const menuItems = [
     { label: 'Projects', icon: <FolderIcon />, path: '/projects' },
     { label: 'Categories', icon: <CategoryIcon />, path: '/categories' },
     { label: 'Dictionary', icon: <MenuBookIcon />, path: '/dictionary' },
+    { text: 'Audit Log', icon: <HistoryIcon />, path: '/audit' },
+    { text: 'Notifications', icon: <NotificationsIcon />, path: '/notifications' },
+    { text: 'Templates', icon: <ArticleIcon />, path: '/templates' },
 ];
 
 export default function Layout() {
@@ -70,7 +78,7 @@ export default function Layout() {
                                     onClick={() => navigate(item.path)}
                                 >
                                     <ListItemIcon>{item.icon}</ListItemIcon>
-                                    <ListItemText primary={item.label} />
+                                    <ListItemText primary={item.label || item.text} />
                                 </ListItemButton>
                             </ListItem>
                         ))}

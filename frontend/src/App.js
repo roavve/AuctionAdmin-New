@@ -15,6 +15,11 @@ import Registrations from './pages/Registrations';
 import Categories from './pages/Categories';
 import Dictionary from './pages/Dictionary';
 import Dashboard from './pages/Dashboard';
+import AuditLog from './pages/AuditLog';
+import Notifications from './pages/Notifications';
+import TextTemplates from './pages/TextTemplates';
+
+
 const PrivateRoute = ({ children }) => {
   const { user } = useAuth();
   return user ? children : <Navigate to="/login" />;
@@ -44,6 +49,9 @@ function App() {
               <Route path="registrations" element={<Registrations />} />
               <Route path="categories" element={<Categories />} />
               <Route path="dictionary" element={<Dictionary />} />
+              <Route path="audit" element={<AuditLog />} />
+              <Route path="notifications" element={<Notifications />} />
+              <Route path="templates" element={<TextTemplates />} />
             </Route>
           </Routes>
         </BrowserRouter>
