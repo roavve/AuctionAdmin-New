@@ -253,13 +253,16 @@ export default function AuctionDetail() {
   const [editing, setEditing] = useState(isNew);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState('');
-  const [inviteDialog, setInviteDialog] = useState(false);
+  const [revisionFiles, setRevisionFiles] = useState([]);
+  const [internalFiles, setInternalFiles] = useState([]);
+  const [uploadingFile, setUploadingFile] = useState(false);
+  const [fileDescription, setFileDescription] = useState('');
   const [allCompanies, setAllCompanies] = useState([]);
   const [selectedCompanies, setSelectedCompanies] = useState([]);
+  const [inviteDialog, setInviteDialog] = useState(false);
   const [inviteLoading, setInviteLoading] = useState(false);
   const [projects, setProjects] = useState([]);
   const [dictionaryItems, setDictionaryItems] = useState([]);
-
   const token = localStorage.getItem('token');
   const headers = { Authorization: `Bearer ${token}` };
 
@@ -298,6 +301,14 @@ export default function AuctionDetail() {
       if (t === 2) setInvitations((await auctionApi.getInvitations(id)).data);
       if (t === 3) setParticipants((await auctionApi.getParticipants(id)).data);
       if (t === 4) setComments((await auctionApi.getComments(id)).data);
+      if (t === 5) {
+        const res = await fetch(`http://localhost:8080/api/auctions/${id}/files`, { headers });
+        setRevisionFiles(await res.json());
+      }
+      if (t === 6) {
+        const res = await fetch(`http://localhost:8080/api/auctions/${id}/internal-files`, { headers });
+        setInternalFiles(await res.json());
+      }
     } catch {}
   };
 
@@ -378,7 +389,32 @@ export default function AuctionDetail() {
       setInviteLoading(false);
     }
   };
-
+  const handleFileUpload = async (e, type) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    setUploadingFile(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      if (fileDescription) formData.append('description', fileDescription);
+      const url = type === 'internal'
+          ? `http://localhost:8080/api/auctions/${id}/internal-files`
+          : `http://localhost:8080/api/auctions/${id}/files`;
+      await fetch(url, {
+        method: 'POST',
+        headers,
+        body: formData
+      });
+      setActionMsg(`File "${file.name}" uploaded successfully`);
+      if (type === 'internal') loadTab(6);
+      else loadTab(5);
+    } catch {
+      setActionMsg('Upload failed');
+    } finally {
+      setUploadingFile(false);
+      e.target.value = '';
+    }
+  };
   if (isNew) {
     return (
         <Box>
@@ -401,7 +437,22 @@ export default function AuctionDetail() {
         </Box>
     );
   }
-
+  const downloadFile = async (url, fileName) => {
+    try {
+      const res = await fetch(url, { headers });
+      const blob = await res.blob();
+      const blobUrl = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = blobUrl;
+      a.download = fileName || 'download';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(blobUrl);
+    } catch {
+      setActionMsg('Download failed');
+    }
+  };
   if (loading) return <Box display="flex" justifyContent="center" mt={4}><CircularProgress /></Box>;
   if (error) return <Alert severity="error">{error}</Alert>;
   if (!auction) return null;
@@ -527,6 +578,8 @@ export default function AuctionDetail() {
           <Tab label="Invitations" />
           <Tab label="Participants" />
           <Tab label="Comments" />
+          <Tab label="Files" />
+          <Tab label="Internal Files" />
         </Tabs>
 
         {tab === 0 && (
@@ -600,7 +653,93 @@ export default function AuctionDetail() {
             <DataGrid rows={comments} columns={commentColumns} autoHeight
                       pageSizeOptions={[10, 20, 50]} disableRowSelectionOnClick />
         )}
+        {tab === 5 && (
+            <Box>
+              <Box mb={2} display="flex" gap={2} alignItems="center" flexWrap="wrap">
+                <Typography variant="subtitle1">Revision Files</Typography>
+                <TextField size="small" label="Description (optional)"
+                           value={fileDescription}
+                           onChange={e => setFileDescription(e.target.value)}
+                           sx={{ width: 250 }} />
+                <Button variant="contained" component="label" disabled={uploadingFile}>
+                  {uploadingFile ? 'Uploading...' : 'Upload File'}
+                  <input type="file" hidden onChange={e => handleFileUpload(e, 'revision')} />
+                </Button>
+              </Box>
+              <DataGrid
+                  rows={revisionFiles}
+                  columns={[
+                    { field: 'id', headerName: 'ID', width: 70 },
+                    { field: 'fileName', headerName: 'File Name', flex: 1 },
+                    { field: 'fileDescription', headerName: 'Description', width: 200 },
+                    { field: 'fileSize', headerName: 'Size (bytes)', width: 120 },
+                    { field: 'fileDate', headerName: 'Date', width: 160,
+                      renderCell: p => p.value ? new Date(p.value).toLocaleString() : '-' },
+                    { field: 'fileUser', headerName: 'Uploaded By', width: 150 },
+                    { field: 'actions', headerName: '', width: 160, sortable: false,
+                      renderCell: p => (
+                          <Box display="flex" gap={0.5}>
+                            <Button size="small"
+                                    onClick={() => downloadFile(`http://localhost:8080/api/auctions/files/${p.row.id}/download`, p.row.fileName)}>
+                              Download
+                            </Button>
+                            <Button size="small" color="error"
+                                    onClick={() => fetch(`http://localhost:8080/api/auctions/files/${p.row.id}`, {
+                                      method: 'DELETE', headers
+                                    }).then(() => loadTab(5))}>
+                              Delete
+                            </Button>
+                          </Box>
+                      )}
+                  ]}
+                  autoHeight pageSizeOptions={[10, 20]} disableRowSelectionOnClick
+              />
+            </Box>
+        )}
 
+        {tab === 6 && (
+            <Box>
+              <Box mb={2} display="flex" gap={2} alignItems="center" flexWrap="wrap">
+                <Typography variant="subtitle1">Internal Files</Typography>
+                <TextField size="small" label="Description (optional)"
+                           value={fileDescription}
+                           onChange={e => setFileDescription(e.target.value)}
+                           sx={{ width: 250 }} />
+                <Button variant="contained" component="label" disabled={uploadingFile}>
+                  {uploadingFile ? 'Uploading...' : 'Upload File'}
+                  <input type="file" hidden onChange={e => handleFileUpload(e, 'internal')} />
+                </Button>
+              </Box>
+              <DataGrid
+                  rows={internalFiles}
+                  columns={[
+                    { field: 'id', headerName: 'ID', width: 70 },
+                    { field: 'fileName', headerName: 'File Name', flex: 1 },
+                    { field: 'fileDescription', headerName: 'Description', width: 200 },
+                    { field: 'fileSize', headerName: 'Size (bytes)', width: 120 },
+                    { field: 'fileDate', headerName: 'Date', width: 160,
+                      renderCell: p => p.value ? new Date(p.value).toLocaleString() : '-' },
+                    { field: 'fileUser', headerName: 'Uploaded By', width: 150 },
+                    { field: 'actions', headerName: '', width: 160, sortable: false,
+                      renderCell: p => (
+                          <Box display="flex" gap={0.5}>
+                            <Button size="small"
+                                    onClick={() => downloadFile(`http://localhost:8080/api/auctions/internal-files/${p.row.id}/download`, p.row.fileName)}>
+                              Download
+                            </Button>
+                            <Button size="small" color="error"
+                                    onClick={() => fetch(`http://localhost:8080/api/auctions/internal-files/${p.row.id}`, {
+                                      method: 'DELETE', headers
+                                    }).then(() => loadTab(6))}>
+                              Delete
+                            </Button>
+                          </Box>
+                      )}
+                  ]}
+                  autoHeight pageSizeOptions={[10, 20]} disableRowSelectionOnClick
+              />
+            </Box>
+        )}
         <Dialog open={inviteDialog} onClose={() => setInviteDialog(false)} maxWidth="md" fullWidth>
           <DialogTitle>
             Invite Companies to Auction
