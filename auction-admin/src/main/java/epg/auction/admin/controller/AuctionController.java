@@ -49,9 +49,13 @@ public class AuctionController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Auction> update(@PathVariable Integer id,
-                                          @RequestBody Auction auction, Authentication auth) {
-        return ResponseEntity.ok(auctionService.updateAuction(id, auction, auth.getName()));
+    public ResponseEntity<?> update(@PathVariable Integer id,
+                                    @RequestBody Auction auction, Authentication auth) {
+        try {
+            return ResponseEntity.ok(auctionService.updateAuction(id, auction, auth.getName()));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
     }
 
     @PostMapping("/{id}/activate")

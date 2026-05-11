@@ -39,24 +39,49 @@ public class AuctionService {
 
     @Transactional
     public Auction createAuction(Auction auction, String userId) {
-        auction.setRecordKey(UUID.randomUUID().toString());
+        auction.setRecordKey(java.util.UUID.randomUUID().toString());
         auction.setStatus(getStatusByKey("key.auctionStatus.draft"));
         auction.setCreateDate(new Date());
         auction.setCreateUserId(userId);
+
+        if (auction.getAuctionType() != null && auction.getAuctionType().getKey() != null) {
+            dictionaryItemRepository.findByKey(auction.getAuctionType().getKey())
+                    .ifPresent(auction::setAuctionType);
+        }
+        if (auction.getValueType() != null && auction.getValueType().getKey() != null) {
+            dictionaryItemRepository.findByKey(auction.getValueType().getKey())
+                    .ifPresent(auction::setValueType);
+        }
+        if (auction.getUom() != null && auction.getUom().getKey() != null) {
+            dictionaryItemRepository.findByKey(auction.getUom().getKey())
+                    .ifPresent(auction::setUom);
+        }
+        if (auction.getCurrency() != null && auction.getCurrency().getKey() != null) {
+            dictionaryItemRepository.findByKey(auction.getCurrency().getKey())
+                    .ifPresent(auction::setCurrency);
+        }
+        if (auction.getProject() != null && auction.getProject().getId() != null) {
+            AuctionProject project = new AuctionProject();
+            project.setId(auction.getProject().getId());
+            auction.setProject(project);
+        }
+
         return auctionRepository.save(auction);
     }
-
     @Transactional
     public Auction updateAuction(Integer id, Auction auction, String userId) {
         Auction original = auctionRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Auction not found: " + id));
 
-        if (!auction.getAuctionStartDate().after(auction.getDiscussEndDate())) {
-            throw new RuntimeException("Auction Start Date must be after Discuss End Date");
+        if (auction.getAuctionStartDate() != null && auction.getDiscussEndDate() != null) {
+            if (!auction.getAuctionStartDate().after(auction.getDiscussEndDate())) {
+                throw new RuntimeException("Auction Start Date must be after Discuss End Date");
+            }
         }
 
         original.setName(auction.getName());
         original.setDesc(auction.getDesc());
+        original.setInviteText(auction.getInviteText());
         original.setAuctionStartDate(auction.getAuctionStartDate());
         original.setAuctionEndDate(auction.getAuctionEndDate());
         original.setStartTime(auction.getStartTime());
@@ -71,14 +96,35 @@ public class AuctionService {
         original.setBidEndDate(auction.getBidEndDate());
         original.setBidEndTime(auction.getBidEndTime());
         original.setQuantity(auction.getQuantity());
-        original.setValueType(auction.getValueType());
-        original.setUom(auction.getUom());
-        original.setInviteText(auction.getInviteText());
         original.setShowLastBid(auction.getShowLastBid());
         original.setAdditionalMinute(auction.getAdditionalMinute());
-        original.setProject(auction.getProject());
         original.setModifyDate(new Date());
         original.setModifyUserId(userId);
+
+        // resolve dictionary items by key
+        if (auction.getAuctionType() != null && auction.getAuctionType().getKey() != null) {
+            dictionaryItemRepository.findByKey(auction.getAuctionType().getKey())
+                    .ifPresent(original::setAuctionType);
+        }
+        if (auction.getValueType() != null && auction.getValueType().getKey() != null) {
+            dictionaryItemRepository.findByKey(auction.getValueType().getKey())
+                    .ifPresent(original::setValueType);
+        }
+        if (auction.getUom() != null && auction.getUom().getKey() != null) {
+            dictionaryItemRepository.findByKey(auction.getUom().getKey())
+                    .ifPresent(original::setUom);
+        }
+        if (auction.getCurrency() != null && auction.getCurrency().getKey() != null) {
+            dictionaryItemRepository.findByKey(auction.getCurrency().getKey())
+                    .ifPresent(original::setCurrency);
+        }
+
+        // resolve project by id
+        if (auction.getProject() != null && auction.getProject().getId() != null) {
+            AuctionProject project = new AuctionProject();
+            project.setId(auction.getProject().getId());
+            original.setProject(project);
+        }
 
         return auctionRepository.save(original);
     }

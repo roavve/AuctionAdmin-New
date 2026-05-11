@@ -3,11 +3,13 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { auctionApi } from '../api/auctions';
 import {
   Box, Typography, Button, Chip, Tabs, Tab, CircularProgress,
-  Alert, Grid, Paper, Dialog, DialogTitle, DialogContent,
-  DialogActions, List, ListItem, ListItemText, ListItemButton, Checkbox
+  Alert, Grid, Paper, TextField, MenuItem, Select, FormControl,
+  InputLabel, Dialog, DialogTitle, DialogContent, DialogActions,
+  List, ListItem, ListItemText, ListItemButton, Checkbox
 } from '@mui/material';
 import { DataGrid } from '@mui/x-data-grid';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import SaveIcon from '@mui/icons-material/Save';
 
 const STATUS_COLORS = {
   'key.auctionStatus.draft': 'default',
@@ -28,6 +30,212 @@ function InfoRow({ label, value }) {
   );
 }
 
+const EMPTY_FORM = {
+  name: '', desc: '', inviteText: '',
+  startBidValue: '', maxBidValue: '', bidStep: '', quantity: '',
+  discussStartDate: '', discussEndDate: '',
+  auctionStartDate: '', auctionEndDate: '',
+  startTime: '', endTime: '',
+  bidStartDate: '', bidEndDate: '',
+  bidStartTime: '', bidEndTime: '',
+  additionalMinute: '',
+  showLastBid: false,
+  auctionType: { key: 'key.auctionType.buy' },
+  valueType: { key: 'key.valueType.amount' },
+  uom: { key: 'key.uom.piece' },
+  currency: { key: 'key.currency.lari' },
+  project: null,
+};
+
+function AuctionForm({ initial, projects, dictionaryItems, onSave, onCancel, saving, saveError }) {
+  const [form, setForm] = useState(initial || EMPTY_FORM);
+
+  const set = (field, value) => setForm(f => ({ ...f, [field]: value }));
+  const setObj = (field, key) => setForm(f => ({ ...f, [field]: { key } }));
+
+  const itemsForKey = (prefix) => dictionaryItems.filter(d => d.key.startsWith(prefix));
+
+  return (
+      <Paper sx={{ p: 3 }}>
+        {saveError && <Alert severity="error" sx={{ mb: 2 }}>{saveError}</Alert>}
+        <Grid container spacing={2}>
+          <Grid size={{ xs: 12 }}>
+            <Typography variant="subtitle1" fontWeight="bold">Basic Info</Typography>
+          </Grid>
+          <Grid size={{ xs: 12, md: 6 }}>
+            <TextField fullWidth label="Name" value={form.name}
+                       onChange={e => set('name', e.target.value)} required />
+          </Grid>
+          <Grid size={{ xs: 12, md: 6 }}>
+            <FormControl fullWidth>
+              <InputLabel>Project</InputLabel>
+              <Select value={form.project?.id || ''} label="Project"
+                      onChange={e => set('project', e.target.value ? { id: e.target.value } : null)}>
+                <MenuItem value="">No Project</MenuItem>
+                {projects.map(p => <MenuItem key={p.id} value={p.id}>{p.name}</MenuItem>)}
+              </Select>
+            </FormControl>
+          </Grid>
+          <Grid size={{ xs: 12, md: 6 }}>
+            <FormControl fullWidth>
+              <InputLabel>Auction Type</InputLabel>
+              <Select value={form.auctionType?.key || ''} label="Auction Type"
+                      onChange={e => setObj('auctionType', e.target.value)}>
+                {itemsForKey('key.auctionType').map(d =>
+                    <MenuItem key={d.key} value={d.key}>{d.name}</MenuItem>)}
+              </Select>
+            </FormControl>
+          </Grid>
+          <Grid size={{ xs: 12, md: 6 }}>
+            <FormControl fullWidth>
+              <InputLabel>Currency</InputLabel>
+              <Select value={form.currency?.key || ''} label="Currency"
+                      onChange={e => setObj('currency', e.target.value)}>
+                {itemsForKey('key.currency').map(d =>
+                    <MenuItem key={d.key} value={d.key}>{d.name}</MenuItem>)}
+              </Select>
+            </FormControl>
+          </Grid>
+          <Grid size={{ xs: 12 }}>
+            <TextField fullWidth label="Description" value={form.desc || ''}
+                       onChange={e => set('desc', e.target.value)} multiline rows={2} />
+          </Grid>
+          <Grid size={{ xs: 12 }}>
+            <TextField fullWidth label="Invite Text" value={form.inviteText || ''}
+                       onChange={e => set('inviteText', e.target.value)} multiline rows={2} />
+          </Grid>
+
+          <Grid size={{ xs: 12 }}>
+            <Typography variant="subtitle1" fontWeight="bold" mt={1}>Bidding</Typography>
+          </Grid>
+          <Grid size={{ xs: 12, md: 3 }}>
+            <TextField fullWidth label="Start Bid Value" type="number"
+                       value={form.startBidValue || ''}
+                       onChange={e => set('startBidValue', e.target.value)} />
+          </Grid>
+          <Grid size={{ xs: 12, md: 3 }}>
+            <TextField fullWidth label="Max Bid Value" type="number"
+                       value={form.maxBidValue || ''}
+                       onChange={e => set('maxBidValue', e.target.value)} />
+          </Grid>
+          <Grid size={{ xs: 12, md: 3 }}>
+            <TextField fullWidth label="Bid Step" type="number"
+                       value={form.bidStep || ''}
+                       onChange={e => set('bidStep', e.target.value)} />
+          </Grid>
+          <Grid size={{ xs: 12, md: 3 }}>
+            <TextField fullWidth label="Quantity" type="number"
+                       value={form.quantity || ''}
+                       onChange={e => set('quantity', e.target.value)} />
+          </Grid>
+          <Grid size={{ xs: 12, md: 6 }}>
+            <FormControl fullWidth>
+              <InputLabel>Value Type</InputLabel>
+              <Select value={form.valueType?.key || ''} label="Value Type"
+                      onChange={e => setObj('valueType', e.target.value)}>
+                {itemsForKey('key.valueType').map(d =>
+                    <MenuItem key={d.key} value={d.key}>{d.name}</MenuItem>)}
+              </Select>
+            </FormControl>
+          </Grid>
+          <Grid size={{ xs: 12, md: 6 }}>
+            <FormControl fullWidth>
+              <InputLabel>Unit of Measure</InputLabel>
+              <Select value={form.uom?.key || ''} label="Unit of Measure"
+                      onChange={e => setObj('uom', e.target.value)}>
+                {itemsForKey('key.uom').map(d =>
+                    <MenuItem key={d.key} value={d.key}>{d.name}</MenuItem>)}
+              </Select>
+            </FormControl>
+          </Grid>
+
+          <Grid size={{ xs: 12 }}>
+            <Typography variant="subtitle1" fontWeight="bold" mt={1}>Schedule</Typography>
+          </Grid>
+          <Grid size={{ xs: 12, md: 6 }}>
+            <TextField fullWidth label="Discuss Start Date" type="date"
+                       value={form.discussStartDate?.substring(0, 10) || ''}
+                       onChange={e => set('discussStartDate', e.target.value)}
+                       InputLabelProps={{ shrink: true }} />
+          </Grid>
+          <Grid size={{ xs: 12, md: 6 }}>
+            <TextField fullWidth label="Discuss End Date" type="date"
+                       value={form.discussEndDate?.substring(0, 10) || ''}
+                       onChange={e => set('discussEndDate', e.target.value)}
+                       InputLabelProps={{ shrink: true }} />
+          </Grid>
+          <Grid size={{ xs: 12, md: 4 }}>
+            <TextField fullWidth label="Auction Start Date" type="date"
+                       value={form.auctionStartDate?.substring(0, 10) || ''}
+                       onChange={e => set('auctionStartDate', e.target.value)}
+                       InputLabelProps={{ shrink: true }} />
+          </Grid>
+          <Grid size={{ xs: 12, md: 4 }}>
+            <TextField fullWidth label="Auction End Date" type="date"
+                       value={form.auctionEndDate?.substring(0, 10) || ''}
+                       onChange={e => set('auctionEndDate', e.target.value)}
+                       InputLabelProps={{ shrink: true }} />
+          </Grid>
+          <Grid size={{ xs: 12, md: 2 }}>
+            <TextField fullWidth label="Start Time (HH:mm)"
+                       value={form.startTime || ''}
+                       onChange={e => set('startTime', e.target.value)}
+                       placeholder="14:00" />
+          </Grid>
+          <Grid size={{ xs: 12, md: 2 }}>
+            <TextField fullWidth label="End Time (HH:mm)"
+                       value={form.endTime || ''}
+                       onChange={e => set('endTime', e.target.value)}
+                       placeholder="16:00" />
+          </Grid>
+
+          <Grid size={{ xs: 12 }}>
+            <Typography variant="subtitle1" fontWeight="bold" mt={1}>Bid Period</Typography>
+          </Grid>
+          <Grid size={{ xs: 12, md: 4 }}>
+            <TextField fullWidth label="Bid Start Date" type="date"
+                       value={form.bidStartDate?.substring(0, 10) || ''}
+                       onChange={e => set('bidStartDate', e.target.value)}
+                       InputLabelProps={{ shrink: true }} />
+          </Grid>
+          <Grid size={{ xs: 12, md: 4 }}>
+            <TextField fullWidth label="Bid End Date" type="date"
+                       value={form.bidEndDate?.substring(0, 10) || ''}
+                       onChange={e => set('bidEndDate', e.target.value)}
+                       InputLabelProps={{ shrink: true }} />
+          </Grid>
+          <Grid size={{ xs: 12, md: 2 }}>
+            <TextField fullWidth label="Bid Start Time"
+                       value={form.bidStartTime || ''}
+                       onChange={e => set('bidStartTime', e.target.value)}
+                       placeholder="14:00" />
+          </Grid>
+          <Grid size={{ xs: 12, md: 2 }}>
+            <TextField fullWidth label="Bid End Time"
+                       value={form.bidEndTime || ''}
+                       onChange={e => set('bidEndTime', e.target.value)}
+                       placeholder="16:00" />
+          </Grid>
+          <Grid size={{ xs: 12, md: 3 }}>
+            <TextField fullWidth label="Additional Minutes" type="number"
+                       value={form.additionalMinute || ''}
+                       onChange={e => set('additionalMinute', e.target.value)} />
+          </Grid>
+
+          <Grid size={{ xs: 12 }}>
+            <Box display="flex" gap={2} mt={2}>
+              <Button variant="contained" startIcon={<SaveIcon />}
+                      onClick={() => onSave(form)} disabled={saving}>
+                {saving ? 'Saving...' : 'Save Auction'}
+              </Button>
+              <Button onClick={onCancel}>Cancel</Button>
+            </Box>
+          </Grid>
+        </Grid>
+      </Paper>
+  );
+}
+
 export default function AuctionDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -42,21 +250,46 @@ export default function AuctionDetail() {
   const [loading, setLoading] = useState(!isNew);
   const [error, setError] = useState('');
   const [actionMsg, setActionMsg] = useState('');
+  const [editing, setEditing] = useState(isNew);
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState('');
   const [inviteDialog, setInviteDialog] = useState(false);
   const [allCompanies, setAllCompanies] = useState([]);
   const [selectedCompanies, setSelectedCompanies] = useState([]);
   const [inviteLoading, setInviteLoading] = useState(false);
+  const [projects, setProjects] = useState([]);
+  const [dictionaryItems, setDictionaryItems] = useState([]);
+
+  const token = localStorage.getItem('token');
+  const headers = { Authorization: `Bearer ${token}` };
 
   const load = async () => {
     setLoading(true);
     try {
-      const res = await auctionApi.getById(id);
-      setAuction(res.data);
+      const [auctionRes, projectsRes, dictRes] = await Promise.all([
+        auctionApi.getById(id),
+        fetch('http://localhost:8080/api/projects', { headers }).then(r => r.json()),
+        fetch('http://localhost:8080/api/dictionary/items', { headers }).then(r => r.json()),
+      ]);
+      setAuction(auctionRes.data);
+      setProjects(projectsRes);
+      setDictionaryItems(dictRes);
     } catch {
       setError('Failed to load auction');
     } finally {
       setLoading(false);
     }
+  };
+
+  const loadNew = async () => {
+    try {
+      const [projectsRes, dictRes] = await Promise.all([
+        fetch('http://localhost:8080/api/projects', { headers }).then(r => r.json()),
+        fetch('http://localhost:8080/api/dictionary/items', { headers }).then(r => r.json()),
+      ]);
+      setProjects(projectsRes);
+      setDictionaryItems(dictRes);
+    } catch {}
   };
 
   const loadTab = async (t) => {
@@ -70,21 +303,48 @@ export default function AuctionDetail() {
 
   const loadCompanies = async () => {
     try {
-      const res = await fetch('http://localhost:8080/api/companies', {
-        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-      });
-      const data = await res.json();
-      setAllCompanies(data);
+      const res = await fetch('http://localhost:8080/api/companies', { headers });
+      setAllCompanies(await res.json());
     } catch {}
   };
 
   useEffect(() => {
-    if (!isNew && id) load();
+    if (isNew) loadNew();
+    else if (id) load();
   }, []);
 
   useEffect(() => {
     if (!isNew && id) loadTab(tab);
   }, [tab]);
+
+  const handleSave = async (form) => {
+    setSaving(true);
+    setSaveError('');
+    try {
+      const payload = {
+        ...form,
+        auctionType: form.auctionType?.key ? { key: form.auctionType.key } : null,
+        valueType: form.valueType?.key ? { key: form.valueType.key } : null,
+        uom: form.uom?.key ? { key: form.uom.key } : null,
+        currency: form.currency?.key ? { key: form.currency.key } : null,
+        project: form.project?.id ? { id: form.project.id } : null,
+      };
+
+      if (isNew) {
+        const res = await auctionApi.create(payload);
+        navigate(`/auctions/${res.data.id}`);
+      } else {
+        await auctionApi.update(id, payload);
+        setEditing(false);
+        load();
+        setActionMsg('Auction saved successfully');
+      }
+    } catch (e) {
+      setSaveError(e.response?.data?.error || e.message || 'Save failed');
+    } finally {
+      setSaving(false);
+    }
+  };
 
   const handleAction = async (action) => {
     try {
@@ -104,10 +364,7 @@ export default function AuctionDetail() {
     try {
       const res = await fetch(`http://localhost:8080/api/auctions/${id}/invite-companies`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${localStorage.getItem('token')}`
-        },
+        headers: { 'Content-Type': 'application/json', ...headers },
         body: JSON.stringify({ companyIds: selectedCompanies })
       });
       const data = await res.json();
@@ -122,31 +379,30 @@ export default function AuctionDetail() {
     }
   };
 
-  // NEW AUCTION FORM
   if (isNew) {
     return (
         <Box>
           <Box display="flex" alignItems="center" mb={2} gap={2}>
-            <Button startIcon={<ArrowBackIcon />} onClick={() => navigate('/auctions')}>
-              Back
-            </Button>
+            <Button startIcon={<ArrowBackIcon />} onClick={() => navigate('/auctions')}>Back</Button>
             <Typography variant="h5">New Auction</Typography>
           </Box>
-          <Paper sx={{ p: 3 }}>
-            <Typography variant="body1" color="text.secondary">
-              New auction form coming soon.
-            </Typography>
-          </Paper>
+          {dictionaryItems.length > 0 ? (
+              <AuctionForm
+                  projects={projects}
+                  dictionaryItems={dictionaryItems}
+                  onSave={handleSave}
+                  onCancel={() => navigate('/auctions')}
+                  saving={saving}
+                  saveError={saveError}
+              />
+          ) : (
+              <Box display="flex" justifyContent="center" mt={4}><CircularProgress /></Box>
+          )}
         </Box>
     );
   }
 
-  if (loading) return (
-      <Box display="flex" justifyContent="center" mt={4}>
-        <CircularProgress />
-      </Box>
-  );
-
+  if (loading) return <Box display="flex" justifyContent="center" mt={4}><CircularProgress /></Box>;
   if (error) return <Alert severity="error">{error}</Alert>;
   if (!auction) return null;
 
@@ -182,13 +438,9 @@ export default function AuctionDetail() {
       renderCell: p => (
           <Box>
             <Button size="small" color="warning"
-                    onClick={() => auctionApi.cancelInvitation(p.row.id).then(() => loadTab(2))}>
-              Cancel
-            </Button>
+                    onClick={() => auctionApi.cancelInvitation(p.row.id).then(() => loadTab(2))}>Cancel</Button>
             <Button size="small"
-                    onClick={() => auctionApi.closeInvitation(p.row.id).then(() => loadTab(2))}>
-              Close
-            </Button>
+                    onClick={() => auctionApi.closeInvitation(p.row.id).then(() => loadTab(2))}>Close</Button>
           </Box>
       )}
   ];
@@ -204,9 +456,7 @@ export default function AuctionDetail() {
     { field: 'actions', headerName: '', width: 130,
       renderCell: p => !p.row.winner ? (
           <Button size="small" color="success"
-                  onClick={() => auctionApi.setWinner(p.row.id).then(() => loadTab(3))}>
-            Set Winner
-          </Button>
+                  onClick={() => auctionApi.setWinner(p.row.id).then(() => loadTab(3))}>Set Winner</Button>
       ) : null }
   ];
 
@@ -222,25 +472,40 @@ export default function AuctionDetail() {
           <Box>
             {p.row.status?.key === 'key.coment.new' &&
                 <Button size="small" color="success"
-                        onClick={() => auctionApi.approveComment(p.row.id).then(() => loadTab(4))}>
-                  Approve
-                </Button>}
+                        onClick={() => auctionApi.approveComment(p.row.id).then(() => loadTab(4))}>Approve</Button>}
             <Button size="small" color="error"
-                    onClick={() => auctionApi.cancelComment(p.row.id).then(() => loadTab(4))}>
-              Cancel
-            </Button>
+                    onClick={() => auctionApi.cancelComment(p.row.id).then(() => loadTab(4))}>Cancel</Button>
           </Box>
       )}
   ];
 
+  if (editing) {
+    return (
+        <Box>
+          <Box display="flex" alignItems="center" mb={2} gap={2}>
+            <Button startIcon={<ArrowBackIcon />} onClick={() => setEditing(false)}>Back</Button>
+            <Typography variant="h5">Edit: {auction.name}</Typography>
+          </Box>
+          <AuctionForm
+              initial={auction}
+              projects={projects}
+              dictionaryItems={dictionaryItems}
+              onSave={handleSave}
+              onCancel={() => setEditing(false)}
+              saving={saving}
+              saveError={saveError}
+          />
+        </Box>
+    );
+  }
+
   return (
       <Box>
         <Box display="flex" alignItems="center" mb={2} gap={2} flexWrap="wrap">
-          <Button startIcon={<ArrowBackIcon />} onClick={() => navigate('/auctions')}>
-            Back
-          </Button>
+          <Button startIcon={<ArrowBackIcon />} onClick={() => navigate('/auctions')}>Back</Button>
           <Typography variant="h5" sx={{ flexGrow: 1 }}>{auction.name}</Typography>
           <Chip label={auction.status?.name || ''} color={STATUS_COLORS[statusKey] || 'default'} />
+          <Button variant="outlined" onClick={() => setEditing(true)}>Edit</Button>
           {statusKey === 'key.auctionStatus.draft' &&
               <Button variant="contained" color="success"
                       onClick={() => handleAction('activate')}>Activate</Button>}
@@ -270,7 +535,6 @@ export default function AuctionDetail() {
                 <Grid size={{ xs: 12, md: 6 }}>
                   <Typography variant="subtitle1" fontWeight="bold" mb={1}>General</Typography>
                   <InfoRow label="ID" value={auction.id} />
-                  <InfoRow label="Record Key" value={auction.recordKey} />
                   <InfoRow label="Type" value={auction.auctionType?.name} />
                   <InfoRow label="Project" value={auction.project?.name} />
                   <InfoRow label="Description" value={auction.desc} />
@@ -340,9 +604,7 @@ export default function AuctionDetail() {
         <Dialog open={inviteDialog} onClose={() => setInviteDialog(false)} maxWidth="md" fullWidth>
           <DialogTitle>
             Invite Companies to Auction
-            <Typography variant="body2" color="text.secondary">
-              {selectedCompanies.length} selected
-            </Typography>
+            <Typography variant="body2" color="text.secondary">{selectedCompanies.length} selected</Typography>
           </DialogTitle>
           <DialogContent dividers>
             <List dense sx={{ maxHeight: 400, overflow: 'auto' }}>
@@ -366,9 +628,7 @@ export default function AuctionDetail() {
             </List>
           </DialogContent>
           <DialogActions>
-            <Button onClick={() => { setInviteDialog(false); setSelectedCompanies([]); }}>
-              Cancel
-            </Button>
+            <Button onClick={() => { setInviteDialog(false); setSelectedCompanies([]); }}>Cancel</Button>
             <Button variant="contained" onClick={handleInvite}
                     disabled={selectedCompanies.length === 0 || inviteLoading}>
               {inviteLoading ? 'Inviting...' : `Invite ${selectedCompanies.length} Companies`}
