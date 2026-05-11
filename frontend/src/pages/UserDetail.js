@@ -4,9 +4,12 @@ import { userApi } from '../api/users';
 import {
     Box, Typography, Button, Chip, Paper, Grid,
     CircularProgress, Alert, TextField, Dialog,
-    DialogTitle, DialogContent, DialogActions
+    DialogTitle, DialogContent, DialogActions,
+    FormControl, InputLabel, Select, MenuItem,
+    FormControlLabel, Switch
 } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import SaveIcon from '@mui/icons-material/Save';
 
 function InfoRow({ label, value }) {
     return (
@@ -19,13 +22,120 @@ function InfoRow({ label, value }) {
     );
 }
 
+const EMPTY_FORM = {
+    firstName: '', lastName: '', email: '', password: '',
+    role: 'ROLE_USER', internal: false, external: true,
+    contactEmail: '', contactPhone: '', contactMobile: '',
+    contactPosition: '',
+};
+
+const ROLES = [
+    { value: 'ROLE_ADMIN', label: 'Admin' },
+    { value: 'ROLE_USER', label: 'User' },
+    { value: 'ROLE_VIEWER', label: 'Viewer (Monitoring)' },
+];
+
+function UserForm({ initial, onSave, onCancel, saving, saveError }) {
+    const [form, setForm] = useState(initial || EMPTY_FORM);
+    const set = (field, value) => setForm(f => ({ ...f, [field]: value }));
+    const isNew = !initial;
+
+    return (
+        <Paper sx={{ p: 3 }}>
+            {saveError && <Alert severity="error" sx={{ mb: 2 }}>{saveError}</Alert>}
+            <Grid container spacing={2}>
+                <Grid size={{ xs: 12 }}>
+                    <Typography variant="subtitle1" fontWeight="bold">User Info</Typography>
+                </Grid>
+                <Grid size={{ xs: 12, md: 6 }}>
+                    <TextField fullWidth label="First Name" value={form.firstName || ''}
+                               onChange={e => set('firstName', e.target.value)} />
+                </Grid>
+                <Grid size={{ xs: 12, md: 6 }}>
+                    <TextField fullWidth label="Last Name" value={form.lastName || ''}
+                               onChange={e => set('lastName', e.target.value)} />
+                </Grid>
+                <Grid size={{ xs: 12, md: 6 }}>
+                    <TextField fullWidth label="Email" value={form.email || ''}
+                               onChange={e => set('email', e.target.value)} required />
+                </Grid>
+                {isNew && (
+                    <Grid size={{ xs: 12, md: 6 }}>
+                        <TextField fullWidth label="Password" type="password"
+                                   value={form.password || ''}
+                                   onChange={e => set('password', e.target.value)} required />
+                    </Grid>
+                )}
+                <Grid size={{ xs: 12, md: 6 }}>
+                    <FormControl fullWidth>
+                        <InputLabel>Role</InputLabel>
+                        <Select value={form.role || 'ROLE_USER'} label="Role"
+                                onChange={e => set('role', e.target.value)}>
+                            {ROLES.map(r => <MenuItem key={r.value} value={r.value}>{r.label}</MenuItem>)}
+                        </Select>
+                    </FormControl>
+                </Grid>
+                <Grid size={{ xs: 12, md: 3 }}>
+                    <FormControlLabel
+                        control={<Switch checked={form.internal || false}
+                                         onChange={e => set('internal', e.target.checked)} />}
+                        label="Internal User"
+                    />
+                </Grid>
+                <Grid size={{ xs: 12, md: 3 }}>
+                    <FormControlLabel
+                        control={<Switch checked={form.external || false}
+                                         onChange={e => set('external', e.target.checked)} />}
+                        label="External User"
+                    />
+                </Grid>
+
+                <Grid size={{ xs: 12 }}>
+                    <Typography variant="subtitle1" fontWeight="bold" mt={1}>Contact</Typography>
+                </Grid>
+                <Grid size={{ xs: 12, md: 6 }}>
+                    <TextField fullWidth label="Contact Email" value={form.contactEmail || ''}
+                               onChange={e => set('contactEmail', e.target.value)} />
+                </Grid>
+                <Grid size={{ xs: 12, md: 6 }}>
+                    <TextField fullWidth label="Contact Phone" value={form.contactPhone || ''}
+                               onChange={e => set('contactPhone', e.target.value)} />
+                </Grid>
+                <Grid size={{ xs: 12, md: 6 }}>
+                    <TextField fullWidth label="Contact Mobile" value={form.contactMobile || ''}
+                               onChange={e => set('contactMobile', e.target.value)} />
+                </Grid>
+                <Grid size={{ xs: 12, md: 6 }}>
+                    <TextField fullWidth label="Contact Position" value={form.contactPosition || ''}
+                               onChange={e => set('contactPosition', e.target.value)} />
+                </Grid>
+
+                <Grid size={{ xs: 12 }}>
+                    <Box display="flex" gap={2} mt={2}>
+                        <Button variant="contained" startIcon={<SaveIcon />}
+                                onClick={() => onSave(form)} disabled={saving}>
+                            {saving ? 'Saving...' : 'Save User'}
+                        </Button>
+                        <Button onClick={onCancel}>Cancel</Button>
+                    </Box>
+                </Grid>
+            </Grid>
+        </Paper>
+    );
+}
+
 export default function UserDetail() {
     const { id } = useParams();
     const navigate = useNavigate();
+    const isNew = !id || id === 'new';
+
     const [user, setUser] = useState(null);
-    const [loading, setLoading] = useState(true);
+    const [loading, setLoading] = useState(!isNew);
     const [error, setError] = useState('');
     const [actionMsg, setActionMsg] = useState('');
+    const [editing, setEditing] = useState(isNew);
+    const [saving, setSaving] = useState(false);
+    const [saveError, setSaveError] = useState('');
     const [pwDialog, setPwDialog] = useState(false);
     const [newPassword, setNewPassword] = useState('');
 
@@ -40,7 +150,27 @@ export default function UserDetail() {
         }
     };
 
-    useEffect(() => { load(); }, [id]);
+    useEffect(() => { if (!isNew) load(); }, []);
+
+    const handleSave = async (form) => {
+        setSaving(true);
+        setSaveError('');
+        try {
+            if (isNew) {
+                const res = await userApi.create(form);
+                navigate(`/users/${res.data.id}`);
+            } else {
+                await userApi.update(id, form);
+                setEditing(false);
+                load();
+                setActionMsg('User saved successfully');
+            }
+        } catch (e) {
+            setSaveError(e.response?.data?.error || e.message || 'Save failed');
+        } finally {
+            setSaving(false);
+        }
+    };
 
     const handleAction = async (action) => {
         try {
@@ -65,9 +195,44 @@ export default function UserDetail() {
         }
     };
 
+    if (isNew) {
+        return (
+            <Box>
+                <Box display="flex" alignItems="center" mb={2} gap={2}>
+                    <Button startIcon={<ArrowBackIcon />} onClick={() => navigate('/users')}>Back</Button>
+                    <Typography variant="h5">New User</Typography>
+                </Box>
+                <UserForm
+                    onSave={handleSave}
+                    onCancel={() => navigate('/users')}
+                    saving={saving}
+                    saveError={saveError}
+                />
+            </Box>
+        );
+    }
+
     if (loading) return <Box display="flex" justifyContent="center" mt={4}><CircularProgress /></Box>;
     if (error) return <Alert severity="error">{error}</Alert>;
     if (!user) return null;
+
+    if (editing) {
+        return (
+            <Box>
+                <Box display="flex" alignItems="center" mb={2} gap={2}>
+                    <Button startIcon={<ArrowBackIcon />} onClick={() => setEditing(false)}>Back</Button>
+                    <Typography variant="h5">Edit: {user.firstName} {user.lastName}</Typography>
+                </Box>
+                <UserForm
+                    initial={user}
+                    onSave={handleSave}
+                    onCancel={() => setEditing(false)}
+                    saving={saving}
+                    saveError={saveError}
+                />
+            </Box>
+        );
+    }
 
     return (
         <Box>
@@ -79,20 +244,23 @@ export default function UserDetail() {
                 <Chip label={user.active ? 'Active' : 'Inactive'}
                       color={user.active ? 'success' : 'default'} />
                 {user.locked && <Chip label="Locked" color="warning" />}
+                <Button variant="outlined" onClick={() => setEditing(true)}>Edit</Button>
                 <Button variant="outlined" onClick={() => setPwDialog(true)}>Change Password</Button>
                 {!user.locked
-                    ? <Button variant="contained" color="warning" onClick={() => handleAction('lock')}>Lock</Button>
-                    : <Button variant="contained" color="success" onClick={() => handleAction('unlock')}>Unlock</Button>
-                }
+                    ? <Button variant="contained" color="warning"
+                              onClick={() => handleAction('lock')}>Lock</Button>
+                    : <Button variant="contained" color="success"
+                              onClick={() => handleAction('unlock')}>Unlock</Button>}
                 {!user.cancelled &&
-                    <Button variant="contained" color="error" onClick={() => handleAction('cancel')}>Cancel</Button>}
+                    <Button variant="contained" color="error"
+                            onClick={() => handleAction('cancel')}>Cancel</Button>}
             </Box>
 
             {actionMsg && <Alert severity="info" sx={{ mb: 2 }} onClose={() => setActionMsg('')}>{actionMsg}</Alert>}
 
             <Paper sx={{ p: 3 }}>
                 <Grid container spacing={3}>
-                    <Grid item xs={12} md={6}>
+                    <Grid size={{ xs: 12, md: 6 }}>
                         <Typography variant="subtitle1" fontWeight="bold" mb={1}>User Info</Typography>
                         <InfoRow label="ID" value={user.id} />
                         <InfoRow label="First Name" value={user.firstName} />
@@ -103,14 +271,13 @@ export default function UserDetail() {
                         <InfoRow label="External" value={user.external ? 'Yes' : 'No'} />
                         <InfoRow label="Status" value={user.status} />
                     </Grid>
-                    <Grid item xs={12} md={6}>
+                    <Grid size={{ xs: 12, md: 6 }}>
                         <Typography variant="subtitle1" fontWeight="bold" mb={1}>Contact & Dates</Typography>
                         <InfoRow label="Contact Email" value={user.contactEmail} />
                         <InfoRow label="Contact Phone" value={user.contactPhone} />
                         <InfoRow label="Contact Mobile" value={user.contactMobile} />
                         <InfoRow label="Contact Position" value={user.contactPosition} />
                         <InfoRow label="Register Date" value={user.registerDate ? new Date(user.registerDate).toLocaleDateString() : null} />
-                        <InfoRow label="Activate Date" value={user.activateDate ? new Date(user.activateDate).toLocaleDateString() : null} />
                         <InfoRow label="Last Login" value={user.loginDate ? new Date(user.loginDate).toLocaleString() : null} />
                         <InfoRow label="Company ID" value={user.company?.id} />
                     </Grid>
@@ -120,11 +287,9 @@ export default function UserDetail() {
             <Dialog open={pwDialog} onClose={() => setPwDialog(false)}>
                 <DialogTitle>Change Password</DialogTitle>
                 <DialogContent>
-                    <TextField
-                        fullWidth label="New Password" type="password"
-                        value={newPassword} onChange={e => setNewPassword(e.target.value)}
-                        sx={{ mt: 1 }}
-                    />
+                    <TextField fullWidth label="New Password" type="password"
+                               value={newPassword} onChange={e => setNewPassword(e.target.value)}
+                               sx={{ mt: 1 }} />
                 </DialogContent>
                 <DialogActions>
                     <Button onClick={() => setPwDialog(false)}>Cancel</Button>
