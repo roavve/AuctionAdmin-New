@@ -633,8 +633,49 @@ export default function AuctionDetail() {
         )}
 
         {tab === 1 && (
-            <DataGrid rows={bids} columns={bidColumns} autoHeight
-                      pageSizeOptions={[10, 20, 50]} disableRowSelectionOnClick />
+            <Box>
+              {bids.length >= 2 && (() => {
+                const activeBids = bids.filter(b => b.status?.key === 'key.bid.active')
+                    .sort((a, b) => a.bidValue - b.bidValue);
+                if (activeBids.length >= 2) {
+                  const first = activeBids[0].bidValue;
+                  const second = activeBids[1].bidValue;
+                  const gap = ((second - first) / second * 100).toFixed(1);
+                  return (
+                      <Box mb={2} display="flex" gap={3} alignItems="center">
+                        <Box sx={{ p: 2, bgcolor: 'success.light', borderRadius: 1 }}>
+                          <Typography variant="body2" color="white">🥇 Best Bid</Typography>
+                          <Typography variant="h6" color="white" fontWeight="bold">
+                            {first.toLocaleString()} {auction.currency?.name}
+                          </Typography>
+                          <Typography variant="body2" color="white">
+                            {activeBids[0].user?.company?.companyName || activeBids[0].user?.email}
+                          </Typography>
+                        </Box>
+                        <Box sx={{ p: 2, bgcolor: 'info.light', borderRadius: 1 }}>
+                          <Typography variant="body2" color="white">🥈 2nd Place</Typography>
+                          <Typography variant="h6" color="white" fontWeight="bold">
+                            {second.toLocaleString()} {auction.currency?.name}
+                          </Typography>
+                          <Typography variant="body2" color="white">
+                            {activeBids[1].user?.company?.companyName || activeBids[1].user?.email}
+                          </Typography>
+                        </Box>
+                        <Box sx={{ p: 2, bgcolor: 'warning.light', borderRadius: 1 }}>
+                          <Typography variant="body2">Gap</Typography>
+                          <Typography variant="h4" fontWeight="bold" color="warning.dark">
+                            {gap}%
+                          </Typography>
+                          <Typography variant="body2">1st is ahead by</Typography>
+                        </Box>
+                      </Box>
+                  );
+                }
+                return null;
+              })()}
+              <DataGrid rows={bids} columns={bidColumns} autoHeight
+                        pageSizeOptions={[10, 20, 50]} disableRowSelectionOnClick />
+            </Box>
         )}
 
         {tab === 2 && (
