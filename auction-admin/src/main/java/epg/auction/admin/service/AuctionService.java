@@ -24,6 +24,8 @@ public class AuctionService {
     @Autowired private DictionaryItemRepository dictionaryItemRepository;
     @Autowired private SysAuditRepository sysAuditRepository;
     @Autowired private epg.auction.admin.repository.AuctionRevisionRepository auctionRevisionRepository;
+    @Autowired private SmsService smsService;
+    @Autowired private CompanyRepository companyRepository;
 
     private DictionaryItem getStatusByKey(String key) {
         return dictionaryItemRepository.findByKey(key)
@@ -322,6 +324,17 @@ public class AuctionService {
         winner.setModifyUserId(userId);
         participantRepository.save(winner);
         audit("SET_WINNER", "PARTICIPANT", participantId, userId);
+
+        // Send SMS to winner
+        try {
+            String winnerPhone = winner.getCompany().getContactMobile();
+            if (winnerPhone != null && !winnerPhone.isEmpty()) {
+                String auctionName = winner.getAuction().getName();
+                smsService.sendSms(winnerPhone, "Congratulations! Your company has won the auction: " + auctionName);
+            }
+        } catch (Exception e) {
+            System.err.println("Failed to send winner SMS: " + e.getMessage());
+        }
     }
 
     @Transactional
@@ -408,7 +421,17 @@ public class AuctionService {
             invitation.setDateSelected(new java.util.Date());
             invitation.setCreateUserId(userId);
             invitationRepository.save(invitation);
+
+            // Send SMS invitation
+            try {
+                epg.auction.admin.entity.Company comp = companyRepository.findById(companyId).orElse(null);
+                if (comp != null && comp.getContactMobile() != null) {
+                    smsService.sendSms(comp.getContactMobile(),
+                            "You have been invited to auction: " + auction.getName());
+                }
+            } catch (Exception e) {
+                System.err.println("Failed to send invitation SMS: " + e.getMessage());
+            }
         }
         audit("INVITE", "AUCTION", auctionId, userId);
-    }
-}
+    }}
