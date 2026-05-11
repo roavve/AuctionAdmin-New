@@ -26,6 +26,7 @@ public class AuctionService {
     @Autowired private epg.auction.admin.repository.AuctionRevisionRepository auctionRevisionRepository;
     @Autowired private SmsService smsService;
     @Autowired private CompanyRepository companyRepository;
+    @Autowired private EmailService emailService;
 
     private DictionaryItem getStatusByKey(String key) {
         return dictionaryItemRepository.findByKey(key)
@@ -325,6 +326,28 @@ public class AuctionService {
         participantRepository.save(winner);
         audit("SET_WINNER", "PARTICIPANT", participantId, userId);
 
+        // Send SMS and email to winner
+        try {
+            String auctionName = winner.getAuction().getName();
+            String winnerPhone = winner.getCompany().getContactMobile();
+            String winnerEmail = winner.getCompany().getContactEmail();
+
+            if (winnerPhone != null && !winnerPhone.isEmpty()) {
+                smsService.sendSms(winnerPhone,
+                        "Congratulations! Your company has won the auction: " + auctionName);
+            }
+            if (winnerEmail != null && !winnerEmail.isEmpty()) {
+                emailService.sendEmail(
+                        winnerEmail,
+                        "გილოცავთ / Congratulations",
+                        "<p>გილოცავთ! თქვენი კომპანია გაიმარჯვა აუქციონზე: <b>" + auctionName + "</b></p>" +
+                                "<p>Congratulations! Your company has won the auction: <b>" + auctionName + "</b></p>"
+                );
+            }
+        } catch (Exception e) {
+            System.err.println("Failed to send winner notifications: " + e.getMessage());
+        }
+
         // Send SMS to winner
         try {
             String winnerPhone = winner.getCompany().getContactMobile();
@@ -396,7 +419,6 @@ public class AuctionService {
         commentRepository.save(comment);
         audit("CANCEL", "COMMENT", id, userId);
     }
-
     @Transactional
     public void inviteCompanies(Integer auctionId, List<Integer> companyIds, String userId) {
         Auction auction = auctionRepository.findById(auctionId)
@@ -422,15 +444,25 @@ public class AuctionService {
             invitation.setCreateUserId(userId);
             invitationRepository.save(invitation);
 
-            // Send SMS invitation
+            // Send SMS and email invitation
             try {
                 epg.auction.admin.entity.Company comp = companyRepository.findById(companyId).orElse(null);
-                if (comp != null && comp.getContactMobile() != null) {
-                    smsService.sendSms(comp.getContactMobile(),
-                            "You have been invited to auction: " + auction.getName());
+                if (comp != null) {
+                    if (comp.getContactMobile() != null) {
+                        smsService.sendSms(comp.getContactMobile(),
+                                "You have been invited to auction: " + auction.getName());
+                    }
+                    if (comp.getContactEmail() != null) {
+                        emailService.sendEmail(
+                                comp.getContactEmail(),
+                                "მოწვევა აუქციონზე / Auction Invitation",
+                                "<p>თქვენ მოწვეული ხართ აუქციონზე: <b>" + auction.getName() + "</b></p>" +
+                                        "<p>You have been invited to auction: <b>" + auction.getName() + "</b></p>"
+                        );
+                    }
                 }
             } catch (Exception e) {
-                System.err.println("Failed to send invitation SMS: " + e.getMessage());
+                System.err.println("Failed to send invitation notifications: " + e.getMessage());
             }
         }
         audit("INVITE", "AUCTION", auctionId, userId);

@@ -14,7 +14,14 @@ public class SmsService {
     @Value("${sms.service.url}")
     private String serviceUrl;
 
+    @Value("${app.notifications.enabled:false}")
+    private boolean notificationsEnabled;
+
     public boolean sendSms(String phoneNumber, String text) {
+        if (!notificationsEnabled) {
+            System.out.println("[SMS DISABLED] Would send to: " + phoneNumber + " | Text: " + text);
+            return true;
+        }
         try {
             String url = serviceUrl
                     + "&to=" + URLEncoder.encode("995" + phoneNumber, "UTF-8")
