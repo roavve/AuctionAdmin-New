@@ -14,7 +14,7 @@ import Projects from './pages/Projects';
 import Registrations from './pages/Registrations';
 import Categories from './pages/Categories';
 import Dictionary from './pages/Dictionary';
-
+import Dashboard from './pages/Dashboard';
 const PrivateRoute = ({ children }) => {
   const { user } = useAuth();
   return user ? children : <Navigate to="/login" />;
@@ -29,7 +29,8 @@ function App() {
             <Route path="/" element={
               <PrivateRoute><Layout /></PrivateRoute>
             }>
-              <Route index element={<Navigate to="/auctions" />} />
+              <Route index element={<Dashboard />} />
+              <Route path="dashboard" element={<Dashboard />} />
               <Route path="auctions" element={<Auctions />} />
               <Route path="auctions/new" element={<AuctionDetail />} />
               <Route path="auctions/:id" element={<AuctionDetail />} />

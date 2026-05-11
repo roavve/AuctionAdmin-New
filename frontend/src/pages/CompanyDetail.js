@@ -4,7 +4,7 @@ import { companyApi } from '../api/companies';
 import {
     Box, Typography, Button, Chip, Paper, Grid,
     CircularProgress, Alert, TextField, MenuItem,
-    Select, FormControl, InputLabel
+    Select, FormControl, InputLabel, Tabs, Tab
 } from '@mui/material';
 import { DataGrid } from '@mui/x-data-grid';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
@@ -17,7 +17,7 @@ const EMPTY_FORM = {
     vatPayer: false,
     contactEmail: '', contactPhone: '', contactMobile: '',
     contactName: '', contactSurname: '', contactPosition: '',
-    type: null, category: null, subCategory: null,
+    type: null, category: null,
 };
 
 function InfoRow({ label, value }) {
@@ -74,7 +74,6 @@ function CompanyForm({ initial, categories, companyTypes, onSave, onCancel, savi
                     <TextField fullWidth label="Business Description" value={form.businessDesc || ''}
                                onChange={e => set('businessDesc', e.target.value)} multiline rows={2} />
                 </Grid>
-
                 <Grid size={{ xs: 12 }}>
                     <Typography variant="subtitle1" fontWeight="bold" mt={1}>Contact</Typography>
                 </Grid>
@@ -102,7 +101,6 @@ function CompanyForm({ initial, categories, companyTypes, onSave, onCancel, savi
                     <TextField fullWidth label="Mobile" value={form.contactMobile || ''}
                                onChange={e => set('contactMobile', e.target.value)} />
                 </Grid>
-
                 <Grid size={{ xs: 12 }}>
                     <Typography variant="subtitle1" fontWeight="bold" mt={1}>Address & Banking</Typography>
                 </Grid>
@@ -130,7 +128,6 @@ function CompanyForm({ initial, categories, companyTypes, onSave, onCancel, savi
                     <TextField fullWidth label="Note" value={form.note || ''}
                                onChange={e => set('note', e.target.value)} multiline rows={2} />
                 </Grid>
-
                 <Grid size={{ xs: 12 }}>
                     <Box display="flex" gap={2} mt={2}>
                         <Button variant="contained" startIcon={<SaveIcon />}
@@ -152,6 +149,8 @@ export default function CompanyDetail() {
 
     const [company, setCompany] = useState(null);
     const [users, setUsers] = useState([]);
+    const [files, setFiles] = useState([]);
+    const [tab, setTab] = useState(0);
     const [loading, setLoading] = useState(!isNew);
     const [error, setError] = useState('');
     const [actionMsg, setActionMsg] = useState('');
@@ -160,18 +159,20 @@ export default function CompanyDetail() {
     const [saveError, setSaveError] = useState('');
     const [categories, setCategories] = useState([]);
     const [companyTypes, setCompanyTypes] = useState([]);
+    const [uploadingFile, setUploadingFile] = useState(false);
+    const [fileDescription, setFileDescription] = useState('');
 
     const token = localStorage.getItem('token');
     const headers = { Authorization: `Bearer ${token}` };
 
     const loadDropdowns = async () => {
         try {
-            const [catRes, typeRes] = await Promise.all([
-                fetch('http://localhost:8080/api/categories/parents', { headers }).then(r => r.json()),
+            const [catRes, dictRes] = await Promise.all([
+                fetch('http://localhost:8080/api/categories', { headers }).then(r => r.json()),
                 fetch('http://localhost:8080/api/dictionary/items', { headers }).then(r => r.json()),
             ]);
             setCategories(catRes);
-            setCompanyTypes(typeRes.filter(d => d.key?.startsWith('key.companyType')));
+            setCompanyTypes(dictRes.filter(d => d.key?.startsWith('key.companyType')));
         } catch {}
     };
 
@@ -192,10 +193,21 @@ export default function CompanyDetail() {
         }
     };
 
+    const loadFiles = async () => {
+        try {
+            const res = await fetch(`http://localhost:8080/api/companies/${id}/files`, { headers });
+            setFiles(await res.json());
+        } catch {}
+    };
+
     useEffect(() => {
         if (isNew) loadDropdowns();
         else load();
     }, []);
+
+    useEffect(() => {
+        if (!isNew && tab === 2) loadFiles();
+    }, [tab]);
 
     const handleSave = async (form) => {
         setSaving(true);
@@ -227,6 +239,44 @@ export default function CompanyDetail() {
         }
     };
 
+    const downloadFile = async (url, fileName) => {
+        try {
+            const res = await fetch(url, { headers });
+            const blob = await res.blob();
+            const blobUrl = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = blobUrl;
+            a.download = fileName || 'download';
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            window.URL.revokeObjectURL(blobUrl);
+        } catch {
+            setActionMsg('Download failed');
+        }
+    };
+
+    const handleFileUpload = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        setUploadingFile(true);
+        try {
+            const formData = new FormData();
+            formData.append('file', file);
+            if (fileDescription) formData.append('description', fileDescription);
+            await fetch(`http://localhost:8080/api/companies/${id}/files`, {
+                method: 'POST', headers, body: formData
+            });
+            setActionMsg(`File "${file.name}" uploaded successfully`);
+            loadFiles();
+        } catch {
+            setActionMsg('Upload failed');
+        } finally {
+            setUploadingFile(false);
+            e.target.value = '';
+        }
+    };
+
     const userColumns = [
         { field: 'id', headerName: 'ID', width: 70 },
         { field: 'firstName', headerName: 'First Name', width: 130 },
@@ -235,7 +285,36 @@ export default function CompanyDetail() {
         { field: 'role', headerName: 'Role', width: 130 },
         { field: 'active', headerName: 'Active', width: 90,
             renderCell: p => <Chip label={p.value ? 'Active' : 'Inactive'}
-                                   color={p.value ? 'success' : 'default'} size="small" /> }
+                                   color={p.value ? 'success' : 'default'} size="small" /> },
+        { field: 'actions', headerName: '', width: 90,
+            renderCell: p => (
+                <Button size="small" onClick={() => navigate(`/users/${p.row.id}`)}>View</Button>
+            )}
+    ];
+
+    const fileColumns = [
+        { field: 'id', headerName: 'ID', width: 70 },
+        { field: 'fileName', headerName: 'File Name', flex: 1 },
+        { field: 'fileDescription', headerName: 'Description', width: 200 },
+        { field: 'fileSize', headerName: 'Size (bytes)', width: 120 },
+        { field: 'fileDate', headerName: 'Date', width: 160,
+            renderCell: p => p.value ? new Date(p.value).toLocaleString() : '-' },
+        { field: 'fileUser', headerName: 'Uploaded By', width: 150 },
+        { field: 'actions', headerName: '', width: 160, sortable: false,
+            renderCell: p => (
+                <Box display="flex" gap={0.5}>
+                    <Button size="small"
+                            onClick={() => downloadFile(`http://localhost:8080/api/companies/files/${p.row.id}/download`, p.row.fileName)}>
+                        Download
+                    </Button>
+                    <Button size="small" color="error"
+                            onClick={() => fetch(`http://localhost:8080/api/companies/files/${p.row.id}`, {
+                                method: 'DELETE', headers
+                            }).then(() => loadFiles())}>
+                        Delete
+                    </Button>
+                </Box>
+            )}
     ];
 
     if (isNew) {
@@ -246,14 +325,9 @@ export default function CompanyDetail() {
                     <Typography variant="h5">New Company</Typography>
                 </Box>
                 {categories.length > 0 || companyTypes.length > 0 ? (
-                    <CompanyForm
-                        categories={categories}
-                        companyTypes={companyTypes}
-                        onSave={handleSave}
-                        onCancel={() => navigate('/companies')}
-                        saving={saving}
-                        saveError={saveError}
-                    />
+                    <CompanyForm categories={categories} companyTypes={companyTypes}
+                                 onSave={handleSave} onCancel={() => navigate('/companies')}
+                                 saving={saving} saveError={saveError} />
                 ) : (
                     <Box display="flex" justifyContent="center" mt={4}><CircularProgress /></Box>
                 )}
@@ -271,15 +345,9 @@ export default function CompanyDetail() {
                     <Button startIcon={<ArrowBackIcon />} onClick={() => setEditing(false)}>Back</Button>
                     <Typography variant="h5">Edit: {company?.companyName}</Typography>
                 </Box>
-                <CompanyForm
-                    initial={company}
-                    categories={categories}
-                    companyTypes={companyTypes}
-                    onSave={handleSave}
-                    onCancel={() => setEditing(false)}
-                    saving={saving}
-                    saveError={saveError}
-                />
+                <CompanyForm initial={company} categories={categories} companyTypes={companyTypes}
+                             onSave={handleSave} onCancel={() => setEditing(false)}
+                             saving={saving} saveError={saveError} />
             </Box>
         );
     }
@@ -298,44 +366,67 @@ export default function CompanyDetail() {
 
             {actionMsg && <Alert severity="info" sx={{ mb: 2 }} onClose={() => setActionMsg('')}>{actionMsg}</Alert>}
 
-            {company && (
-                <>
-                    <Paper sx={{ p: 3, mb: 3 }}>
-                        <Grid container spacing={3}>
-                            <Grid size={{ xs: 12, md: 6 }}>
-                                <Typography variant="subtitle1" fontWeight="bold" mb={1}>Company Info</Typography>
-                                <InfoRow label="ID" value={company.id} />
-                                <InfoRow label="Company Name" value={company.companyName} />
-                                <InfoRow label="Tax ID" value={company.taxId} />
-                                <InfoRow label="Type" value={company.type?.name} />
-                                <InfoRow label="Status" value={company.status?.name} />
-                                <InfoRow label="Category" value={company.category?.name} />
-                                <InfoRow label="VAT Payer" value={company.vatPayer ? 'Yes' : 'No'} />
-                                <InfoRow label="Website" value={company.webSite} />
-                            </Grid>
-                            <Grid size={{ xs: 12, md: 6 }}>
-                                <Typography variant="subtitle1" fontWeight="bold" mb={1}>Contact</Typography>
-                                <InfoRow label="Contact Name" value={company.contactName} />
-                                <InfoRow label="Contact Surname" value={company.contactSurname} />
-                                <InfoRow label="Contact Position" value={company.contactPosition} />
-                                <InfoRow label="Email" value={company.contactEmail} />
-                                <InfoRow label="Phone" value={company.contactPhone} />
-                                <InfoRow label="Mobile" value={company.contactMobile} />
-                            </Grid>
-                            <Grid size={{ xs: 12, md: 6 }}>
-                                <Typography variant="subtitle1" fontWeight="bold" mb={1}>Address & Banking</Typography>
-                                <InfoRow label="Physical Address" value={company.phisAddress} />
-                                <InfoRow label="Legal Address" value={company.legalAddress} />
-                                <InfoRow label="Bank Code" value={company.bankCode1} />
-                                <InfoRow label="Bank Account" value={company.bankAccount1} />
-                            </Grid>
-                        </Grid>
-                    </Paper>
+            <Tabs value={tab} onChange={(_, v) => setTab(v)} sx={{ mb: 2 }}>
+                <Tab label="Details" />
+                <Tab label="Users" />
+                <Tab label="Files" />
+            </Tabs>
 
-                    <Typography variant="h6" mb={1}>Users</Typography>
-                    <DataGrid rows={users} columns={userColumns} autoHeight
+            {tab === 0 && company && (
+                <Paper sx={{ p: 3 }}>
+                    <Grid container spacing={3}>
+                        <Grid size={{ xs: 12, md: 6 }}>
+                            <Typography variant="subtitle1" fontWeight="bold" mb={1}>Company Info</Typography>
+                            <InfoRow label="ID" value={company.id} />
+                            <InfoRow label="Company Name" value={company.companyName} />
+                            <InfoRow label="Tax ID" value={company.taxId} />
+                            <InfoRow label="Type" value={company.type?.name} />
+                            <InfoRow label="Status" value={company.status?.name} />
+                            <InfoRow label="Category" value={company.category?.name} />
+                            <InfoRow label="VAT Payer" value={company.vatPayer ? 'Yes' : 'No'} />
+                            <InfoRow label="Website" value={company.webSite} />
+                            <InfoRow label="Business Desc" value={company.businessDesc} />
+                            <InfoRow label="Note" value={company.note} />
+                        </Grid>
+                        <Grid size={{ xs: 12, md: 6 }}>
+                            <Typography variant="subtitle1" fontWeight="bold" mb={1}>Contact</Typography>
+                            <InfoRow label="Contact Name" value={company.contactName} />
+                            <InfoRow label="Contact Surname" value={company.contactSurname} />
+                            <InfoRow label="Contact Position" value={company.contactPosition} />
+                            <InfoRow label="Email" value={company.contactEmail} />
+                            <InfoRow label="Phone" value={company.contactPhone} />
+                            <InfoRow label="Mobile" value={company.contactMobile} />
+                            <Typography variant="subtitle1" fontWeight="bold" mb={1} mt={2}>Address & Banking</Typography>
+                            <InfoRow label="Physical Address" value={company.phisAddress} />
+                            <InfoRow label="Legal Address" value={company.legalAddress} />
+                            <InfoRow label="Bank Code" value={company.bankCode1} />
+                            <InfoRow label="Bank Account" value={company.bankAccount1} />
+                        </Grid>
+                    </Grid>
+                </Paper>
+            )}
+
+            {tab === 1 && (
+                <DataGrid rows={users} columns={userColumns} autoHeight
+                          pageSizeOptions={[10, 20]} disableRowSelectionOnClick />
+            )}
+
+            {tab === 2 && (
+                <Box>
+                    <Box mb={2} display="flex" gap={2} alignItems="center" flexWrap="wrap">
+                        <Typography variant="subtitle1">Company Files</Typography>
+                        <TextField size="small" label="Description (optional)"
+                                   value={fileDescription}
+                                   onChange={e => setFileDescription(e.target.value)}
+                                   sx={{ width: 250 }} />
+                        <Button variant="contained" component="label" disabled={uploadingFile}>
+                            {uploadingFile ? 'Uploading...' : 'Upload File'}
+                            <input type="file" hidden onChange={handleFileUpload} />
+                        </Button>
+                    </Box>
+                    <DataGrid rows={files} columns={fileColumns} autoHeight
                               pageSizeOptions={[10, 20]} disableRowSelectionOnClick />
-                </>
+                </Box>
             )}
         </Box>
     );

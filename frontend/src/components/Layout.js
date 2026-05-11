@@ -16,10 +16,11 @@ import MonitorIcon from '@mui/icons-material/Monitor';
 import ExpandLess from '@mui/icons-material/ExpandLess';
 import ExpandMore from '@mui/icons-material/ExpandMore';
 import AppRegistrationIcon from '@mui/icons-material/AppRegistration';
-
+import DashboardIcon from '@mui/icons-material/Dashboard';
 const DRAWER_WIDTH = 240;
 
 const menuItems = [
+    { text: 'Dashboard', icon: <DashboardIcon />, path: '/dashboard' },
     { label: 'Auctions', icon: <GavelIcon />, path: '/auctions' },
     { label: 'Monitor', icon: <MonitorIcon />, path: '/monitor' },
     { label: 'Companies', icon: <BusinessIcon />, path: '/companies' },
