@@ -120,6 +120,11 @@ export default function Auctions() {
             field: 'auctionStartDate', headerName: 'Start Date', width: 120,
             renderCell: (params) => params.value ? new Date(params.value).toLocaleDateString() : '-'
         },
+
+        { field: 'allParticipants', headerName: 'All Participants', width: 130,
+            renderCell: p => p.value ?? 0 },
+        { field: 'activeParticipants', headerName: 'Active Participants', width: 140,
+            renderCell: p => p.value ?? 0 },
         {
             field: 'actions', headerName: '', width: 100, sortable: false,
             renderCell: (params) => (

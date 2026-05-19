@@ -3,7 +3,7 @@ import client from './client';
 export const auctionApi = {
     getAll: () => client.get('/api/auctions'),
     getById: (id) => client.get(`/api/auctions/${id}`),
-    search: (params) => client.get('/api/auctions/search', { params }),
+    search: (params) => client.get('/api/auctions', { params }),
     create: (data) => client.post('/api/auctions', data),
     update: (id, data) => client.put(`/api/auctions/${id}`, data),
     activate: (id) => client.post(`/api/auctions/${id}/activate`),
@@ -20,8 +20,9 @@ export const auctionApi = {
     cancelInvitation: (invId) => client.post(`/api/auctions/invitations/${invId}/cancel`),
     closeInvitation: (invId) => client.post(`/api/auctions/invitations/${invId}/close`),
     getParticipants: (id) => client.get(`/api/auctions/${id}/participants`),
-    setWinner: (participantId) => client.post(`/api/auctions/participants/${participantId}/win`),
+    setWinner: (participantId) => client.post(`/api/auctions/participants/${participantId}/winner`),
     getComments: (id) => client.get(`/api/auctions/${id}/comments`),
     approveComment: (commentId) => client.post(`/api/auctions/comments/${commentId}/approve`),
     cancelComment: (commentId) => client.post(`/api/auctions/comments/${commentId}/cancel`),
+    answerComment: (commentId, text) => client.post(`/api/auctions/comments/${commentId}/answer`, { text }),
 };

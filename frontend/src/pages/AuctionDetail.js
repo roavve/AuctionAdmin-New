@@ -524,14 +524,32 @@ export default function AuctionDetail() {
       renderCell: p => p.value ? new Date(p.value).toLocaleString() : '-' },
     { field: 'status', headerName: 'Status', width: 120,
       renderCell: p => <Chip label={p.value?.name || ''} size="small" /> },
-    { field: 'actions', headerName: '', width: 160,
+    { field: 'actions', headerName: '', width: 240,
       renderCell: p => (
-          <Box>
+          <Box display="flex" gap={0.5}>
             {p.row.status?.key === 'key.coment.new' &&
                 <Button size="small" color="success"
-                        onClick={() => auctionApi.approveComment(p.row.id).then(() => loadTab(4))}>Approve</Button>}
+                        onClick={() => auctionApi.approveComment(p.row.id).then(() => loadTab(4))}>
+                  Approve
+                </Button>}
+            {p.row.status?.key === 'key.coment.new' &&
+                <Button size="small" color="primary"
+                        onClick={() => {
+                          const text = window.prompt('Enter reply:');
+                          if (text) {
+                            fetch(`http://localhost:8080/api/auctions/comments/${p.row.id}/answer`, {
+                              method: 'POST',
+                              headers: { 'Content-Type': 'application/json', ...headers },
+                              body: JSON.stringify({ text })
+                            }).then(() => loadTab(4));
+                          }
+                        }}>
+                  Answer
+                </Button>}
             <Button size="small" color="error"
-                    onClick={() => auctionApi.cancelComment(p.row.id).then(() => loadTab(4))}>Cancel</Button>
+                    onClick={() => auctionApi.cancelComment(p.row.id).then(() => loadTab(4))}>
+              Cancel
+            </Button>
           </Box>
       )}
   ];

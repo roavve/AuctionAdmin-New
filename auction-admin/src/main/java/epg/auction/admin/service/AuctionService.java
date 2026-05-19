@@ -55,7 +55,30 @@ public class AuctionService {
 
     @Transactional
     public Auction save(Auction auction) { return auctionRepository.save(auction); }
+    @Transactional
+    public void answerComment(Integer commentId, String text, String userId) {
+        AuctionComment original = commentRepository.findById(commentId)
+                .orElseThrow(() -> new RuntimeException("Comment not found"));
 
+        // Approve the original comment
+        original.setStatus(getStatusByKey("key.coment.approved"));
+        original.setModifyUserId(userId);
+        commentRepository.save(original);
+
+        // Create reply comment
+        AuctionComment reply = new AuctionComment();
+        reply.setRecordKey(UUID.randomUUID().toString());
+        reply.setAuction(original.getAuction());
+        reply.setCommText(text);
+        reply.setStatus(getStatusByKey("key.coment.approved"));
+        reply.setCommCreated(new Date());
+        reply.setAdmin(true);
+        reply.setAnswerToKey(original.getRecordKey());
+        reply.setCreateUserId(userId);
+        commentRepository.save(reply);
+
+        audit("ANSWER", "COMMENT", commentId, userId);
+    }
     @Transactional
     public Auction createAuction(Auction auction, String userId) {
         auction.setRecordKey(java.util.UUID.randomUUID().toString());

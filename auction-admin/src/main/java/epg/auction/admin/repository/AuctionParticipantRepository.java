@@ -14,6 +14,9 @@ public interface AuctionParticipantRepository extends JpaRepository<AuctionParti
     @Query("SELECT p FROM AuctionParticipant p WHERE p.auction.id = :auctionId")
     List<AuctionParticipant> findByAuctionId(@Param("auctionId") Integer auctionId);
 
-    @Query("SELECT p FROM AuctionParticipant p WHERE p.auction.id = :auctionId AND p.winner = false")
-    List<AuctionParticipant> findFailedByAuctionId(@Param("auctionId") Integer auctionId);
+    @Query("SELECT COUNT(p) FROM AuctionParticipant p WHERE p.auction.id = :auctionId")
+    Long countByAuctionId(@Param("auctionId") Integer auctionId);
+
+    @Query("SELECT COUNT(p) FROM AuctionParticipant p WHERE p.auction.id = :auctionId AND (p.winner = false OR p.winner IS NULL)")
+    Long countActiveByAuctionId(@Param("auctionId") Integer auctionId);
 }

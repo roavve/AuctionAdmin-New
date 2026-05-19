@@ -61,7 +61,7 @@ export default function Dashboard() {
         const load = async () => {
             try {
                 const [auctionsRes, companiesRes, usersRes, projectsRes, registrationsRes] = await Promise.all([
-                    fetch('http://localhost:8080/api/auctions/search?size=100', { headers }).then(r => r.json()),
+                    fetch('http://localhost:8080/api/auctions?size=100', { headers }).then(r => r.json()),
                     fetch('http://localhost:8080/api/companies', { headers }).then(r => r.json()),
                     fetch('http://localhost:8080/api/users?size=100', { headers }).then(r => r.json()),
                     fetch('http://localhost:8080/api/projects', { headers }).then(r => r.json()),

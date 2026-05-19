@@ -142,7 +142,16 @@ public class Auction extends MainEntity implements Serializable {
 
     @Column(name = "AUCTION_LAST_OFFER")
     private Double lastOffer;
+    @Transient
+    private Long allParticipants;
 
+    @Transient
+    private Long activeParticipants;
+
+    public Long getAllParticipants() { return allParticipants; }
+    public void setAllParticipants(Long allParticipants) { this.allParticipants = allParticipants; }
+    public Long getActiveParticipants() { return activeParticipants; }
+    public void setActiveParticipants(Long activeParticipants) { this.activeParticipants = activeParticipants; }
     public Integer getId() { return id; }
     public void setId(Integer id) { this.id = id; }
     public String getRecordKey() { return recordKey; }
