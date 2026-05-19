@@ -4,7 +4,7 @@ import { companyApi } from '../api/companies';
 import {
     Box, Button, Typography, Chip, Alert, Paper,
     TextField, MenuItem, Select, FormControl, InputLabel,
-    Grid, IconButton, Collapse
+    Grid, IconButton, Collapse, Tabs, Tab
 } from '@mui/material';
 import { DataGrid } from '@mui/x-data-grid';
 import AddIcon from '@mui/icons-material/Add';
@@ -15,11 +15,11 @@ import FilterListIcon from '@mui/icons-material/FilterList';
 const EMPTY_FILTERS = {
     name: '',
     taxId: '',
-    statusId: '',
     categoryId: '',
 };
 
 export default function Companies() {
+    const [tab, setTab] = useState(0);
     const [rows, setRows] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
@@ -29,36 +29,43 @@ export default function Companies() {
     const [filters, setFilters] = useState(EMPTY_FILTERS);
     const [appliedFilters, setAppliedFilters] = useState(EMPTY_FILTERS);
     const [showFilters, setShowFilters] = useState(false);
-    const [statuses, setStatuses] = useState([]);
     const [categories, setCategories] = useState([]);
     const navigate = useNavigate();
 
     const token = localStorage.getItem('token');
     const headers = { Authorization: `Bearer ${token}` };
 
-    const loadDropdowns = async () => {
+    const statusKeys = {
+        0: ['key.companyStatus.created', 'key.companyStatus.invited',
+            'key.companyStatus.received', 'key.companyStatus.registered'],
+        1: ['key.companyStatus.active'],
+        2: ['key.companyStatus.cancelled', 'key.companyStatus.rejected']
+    };
+
+    const loadCategories = async () => {
         try {
-            const [dictRes, catRes] = await Promise.all([
-                fetch('http://localhost:8080/api/dictionary/items', { headers }).then(r => r.json()),
-                fetch('http://localhost:8080/api/categories', { headers }).then(r => r.json()),
-            ]);
-            setStatuses(dictRes.filter(d => d.key?.startsWith('key.companyStatus')));
-            setCategories(catRes);
+            const res = await fetch('http://localhost:8080/api/categories', { headers });
+            setCategories(await res.json());
         } catch {}
     };
 
-    const loadCompanies = async (currentPage, currentSize, currentFilters) => {
+    const loadCompanies = async (currentPage, currentSize, currentFilters, currentTab) => {
         setLoading(true);
         try {
             const res = await companyApi.getAll();
             let data = res.data;
 
+            // filter by tab status
+            const allowedKeys = statusKeys[currentTab];
+            data = data.filter(c => allowedKeys.includes(c.status?.key));
+
+            // apply search filters
             if (currentFilters.name)
-                data = data.filter(c => c.companyName?.toLowerCase().includes(currentFilters.name.toLowerCase()));
+                data = data.filter(c => c.companyName?.toLowerCase()
+                    .includes(currentFilters.name.toLowerCase()));
             if (currentFilters.taxId)
-                data = data.filter(c => c.taxId?.toLowerCase().includes(currentFilters.taxId.toLowerCase()));
-            if (currentFilters.statusId)
-                data = data.filter(c => c.status?.id === Number(currentFilters.statusId));
+                data = data.filter(c => c.taxId?.toLowerCase()
+                    .includes(currentFilters.taxId.toLowerCase()));
             if (currentFilters.categoryId)
                 data = data.filter(c => c.category?.id === Number(currentFilters.categoryId));
 
@@ -72,11 +79,23 @@ export default function Companies() {
         }
     };
 
-    useEffect(() => { loadDropdowns(); }, []);
-    useEffect(() => { loadCompanies(page, pageSize, appliedFilters); }, [page, pageSize, appliedFilters]);
+    useEffect(() => { loadCategories(); }, []);
+
+    useEffect(() => {
+        loadCompanies(page, pageSize, appliedFilters, tab);
+    }, [page, pageSize, appliedFilters, tab]);
+
+    const handleTabChange = (_, newTab) => {
+        setTab(newTab);
+        setPage(0);
+    };
 
     const handleSearch = () => { setPage(0); setAppliedFilters({ ...filters }); };
-    const handleClear = () => { setFilters(EMPTY_FILTERS); setAppliedFilters(EMPTY_FILTERS); setPage(0); };
+    const handleClear = () => {
+        setFilters(EMPTY_FILTERS);
+        setAppliedFilters(EMPTY_FILTERS);
+        setPage(0);
+    };
 
     const activeFilterCount = Object.values(appliedFilters).filter(v => v !== '').length;
 
@@ -84,12 +103,16 @@ export default function Companies() {
         { field: 'id', headerName: 'ID', width: 70 },
         { field: 'companyName', headerName: 'Company Name', flex: 1 },
         { field: 'taxId', headerName: 'Tax ID', width: 130 },
+        { field: 'type', headerName: 'Type', width: 130,
+            renderCell: p => p.value?.name || '-' },
         { field: 'status', headerName: 'Status', width: 130,
             renderCell: p => <Chip label={p.value?.name || ''} size="small" /> },
         { field: 'category', headerName: 'Category', width: 150,
             renderCell: p => p.value?.name || '-' },
         { field: 'contactEmail', headerName: 'Email', width: 200 },
         { field: 'contactPhone', headerName: 'Phone', width: 130 },
+        { field: 'flowDateCreated', headerName: 'Date Created', width: 130,
+            renderCell: p => p.value ? new Date(p.value).toLocaleDateString() : '-' },
         { field: 'actions', headerName: '', width: 90, sortable: false,
             renderCell: p => (
                 <Button size="small" onClick={() => navigate(`/companies/${p.row.id}`)}>View</Button>
@@ -113,6 +136,12 @@ export default function Companies() {
                 </Box>
             </Box>
 
+            <Tabs value={tab} onChange={handleTabChange} sx={{ mb: 2 }}>
+                <Tab label="New Companies" />
+                <Tab label="Active Companies" />
+                <Tab label="Cancelled Companies" />
+            </Tabs>
+
             <Collapse in={showFilters}>
                 <Paper sx={{ p: 2, mb: 2 }}>
                     <Grid container spacing={2} alignItems="center">
@@ -130,18 +159,6 @@ export default function Companies() {
                         </Grid>
                         <Grid size={{ xs: 12, md: 3 }}>
                             <FormControl fullWidth size="small">
-                                <InputLabel>Status</InputLabel>
-                                <Select value={filters.statusId} label="Status"
-                                        onChange={e => setFilters(f => ({ ...f, statusId: e.target.value }))}>
-                                    <MenuItem value="">All Statuses</MenuItem>
-                                    {statuses.map(s => (
-                                        <MenuItem key={s.id} value={s.id}>{s.name}</MenuItem>
-                                    ))}
-                                </Select>
-                            </FormControl>
-                        </Grid>
-                        <Grid size={{ xs: 12, md: 2 }}>
-                            <FormControl fullWidth size="small">
                                 <InputLabel>Category</InputLabel>
                                 <Select value={filters.categoryId} label="Category"
                                         onChange={e => setFilters(f => ({ ...f, categoryId: e.target.value }))}>
@@ -152,7 +169,7 @@ export default function Companies() {
                                 </Select>
                             </FormControl>
                         </Grid>
-                        <Grid size={{ xs: 12, md: 2 }}>
+                        <Grid size={{ xs: 12, md: 4 }}>
                             <Box display="flex" gap={1}>
                                 <Button variant="contained" startIcon={<SearchIcon />}
                                         onClick={handleSearch} fullWidth>
