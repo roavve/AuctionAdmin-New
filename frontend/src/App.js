@@ -18,7 +18,7 @@ import Dashboard from './pages/Dashboard';
 import AuditLog from './pages/AuditLog';
 import Notifications from './pages/Notifications';
 import TextTemplates from './pages/TextTemplates';
-
+import Comments from './pages/Comments';
 
 const PrivateRoute = ({ children }) => {
   const { user } = useAuth();
@@ -52,6 +52,7 @@ function App() {
               <Route path="audit" element={<AuditLog />} />
               <Route path="notifications" element={<Notifications />} />
               <Route path="templates" element={<TextTemplates />} />
+              <Route path="comments" element={<Comments />} />
             </Route>
           </Routes>
         </BrowserRouter>

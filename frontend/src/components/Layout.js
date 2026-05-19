@@ -18,13 +18,14 @@ import DashboardIcon from '@mui/icons-material/Dashboard';
 import HistoryIcon from '@mui/icons-material/History';
 import NotificationsIcon from '@mui/icons-material/Notifications';
 import ArticleIcon from '@mui/icons-material/Article';
-
+import CommentIcon from '@mui/icons-material/Comment';
 
 const DRAWER_WIDTH = 240;
 
 const menuItems = [
     { text: 'Dashboard', icon: <DashboardIcon />, path: '/dashboard' },
     { label: 'Auctions', icon: <GavelIcon />, path: '/auctions' },
+    { label: 'Comments', icon: <CommentIcon />, path: '/comments' },
     { label: 'Monitor', icon: <MonitorIcon />, path: '/monitor' },
     { label: 'Companies', icon: <BusinessIcon />, path: '/companies' },
     { label: 'Users', icon: <PeopleIcon />, path: '/users' },

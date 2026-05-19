@@ -60,17 +60,17 @@ public class AuctionService {
         AuctionComment original = commentRepository.findById(commentId)
                 .orElseThrow(() -> new RuntimeException("Comment not found"));
 
-        // Approve the original comment
-        original.setStatus(getStatusByKey("key.coment.approved"));
+        // Mark original as answered (not approved)
+        original.setStatus(getStatusByKey("key.coment.answered"));
         original.setModifyUserId(userId);
         commentRepository.save(original);
 
-        // Create reply comment
+        // Create reply comment as approved
         AuctionComment reply = new AuctionComment();
         reply.setRecordKey(UUID.randomUUID().toString());
         reply.setAuction(original.getAuction());
         reply.setCommText(text);
-        reply.setStatus(getStatusByKey("key.coment.approved"));
+        reply.setStatus(getStatusByKey("key.coment.answered"));
         reply.setCommCreated(new Date());
         reply.setAdmin(true);
         reply.setAnswerToKey(original.getRecordKey());

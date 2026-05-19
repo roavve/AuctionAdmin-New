@@ -208,7 +208,33 @@ public class AuctionController {
     public ResponseEntity<List<AuctionParticipant>> getParticipants(@PathVariable Integer id) {
         return ResponseEntity.ok(auctionService.getParticipantsByAuction(id));
     }
+    @GetMapping("/comments/new")
+    public Page<epg.auction.admin.entity.AuctionComment> getNewComments(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+        return auctionService.getNewComments(page, size);
+    }
 
+    @GetMapping("/comments/answered")
+    public Page<epg.auction.admin.entity.AuctionComment> getAnsweredComments(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+        return auctionService.getAnsweredComments(page, size);
+    }
+
+    @GetMapping("/comments/approved")
+    public Page<epg.auction.admin.entity.AuctionComment> getApprovedComments(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+        return auctionService.getApprovedComments(page, size);
+    }
+
+    @GetMapping("/comments/cancelled")
+    public Page<epg.auction.admin.entity.AuctionComment> getCancelledComments(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+        return auctionService.getCancelledComments(page, size);
+    }
     @PostMapping("/participants/{partId}/winner")
     public ResponseEntity<?> setWinner(@PathVariable Integer partId, Authentication auth) {
         try {
