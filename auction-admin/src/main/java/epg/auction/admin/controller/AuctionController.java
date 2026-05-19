@@ -189,6 +189,19 @@ public class AuctionController {
         }
     }
 
+    @PostMapping("/project/{projectId}/invite-companies")
+    public ResponseEntity<?> inviteCompaniesToProject(
+            @PathVariable Integer projectId,
+            @RequestBody Map<String, List<Integer>> body,
+            Authentication auth) {
+        try {
+            List<Integer> companyIds = body.get("companyIds");
+            int count = auctionService.inviteCompaniesToProject(projectId, companyIds, auth.getName());
+            return ResponseEntity.ok(Map.of("success", true, "count", count));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
     // =================== PARTICIPANTS ===================
 
     @GetMapping("/{id}/participants")

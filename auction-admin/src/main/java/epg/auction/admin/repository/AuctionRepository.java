@@ -21,7 +21,8 @@ public interface AuctionRepository extends JpaRepository<Auction, Integer> {
 
     @Query("SELECT a FROM Auction a WHERE a.status.key = 'key.auctionStatus.completed' ORDER BY a.createDate DESC")
     Page<Auction> findClosedAuctions(Pageable pageable);
-
+    @Query("SELECT a FROM Auction a WHERE a.project.id = :projectId AND a.status.key = 'key.auctionStatus.active'")
+    List<Auction> findActiveAuctionsByProject(@Param("projectId") Integer projectId);
     @Query("SELECT a FROM Auction a WHERE a.status.key = 'key.auctionStatus.cancelled' ORDER BY a.createDate DESC")
     Page<Auction> findCancelledAuctions(Pageable pageable);
 

@@ -489,4 +489,52 @@ public class AuctionService {
             }
         }
         audit("INVITE", "AUCTION", auctionId, userId);
+    }
+    @Transactional
+    public int inviteCompaniesToProject(Integer projectId, List<Integer> companyIds, String userId) {
+        List<Auction> activeAuctions = auctionRepository.findActiveAuctionsByProject(projectId);
+        DictionaryItem invitedStatus = getStatusByKey("key.auctionInvitation.invited");
+        int count = 0;
+
+        for (Auction auction : activeAuctions) {
+            for (Integer companyId : companyIds) {
+                Long existing = invitationRepository.countActiveInvitation(auction.getId(), companyId);
+                if (existing > 0) continue;
+
+                AuctionInvitation invitation = new AuctionInvitation();
+                invitation.setRecordKey(java.util.UUID.randomUUID().toString());
+                invitation.setAuction(auction);
+
+                epg.auction.admin.entity.Company company = new epg.auction.admin.entity.Company();
+                company.setId(companyId);
+                invitation.setCompany(company);
+
+                invitation.setStatus(invitedStatus);
+                invitation.setDateInvited(new java.util.Date());
+                invitation.setDateSelected(new java.util.Date());
+                invitation.setCreateUserId(userId);
+                invitationRepository.save(invitation);
+                count++;
+
+                // Send SMS and email
+                try {
+                    epg.auction.admin.entity.Company comp = companyRepository.findById(companyId).orElse(null);
+                    if (comp != null) {
+                        if (comp.getContactMobile() != null) {
+                            smsService.sendSms(comp.getContactMobile(),
+                                    "You have been invited to project auctions: " + auction.getName());
+                        }
+                        if (comp.getContactEmail() != null) {
+                            emailService.sendEmail(comp.getContactEmail(),
+                                    "მოწვევა პროექტის აუქციონზე / Project Auction Invitation",
+                                    "<p>You have been invited to auction: <b>" + auction.getName() + "</b></p>");
+                        }
+                    }
+                } catch (Exception e) {
+                    System.err.println("Failed to send notification: " + e.getMessage());
+                }
+            }
+        }
+        audit("INVITE_PROJECT", "PROJECT", projectId, userId);
+        return count;
     }}

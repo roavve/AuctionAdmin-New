@@ -2,14 +2,15 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { projectApi } from '../api/projects';
 import {
-    Box, Typography, Button, Chip, Alert, Paper,
-    Dialog, DialogTitle, DialogContent, DialogActions,
+    Box, Button, Chip, Alert, Paper,
     TextField, Grid
 } from '@mui/material';
 import { DataGrid } from '@mui/x-data-grid';
 import AddIcon from '@mui/icons-material/Add';
 import SaveIcon from '@mui/icons-material/Save';
-
+import { Dialog, DialogTitle, DialogContent, DialogActions,
+    List, ListItem, ListItemText, ListItemButton, Checkbox,
+    Typography } from '@mui/material';
 function ProjectForm({ initial, onSave, onCancel, saving, saveError }) {
     const [form, setForm] = useState(initial || { name: '', projectSum: '' });
     const set = (f, v) => setForm(p => ({ ...p, [f]: v }));
@@ -51,6 +52,10 @@ export default function Projects() {
     const [projectAuctions, setProjectAuctions] = useState([]);
     const [selectedProject, setSelectedProject] = useState(null);
     const [auctionsDialog, setAuctionsDialog] = useState(false);
+    const [inviteProjectDialog, setInviteProjectDialog] = useState(false);
+    const [allCompanies, setAllCompanies] = useState([]);
+    const [selectedCompanies, setSelectedCompanies] = useState([]);
+    const [inviteLoading, setInviteLoading] = useState(false);
     const navigate = useNavigate();
 
     const token = localStorage.getItem('token');
@@ -101,7 +106,7 @@ export default function Projects() {
     const viewAuctions = async (project) => {
         setSelectedProject(project);
         try {
-            const res = await fetch(`http://localhost:8080/api/auctions/search?projectId=${project.id}&size=100`, { headers });
+            const res = await fetch(`http://localhost:8080/api/auctions?projectId=${project.id}&size=100`, { headers });
             const data = await res.json();
             setProjectAuctions(data.content || []);
         } catch {
@@ -109,7 +114,16 @@ export default function Projects() {
         }
         setAuctionsDialog(true);
     };
-
+    const inviteToProject = async (project) => {
+        setSelectedProject(project);
+        try {
+            const res = await fetch('http://localhost:8080/api/companies', { headers });
+            setAllCompanies(await res.json());
+        } catch {
+            setAllCompanies([]);
+        }
+        setInviteProjectDialog(true);
+    };
     const STATUS_COLORS = {
         'key.auctionStatus.draft': 'default',
         'key.auctionStatus.active': 'success',
@@ -127,10 +141,11 @@ export default function Projects() {
             renderCell: p => p.value ? p.value.toLocaleString() : '-' },
         { field: 'disabled', headerName: 'Disabled', width: 100,
             renderCell: p => p.value ? <Chip label="Disabled" color="error" size="small" /> : null },
-        { field: 'actions', headerName: '', width: 240, sortable: false,
+        { field: 'actions', headerName: '', width: 280, sortable: false,
             renderCell: p => (
                 <Box display="flex" gap={0.5}>
                     <Button size="small" onClick={() => viewAuctions(p.row)}>Auctions</Button>
+                    <Button size="small" color="primary" onClick={() => inviteToProject(p.row)}>Invite</Button>
                     <Button size="small" onClick={() => { setEditProject(p.row); setDialog(true); }}>Edit</Button>
                     <Button size="small" color="error" onClick={() => handleDelete(p.row.id)}>Delete</Button>
                 </Box>
@@ -197,6 +212,65 @@ export default function Projects() {
                 </DialogContent>
                 <DialogActions>
                     <Button onClick={() => setAuctionsDialog(false)}>Close</Button>
+                </DialogActions>
+            </Dialog>
+            <Dialog open={inviteProjectDialog} onClose={() => setInviteProjectDialog(false)}
+                    maxWidth="md" fullWidth>
+                <DialogTitle>
+                    Invite Companies to All Active Auctions in: {selectedProject?.name}
+                    <Typography variant="body2" color="text.secondary">
+                        {selectedCompanies.length} selected
+                    </Typography>
+                </DialogTitle>
+                <DialogContent dividers>
+                    <List dense sx={{ maxHeight: 400, overflow: 'auto' }}>
+                        {allCompanies.map(company => (
+                            <ListItem key={company.id} disablePadding>
+                                <ListItemButton onClick={() => {
+                                    setSelectedCompanies(prev =>
+                                        prev.includes(company.id)
+                                            ? prev.filter(cid => cid !== company.id)
+                                            : [...prev, company.id]
+                                    );
+                                }}>
+                                    <Checkbox checked={selectedCompanies.includes(company.id)} size="small" />
+                                    <ListItemText
+                                        primary={company.companyName}
+                                        secondary={`${company.taxId || ''} | ${company.contactEmail || ''}`}
+                                    />
+                                </ListItemButton>
+                            </ListItem>
+                        ))}
+                    </List>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={() => { setInviteProjectDialog(false); setSelectedCompanies([]); }}>
+                        Cancel
+                    </Button>
+                    <Button variant="contained" disabled={selectedCompanies.length === 0 || inviteLoading}
+                            onClick={async () => {
+                                setInviteLoading(true);
+                                try {
+                                    const res = await fetch(
+                                        `http://localhost:8080/api/auctions/project/${selectedProject.id}/invite-companies`,
+                                        {
+                                            method: 'POST',
+                                            headers: { 'Content-Type': 'application/json', ...headers },
+                                            body: JSON.stringify({ companyIds: selectedCompanies })
+                                        }
+                                    );
+                                    const data = await res.json();
+                                    setActionMsg(`${data.count} invitations created across all active auctions`);
+                                    setInviteProjectDialog(false);
+                                    setSelectedCompanies([]);
+                                } catch {
+                                    setActionMsg('Invite failed');
+                                } finally {
+                                    setInviteLoading(false);
+                                }
+                            }}>
+                        {inviteLoading ? 'Inviting...' : `Invite ${selectedCompanies.length} Companies`}
+                    </Button>
                 </DialogActions>
             </Dialog>
         </Box>
