@@ -30,10 +30,11 @@ public class AuctionController {
             @RequestParam(required = false) Integer projectId,
             @RequestParam(required = false) Integer rangeStartAmount,
             @RequestParam(required = false) Integer rangeEndAmount,
+            @RequestParam(required = false) String rangeStartDate,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
         Page<Auction> auctions = auctionService.searchAuctions(
-                statusId, projectId, rangeStartAmount, rangeEndAmount, page, size);
+                statusId, projectId, rangeStartAmount, rangeEndAmount, rangeStartDate, page, size);
         auctions.getContent().forEach(a -> {
             a.setAllParticipants(participantRepository.countByAuctionId(a.getId()));
             a.setActiveParticipants(participantRepository.countActiveByAuctionId(a.getId()));
@@ -62,16 +63,16 @@ public class AuctionController {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
     }
-
     @DeleteMapping("/{id}")
     public ResponseEntity<?> delete(@PathVariable Integer id, Authentication auth) {
         try {
-            auctionService.cancelAuction(id, auth.getName());
+            auctionService.deleteDraftAuction(id, auth.getName());
             return ResponseEntity.ok(Map.of("success", true));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
     }
+
 
     @PostMapping("/{id}/activate")
     public ResponseEntity<?> activate(@PathVariable Integer id, Authentication auth) {

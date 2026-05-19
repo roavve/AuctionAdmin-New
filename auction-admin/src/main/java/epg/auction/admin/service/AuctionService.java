@@ -246,9 +246,16 @@ public class AuctionService {
     }
 
     public Page<Auction> searchAuctions(Integer statusId, Integer projectId,
-                                        Integer rangeStart, Integer rangeEnd, int page, int size) {
+                                        Integer rangeStart, Integer rangeEnd,
+                                        String startDate, int page, int size) {
+        java.util.Date date = null;
+        if (startDate != null && !startDate.isEmpty()) {
+            try {
+                date = new java.text.SimpleDateFormat("yyyy-MM-dd").parse(startDate);
+            } catch (Exception e) {}
+        }
         return auctionRepository.searchAuctions(statusId, projectId, rangeStart, rangeEnd,
-                PageRequest.of(page, size));
+                date, PageRequest.of(page, size));
     }
 
     // =================== BIDS ===================
@@ -269,7 +276,18 @@ public class AuctionService {
         bid.setCreateUserId(userId);
         return bidRepository.save(bid);
     }
-
+    @Transactional
+    public void deleteDraftAuction(Integer auctionId, String userId) {
+        Auction auction = auctionRepository.findById(auctionId)
+                .orElseThrow(() -> new RuntimeException("Auction not found"));
+        if (!"key.auctionStatus.draft".equals(auction.getStatus().getKey())) {
+            throw new RuntimeException("Only draft auctions can be deleted");
+        }
+        // Delete related records first
+        auctionRevisionRepository.deleteByAuctionId(auctionId);
+        auctionRepository.delete(auction);
+        audit("DELETE", "AUCTION", auctionId, userId);
+    }
     @Transactional
     public void cancelBid(Integer bidId, String userId) {
         AuctionBid bid = bidRepository.findById(bidId)

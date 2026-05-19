@@ -582,6 +582,20 @@ export default function AuctionDetail() {
           <Chip label={auction.status?.name || ''} color={STATUS_COLORS[statusKey] || 'default'} />
           <Button variant="outlined" onClick={() => setEditing(true)}>Edit</Button>
           {statusKey === 'key.auctionStatus.draft' &&
+              <Button variant="outlined" color="error"
+                      onClick={async () => {
+                        if (window.confirm('Delete this auction?')) {
+                          try {
+                            await fetch(`http://localhost:8080/api/auctions/${id}`, {
+                              method: 'DELETE', headers
+                            });
+                            navigate('/auctions');
+                          } catch {
+                            setError('Delete failed');
+                          }
+                        }
+                      }}>Delete</Button>}
+          {statusKey === 'key.auctionStatus.draft' &&
               <Button variant="contained" color="success"
                       onClick={() => handleAction('activate')}>Activate</Button>}
           {statusKey === 'key.auctionStatus.active' &&

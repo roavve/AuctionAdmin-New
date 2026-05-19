@@ -35,13 +35,15 @@ public interface AuctionRepository extends JpaRepository<Auction, Integer> {
     @Query("SELECT a FROM Auction a WHERE " +
             "(:statusId IS NULL OR a.status.id = :statusId) AND " +
             "(:projectId IS NULL OR a.project.id = :projectId) AND " +
-            "(:rangeStartAmount IS NULL OR a.startBidValue >= :rangeStartAmount) AND " +
-            "(:rangeEndAmount IS NULL OR a.startBidValue <= :rangeEndAmount) " +
-            "ORDER BY a.createDate DESC")
+            "(:rangeStart IS NULL OR a.startBidValue >= :rangeStart) AND " +
+            "(:rangeEnd IS NULL OR a.startBidValue <= :rangeEnd) AND " +
+            "(:startDate IS NULL OR a.auctionStartDate >= :startDate) " +
+            "ORDER BY a.id DESC")
     Page<Auction> searchAuctions(
             @Param("statusId") Integer statusId,
             @Param("projectId") Integer projectId,
-            @Param("rangeStartAmount") Integer rangeStartAmount,
-            @Param("rangeEndAmount") Integer rangeEndAmount,
+            @Param("rangeStart") Integer rangeStart,
+            @Param("rangeEnd") Integer rangeEnd,
+            @Param("startDate") java.util.Date startDate,
             Pageable pageable);
 }

@@ -25,8 +25,8 @@ const EMPTY_FILTERS = {
     projectId: '',
     rangeStartAmount: '',
     rangeEndAmount: '',
+    rangeStartDate: '',
 };
-
 export default function Auctions() {
     const [rows, setRows] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -65,6 +65,7 @@ export default function Auctions() {
                 ...(currentFilters.projectId && { projectId: currentFilters.projectId }),
                 ...(currentFilters.rangeStartAmount && { rangeStartAmount: currentFilters.rangeStartAmount }),
                 ...(currentFilters.rangeEndAmount && { rangeEndAmount: currentFilters.rangeEndAmount }),
+                ...(currentFilters.rangeStartDate && { rangeStartDate: currentFilters.rangeStartDate }),
             };
             const res = await auctionApi.search(params);
             setRows(res.data.content);
@@ -116,6 +117,7 @@ export default function Auctions() {
         },
         { field: 'startBidValue', headerName: 'Start Bid', width: 110 },
         { field: 'lastBidValue', headerName: 'Last Bid', width: 110 },
+        { field: 'createUserId', headerName: 'Administrator', width: 130 },
         {
             field: 'auctionStartDate', headerName: 'Start Date', width: 120,
             renderCell: (params) => params.value ? new Date(params.value).toLocaleDateString() : '-'
@@ -194,6 +196,12 @@ export default function Auctions() {
                             <TextField fullWidth size="small" label="Max Bid Value" type="number"
                                        value={filters.rangeEndAmount}
                                        onChange={e => setFilters(f => ({ ...f, rangeEndAmount: e.target.value }))} />
+                        </Grid>
+                        <Grid size={{ xs: 12, md: 2 }}>
+                            <TextField fullWidth size="small" label="Start Date From" type="date"
+                                       value={filters.rangeStartDate}
+                                       onChange={e => setFilters(f => ({ ...f, rangeStartDate: e.target.value }))}
+                                       InputLabelProps={{ shrink: true }} />
                         </Grid>
                         <Grid size={{ xs: 12, md: 2 }}>
                             <Box display="flex" gap={1}>

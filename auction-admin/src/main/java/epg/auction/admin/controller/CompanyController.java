@@ -7,7 +7,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
-
+import epg.auction.admin.entity.AuctionParticipant;
+import java.util.List;
 import java.util.List;
 import java.util.Map;
 
@@ -16,7 +17,7 @@ import java.util.Map;
 public class CompanyController {
 
     @Autowired private CompanyService companyService;
-
+    @Autowired private epg.auction.admin.repository.AuctionParticipantRepository participantRepository;
     @GetMapping
     public List<Company> getAll() { return companyService.getAll(); }
 
@@ -56,7 +57,15 @@ public class CompanyController {
     public List<User> getUsers(@PathVariable Integer id) {
         return companyService.getUsersByCompany(id);
     }
-
+    @GetMapping("/{id}/bid-history")
+    public ResponseEntity<?> getBidHistory(@PathVariable Integer id) {
+        try {
+            List<AuctionParticipant> participants = participantRepository.findByCompanyId(id);
+            return ResponseEntity.ok(participants);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
     @DeleteMapping("/{id}")
     public ResponseEntity<?> delete(@PathVariable Integer id) {
         companyService.delete(id);
