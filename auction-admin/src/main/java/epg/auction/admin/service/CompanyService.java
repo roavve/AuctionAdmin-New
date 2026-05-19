@@ -15,10 +15,12 @@ import java.util.UUID;
 
 @Service
 public class CompanyService {
-
+    @Autowired private epg.auction.admin.repository.UserRepository userRepository;
+    @Autowired private epg.auction.admin.repository.DictionaryItemRepository dictionaryItemRepository;
+    @Autowired private epg.auction.admin.service.EmailService emailService;
+    @Autowired private epg.auction.admin.service.SmsService smsService;
     @Autowired private CompanyRepository companyRepository;
-    @Autowired private UserRepository userRepository;
-    @Autowired private DictionaryItemRepository dictionaryItemRepository;
+
 
     private DictionaryItem getStatusByKey(String key) {
         return dictionaryItemRepository.findByKey(key)
@@ -41,7 +43,59 @@ public class CompanyService {
         company.setStatus(getStatusByKey("key.companyStatus.created"));
         return companyRepository.save(company);
     }
+    @Transactional
+    public void inviteCompany(Integer companyId, String userId) {
+        Company company = companyRepository.findById(companyId)
+                .orElseThrow(() -> new RuntimeException("Company not found"));
 
+        // Create user account for company contact
+        User user = new User();
+        user.setRecordKey(java.util.UUID.randomUUID().toString());
+        user.setEmail(company.getContactEmail());
+        user.setFirstName(company.getContactName());
+        user.setLastName(company.getContactSurname());
+        user.setContactPosition(company.getContactPosition());
+        user.setContactMobile(company.getContactMobile());
+        user.setContactEmail(company.getContactEmail());
+        user.setContactPhone(company.getContactPhone());
+        user.setCompany(company);
+        user.setRole("ROLE_USER");
+        user.setActive(true);
+        user.setExternal(true);
+        user.setInternal(false);
+        user.setRegisterDate(new java.util.Date());
+        user.setCreateUserId(userId);
+        user.setStatus(1);
+        user.setLocked(false);
+        user.setCancelled(false);
+
+        String rawPassword = java.util.UUID.randomUUID().toString().substring(0, 8);
+        user.setPassword(epg.auction.admin.service.UserService.hashPassword(rawPassword));
+        userRepository.save(user);
+
+        // Update company status to active
+        dictionaryItemRepository.findByKey("key.companyStatus.active")
+                .ifPresent(company::setStatus);
+        company.setFlowDateActivated(new java.util.Date());
+        companyRepository.save(company);
+
+        // Send email with credentials
+        emailService.sendEmail(
+                company.getContactEmail(),
+                "მოწვევა / Company Invitation",
+                "<p>თქვენი კომპანია მოწვეულია სისტემაში.</p>" +
+                        "<p>Your company has been invited to the system.</p>" +
+                        "<p>Email: " + company.getContactEmail() + "</p>" +
+                        "<p>Password: " + rawPassword + "</p>"
+        );
+
+        // Send SMS
+        if (company.getContactMobile() != null) {
+            smsService.sendSms(company.getContactMobile(),
+                    "You have been invited. Login: " + company.getContactEmail() +
+                            " Pass: " + rawPassword);
+        }
+    }
     @Transactional
     public Company updateCompany(Integer id, Company company, String userId) {
         Company original = companyRepository.findById(id)

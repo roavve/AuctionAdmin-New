@@ -113,9 +113,21 @@ export default function Companies() {
         { field: 'contactPhone', headerName: 'Phone', width: 130 },
         { field: 'flowDateCreated', headerName: 'Date Created', width: 130,
             renderCell: p => p.value ? new Date(p.value).toLocaleDateString() : '-' },
-        { field: 'actions', headerName: '', width: 90, sortable: false,
+        { field: 'actions', headerName: '', width: 180, sortable: false,
             renderCell: p => (
-                <Button size="small" onClick={() => navigate(`/companies/${p.row.id}`)}>View</Button>
+                <Box display="flex" gap={0.5}>
+                    <Button size="small" onClick={() => navigate(`/companies/${p.row.id}`)}>View</Button>
+                    {p.row.status?.key === 'key.companyStatus.created' && (
+                        <Button size="small" color="primary"
+                                onClick={async () => {
+                                    await fetch(`http://localhost:8080/api/companies/${p.row.id}/invite`,
+                                        { method: 'POST', headers });
+                                    loadCompanies(page, pageSize, appliedFilters, tab);
+                                }}>
+                            Invite
+                        </Button>
+                    )}
+                </Box>
             )}
     ];
 

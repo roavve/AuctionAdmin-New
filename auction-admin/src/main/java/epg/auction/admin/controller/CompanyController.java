@@ -31,7 +31,15 @@ public class CompanyController {
     public ResponseEntity<Company> create(@RequestBody Company company, Authentication auth) {
         return ResponseEntity.ok(companyService.createCompany(company, auth.getName()));
     }
-
+    @PostMapping("/{id}/invite")
+    public ResponseEntity<?> inviteCompany(@PathVariable Integer id, Authentication auth) {
+        try {
+            companyService.inviteCompany(id, auth.getName());
+            return ResponseEntity.ok(Map.of("success", true));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
     @PutMapping("/{id}")
     public ResponseEntity<Company> update(@PathVariable Integer id,
                                           @RequestBody Company company, Authentication auth) {

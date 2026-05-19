@@ -238,7 +238,17 @@ export default function CompanyDetail() {
             setActionMsg('Action failed');
         }
     };
-
+    const handleInvite = async () => {
+        try {
+            await fetch(`http://localhost:8080/api/companies/${id}/invite`, {
+                method: 'POST', headers
+            });
+            setActionMsg('Company invited successfully - user account created and credentials sent');
+            load();
+        } catch {
+            setActionMsg('Invite failed');
+        }
+    };
     const downloadFile = async (url, fileName) => {
         try {
             const res = await fetch(url, { headers });
@@ -359,6 +369,11 @@ export default function CompanyDetail() {
                 <Typography variant="h5" sx={{ flexGrow: 1 }}>{company?.companyName}</Typography>
                 {company && <Chip label={company.status?.name || ''} size="small" />}
                 <Button variant="outlined" onClick={() => setEditing(true)}>Edit</Button>
+                {company && company.status?.key === 'key.companyStatus.created' && (
+                    <Button variant="contained" color="primary" onClick={handleInvite}>
+                        Invite Company
+                    </Button>
+                )}
                 {company && company.status?.key !== 'key.companyStatus.cancelled' && (
                     <Button variant="contained" color="error" onClick={handleCancel}>Cancel Company</Button>
                 )}
