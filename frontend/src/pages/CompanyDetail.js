@@ -141,7 +141,53 @@ function CompanyForm({ initial, categories, companyTypes, onSave, onCancel, savi
         </Paper>
     );
 }
+function BidHistoryTab({ companyId, headers }) {
+    const [history, setHistory] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const navigate = useNavigate();
 
+    useEffect(() => {
+        fetch(`http://localhost:8080/api/companies/${companyId}/bid-history`, { headers })
+            .then(r => r.json())
+            .then(data => { setHistory(data); setLoading(false); })
+            .catch(() => setLoading(false));
+    }, [companyId]);
+
+    const columns = [
+        { field: 'id', headerName: 'ID', width: 70 },
+        { field: 'auctionName', headerName: 'Auction', flex: 1,
+            valueGetter: (value, row) => row.auction?.name || '-',
+            renderCell: p => (
+                <Button size="small" onClick={() => navigate(`/auctions/${p.row.auction?.id}`)}>
+                    {p.row.auction?.name || '-'}
+                </Button>
+            )},
+        { field: 'auctionProject', headerName: 'Project', width: 150,
+            valueGetter: (value, row) => row.auction?.project?.name || '-' },
+        { field: 'winner', headerName: 'Result', width: 100,
+            renderCell: p => p.value
+                ? <Chip label="WON" color="success" size="small" />
+                : <Chip label="LOST" color="error" size="small" /> },
+        { field: 'startBid', headerName: 'Start Bid', width: 110,
+            valueGetter: (value, row) => row.auction?.startBidValue || '-' },
+        { field: 'lastBid', headerName: 'Last Bid', width: 110,
+            valueGetter: (value, row) => row.auction?.lastBidValue || '-' },
+        { field: 'auctionStatus', headerName: 'Auction Status', width: 130,
+            valueGetter: (value, row) => row.auction?.status?.name || '-',
+            renderCell: p => <Chip label={p.row.auction?.status?.name || ''} size="small" /> },
+    ];
+
+    return (
+        <Box>
+            <Typography variant="subtitle1" mb={2}>
+                Bid History ({history.length} auctions participated)
+            </Typography>
+            <DataGrid rows={history} columns={columns} autoHeight
+                      loading={loading} pageSizeOptions={[10, 20, 50]}
+                      disableRowSelectionOnClick />
+        </Box>
+    );
+}
 export default function CompanyDetail() {
     const { id } = useParams();
     const navigate = useNavigate();
@@ -385,6 +431,7 @@ export default function CompanyDetail() {
                 <Tab label="Details" />
                 <Tab label="Users" />
                 <Tab label="Files" />
+                <Tab label="Bid History" />
             </Tabs>
 
             {tab === 0 && company && (
@@ -443,6 +490,10 @@ export default function CompanyDetail() {
                               pageSizeOptions={[10, 20]} disableRowSelectionOnClick />
                 </Box>
             )}
+            {tab === 3 && (
+                <BidHistoryTab companyId={id} headers={headers} />
+            )}
+
         </Box>
     );
 }
