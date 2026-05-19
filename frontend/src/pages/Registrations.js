@@ -216,6 +216,25 @@ export default function Registrations() {
                             <Typography variant="body2">Address: {selectedReg.phisAddress}</Typography>
                             <Typography variant="body2">Tax ID: {selectedReg.taxId}</Typography>
                             <Typography variant="body2">VAT Payer: {selectedReg.vatPayer ? 'Yes' : 'No'}</Typography>
+                            <Box mt={1} p={1} bgcolor={selectedReg.policyAccepted ? 'success.light' : 'error.light'}
+                                 borderRadius={1} display="inline-block">
+                                <Typography variant="body2" color="white" fontWeight="bold">
+                                    {selectedReg.policyAccepted ? '✓ Policy Accepted' : '✗ Policy Not Accepted'}
+                                </Typography>
+                            </Box>
+                            {selectedReg.policyFileName && (
+                                <Box mt={1}>
+                                    <Typography variant="body2">
+                                        Policy Document: <strong>{selectedReg.policyFileName}</strong>
+                                    </Typography>
+                                    <Button size="small" variant="outlined" sx={{ mt: 0.5 }}
+                                            onClick={() => downloadFile(
+                                                `http://localhost:8080/api/registrations/${selectedReg.id}/policy`,
+                                                selectedReg.policyFileName)}>
+                                        Download Policy Doc
+                                    </Button>
+                                </Box>
+                            )}
                         </Box>
                     )}
 
@@ -240,7 +259,19 @@ export default function Registrations() {
                 <DialogActions>
                     {tab === 0 && selectedReg && (
                         <>
+                            {!selectedReg.policyAccepted && (
+                                <Button variant="outlined" color="warning"
+                                        onClick={async () => {
+                                            await fetch(`http://localhost:8080/api/registrations/${selectedReg.id}/acceptPolicy`,
+                                                { method: 'POST', headers });
+                                            setSelectedReg(r => ({ ...r, policyAccepted: true }));
+                                            setActionMsg('Policy marked as accepted');
+                                        }}>
+                                    Mark Policy Accepted
+                                </Button>
+                            )}
                             <Button color="success" variant="contained"
+                                    disabled={!selectedReg.policyAccepted}
                                     onClick={() => { handleApprove(selectedReg.id); setDetailDialog(false); }}>
                                 Approve
                             </Button>

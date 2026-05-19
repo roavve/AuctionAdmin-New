@@ -11,7 +11,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
-
+import jakarta.servlet.http.HttpServletResponse;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -57,7 +57,22 @@ public class RegistrationController {
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
-
+    @GetMapping("/{id}/policy")
+    public void downloadPolicy(@PathVariable Integer id, HttpServletResponse response) {
+        registerRequestRepository.findById(id).ifPresent(req -> {
+            try {
+                if (req.getPolicyFile() != null) {
+                    response.setContentType("application/octet-stream");
+                    response.setHeader("Content-Disposition",
+                            "attachment; filename=\"" + req.getPolicyFileName() + "\"");
+                    response.getOutputStream().write(req.getPolicyFile());
+                    response.flushBuffer();
+                }
+            } catch (Exception e) {
+                response.setStatus(404);
+            }
+        });
+    }
     @PostMapping("/{id}/createCompany")
     public ResponseEntity<?> approve(@PathVariable Integer id, Authentication auth) {
         return registerRequestRepository.findById(id).map(req -> {
@@ -166,7 +181,14 @@ public class RegistrationController {
             }
         }).orElse(ResponseEntity.notFound().build());
     }
-
+    @PostMapping("/{id}/acceptPolicy")
+    public ResponseEntity<?> acceptPolicy(@PathVariable Integer id) {
+        return registerRequestRepository.findById(id).map(req -> {
+            req.setPolicyAccepted(true);
+            registerRequestRepository.save(req);
+            return ResponseEntity.ok(Map.of("success", true));
+        }).orElse(ResponseEntity.notFound().build());
+    }
     @PostMapping("/{id}/reject")
     public ResponseEntity<?> reject(@PathVariable Integer id, Authentication auth) {
         return registerRequestRepository.findById(id).map(req -> {

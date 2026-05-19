@@ -20,3 +20,4 @@ public interface CategoryRepository extends JpaRepository<Category, Integer> {
     @Query("SELECT c FROM Category c WHERE (:name IS NULL OR c.name LIKE %:name%) AND (:parentId IS NULL OR c.parent.id = :parentId) ORDER BY c.name")
     List<Category> searchCategories(@Param("name") String name, @Param("parentId") Integer parentId);
 }
+

@@ -15,7 +15,7 @@ public class RegisterRequest extends MainEntity implements Serializable {
     @Column(name = "RECORDKEY")
     private String recordKey;
 
-    @Column(name = "NAME")
+    @Column(name = "COMPANY_NAME")
     private String companyName;
 
     @ManyToOne
@@ -75,6 +75,16 @@ public class RegisterRequest extends MainEntity implements Serializable {
     @Column(name = "WEB_SITE")
     private String webSite;
 
+    @Column(name = "POLICY_ACCEPTED")
+    private Boolean policyAccepted;
+
+    @Column(name = "POLICY_FILE_NAME")
+    private String policyFileName;
+
+    @Column(name = "POLICY_FILE")
+
+    private byte[] policyFile;
+
     public Integer getId() { return id; }
     public void setId(Integer id) { this.id = id; }
     public String getRecordKey() { return recordKey; }
@@ -117,4 +127,10 @@ public class RegisterRequest extends MainEntity implements Serializable {
     public void setContactMobile(String contactMobile) { this.contactMobile = contactMobile; }
     public String getWebSite() { return webSite; }
     public void setWebSite(String webSite) { this.webSite = webSite; }
+    public Boolean getPolicyAccepted() { return policyAccepted; }
+    public void setPolicyAccepted(Boolean policyAccepted) { this.policyAccepted = policyAccepted; }
+    public String getPolicyFileName() { return policyFileName; }
+    public void setPolicyFileName(String policyFileName) { this.policyFileName = policyFileName; }
+    public byte[] getPolicyFile() { return policyFile; }
+    public void setPolicyFile(byte[] policyFile) { this.policyFile = policyFile; }
 }
