@@ -161,5 +161,6 @@ export default function Dictionary() {
                 </DialogActions>
             </Dialog>
         </Box>
+
     );
 }
