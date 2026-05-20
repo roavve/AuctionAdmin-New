@@ -2,7 +2,6 @@ package epg.auction.admin.controller;
 
 import epg.auction.admin.entity.Category;
 import epg.auction.admin.service.CategoryService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -13,12 +12,15 @@ import java.util.Map;
 @RequestMapping("/api/categories")
 public class CategoryController {
 
-    @Autowired private CategoryService categoryService;
+    private final CategoryService categoryService;
+
+    public CategoryController(CategoryService categoryService) {
+        this.categoryService = categoryService;
+    }
 
     @GetMapping
-    public List<Category> search(
-            @RequestParam(required = false) String name,
-            @RequestParam(required = false) Integer parentId) {
+    public List<Category> search(@RequestParam(required = false) String name,
+                                 @RequestParam(required = false) Integer parentId) {
         return categoryService.search(name, parentId);
     }
 

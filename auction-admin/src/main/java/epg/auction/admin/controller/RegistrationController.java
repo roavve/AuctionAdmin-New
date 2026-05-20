@@ -5,13 +5,12 @@ import epg.auction.admin.repository.*;
 import epg.auction.admin.service.EmailService;
 import epg.auction.admin.service.SmsService;
 import epg.auction.admin.service.UserService;
-import org.springframework.beans.factory.annotation.Autowired;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
-import jakarta.servlet.http.HttpServletResponse;
 
 import java.util.Date;
 import java.util.HashMap;
@@ -23,33 +22,48 @@ import java.util.UUID;
 @RequestMapping("/api/registrations")
 public class RegistrationController {
 
-    @Autowired private RegisterRequestRepository registerRequestRepository;
-    @Autowired private CompanyRepository companyRepository;
-    @Autowired private DictionaryItemRepository dictionaryItemRepository;
-    @Autowired private RegisterRequestFileRepository registerRequestFileRepository;
-    @Autowired private CompanyFileRepository companyFileRepository;
-    @Autowired private UserRepository userRepository;
-    @Autowired private EmailService emailService;
-    @Autowired private SmsService smsService;
+    private final RegisterRequestRepository registerRequestRepository;
+    private final CompanyRepository companyRepository;
+    private final DictionaryItemRepository dictionaryItemRepository;
+    private final RegisterRequestFileRepository registerRequestFileRepository;
+    private final CompanyFileRepository companyFileRepository;
+    private final UserRepository userRepository;
+    private final EmailService emailService;
+    private final SmsService smsService;
+
+    public RegistrationController(RegisterRequestRepository registerRequestRepository,
+                                  CompanyRepository companyRepository,
+                                  DictionaryItemRepository dictionaryItemRepository,
+                                  RegisterRequestFileRepository registerRequestFileRepository,
+                                  CompanyFileRepository companyFileRepository,
+                                  UserRepository userRepository,
+                                  EmailService emailService,
+                                  SmsService smsService) {
+        this.registerRequestRepository = registerRequestRepository;
+        this.companyRepository = companyRepository;
+        this.dictionaryItemRepository = dictionaryItemRepository;
+        this.registerRequestFileRepository = registerRequestFileRepository;
+        this.companyFileRepository = companyFileRepository;
+        this.userRepository = userRepository;
+        this.emailService = emailService;
+        this.smsService = smsService;
+    }
 
     @GetMapping("/new")
-    public Page<RegisterRequest> getNew(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size) {
+    public Page<RegisterRequest> getNew(@RequestParam(defaultValue = "0") int page,
+                                        @RequestParam(defaultValue = "20") int size) {
         return registerRequestRepository.findNewRequests(PageRequest.of(page, size));
     }
 
     @GetMapping("/processed")
-    public Page<RegisterRequest> getProcessed(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size) {
+    public Page<RegisterRequest> getProcessed(@RequestParam(defaultValue = "0") int page,
+                                              @RequestParam(defaultValue = "20") int size) {
         return registerRequestRepository.findProcessedRequests(PageRequest.of(page, size));
     }
 
     @GetMapping("/cancelled")
-    public Page<RegisterRequest> getCancelled(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size) {
+    public Page<RegisterRequest> getCancelled(@RequestParam(defaultValue = "0") int page,
+                                              @RequestParam(defaultValue = "20") int size) {
         return registerRequestRepository.findCancelledRequests(PageRequest.of(page, size));
     }
 
@@ -81,7 +95,6 @@ public class RegistrationController {
     public ResponseEntity<?> approve(@PathVariable Integer id, Authentication auth) {
         return registerRequestRepository.findById(id).map(req -> {
             try {
-                // Create company
                 Company company = new Company();
                 company.setRecordKey(UUID.randomUUID().toString());
                 company.setCompanyName(req.getCompanyName());
@@ -108,12 +121,9 @@ public class RegistrationController {
 
                 dictionaryItemRepository.findByKey("key.companyStatus.active")
                         .ifPresent(company::setStatus);
-
                 Company saved = companyRepository.save(company);
 
-                // Copy registration files to company files
-                List<RegisterRequestFile> reqFiles =
-                        registerRequestFileRepository.findByRequestId(id);
+                List<RegisterRequestFile> reqFiles = registerRequestFileRepository.findByRequestId(id);
                 for (RegisterRequestFile rf : reqFiles) {
                     CompanyFile cf = new CompanyFile();
                     cf.setRecordKey(UUID.randomUUID().toString());
@@ -129,7 +139,6 @@ public class RegistrationController {
                     companyFileRepository.save(cf);
                 }
 
-                // Create user account for contact person
                 User user = new User();
                 user.setRecordKey(UUID.randomUUID().toString());
                 user.setEmail(req.getContactEmail());
@@ -154,7 +163,6 @@ public class RegistrationController {
                 user.setPassword(UserService.hashPassword(rawPassword));
                 userRepository.save(user);
 
-                // Send email using template
                 Map<String, String> vars = new HashMap<>();
                 vars.put("email", req.getContactEmail());
                 vars.put("password", rawPassword);
@@ -162,14 +170,12 @@ public class RegistrationController {
                 emailService.sendTemplatedEmail(req.getContactEmail(),
                         "key.template.registrationApproved", vars);
 
-                // Send SMS
                 if (req.getContactMobile() != null) {
                     smsService.sendSms(req.getContactMobile(),
                             "Registration approved. Login: " + req.getContactEmail() +
                                     " Pass: " + rawPassword);
                 }
 
-                // Update request status
                 dictionaryItemRepository.findByKey("key.registration.processed")
                         .ifPresent(status -> {
                             req.setStatus(status);
@@ -200,13 +206,10 @@ public class RegistrationController {
                         req.setStatus(status);
                         registerRequestRepository.save(req);
                     });
-
-            // Send rejection email using template
             Map<String, String> vars = new HashMap<>();
             vars.put("companyName", req.getCompanyName());
             emailService.sendTemplatedEmail(req.getContactEmail(),
                     "key.template.registrationRejected", vars);
-
             return ResponseEntity.ok(Map.of("success", true));
         }).orElse(ResponseEntity.notFound().build());
     }

@@ -1,8 +1,8 @@
+// AuditController.java
 package epg.auction.admin.controller;
 
 import epg.auction.admin.entity.SysAudit;
 import epg.auction.admin.repository.SysAuditRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.web.bind.annotation.*;
@@ -11,8 +11,11 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/audit")
 public class AuditController {
 
-    @Autowired
-    private SysAuditRepository sysAuditRepository;
+    private final SysAuditRepository sysAuditRepository;
+
+    public AuditController(SysAuditRepository sysAuditRepository) {
+        this.sysAuditRepository = sysAuditRepository;
+    }
 
     @GetMapping
     public Page<SysAudit> search(

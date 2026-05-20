@@ -1,7 +1,7 @@
 package epg.auction.admin.service;
 
+import epg.auction.admin.repository.TextTemplateRepository;
 import jakarta.mail.internet.MimeMessage;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
@@ -12,14 +12,17 @@ import java.util.Map;
 @Service
 public class EmailService {
 
-    @Autowired
-    private JavaMailSender mailSender;
+    private final JavaMailSender mailSender;
+    private final TextTemplateRepository templateRepository;
+    private final boolean notificationsEnabled;
 
-    @Autowired
-    private epg.auction.admin.repository.TextTemplateRepository templateRepository;
-
-    @Value("${app.notifications.enabled:false}")
-    private boolean notificationsEnabled;
+    public EmailService(JavaMailSender mailSender,
+                        TextTemplateRepository templateRepository,
+                        @Value("${app.notifications.enabled:false}") boolean notificationsEnabled) {
+        this.mailSender = mailSender;
+        this.templateRepository = templateRepository;
+        this.notificationsEnabled = notificationsEnabled;
+    }
 
     public boolean sendEmail(String to, String subject, String htmlContent) {
         if (!notificationsEnabled) {

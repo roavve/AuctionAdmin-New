@@ -2,19 +2,20 @@ package epg.auction.admin.controller;
 
 import epg.auction.admin.entity.TextTemplate;
 import epg.auction.admin.repository.TextTemplateRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/api/templates")
 public class TextTemplateController {
 
-    @Autowired
-    private TextTemplateRepository textTemplateRepository;
+    private final TextTemplateRepository textTemplateRepository;
+
+    public TextTemplateController(TextTemplateRepository textTemplateRepository) {
+        this.textTemplateRepository = textTemplateRepository;
+    }
 
     @GetMapping
     public List<TextTemplate> getAll() {

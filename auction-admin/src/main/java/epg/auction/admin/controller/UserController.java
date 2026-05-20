@@ -2,7 +2,6 @@ package epg.auction.admin.controller;
 
 import epg.auction.admin.entity.User;
 import epg.auction.admin.service.UserService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -15,17 +14,20 @@ import java.util.Map;
 @RequestMapping("/api/users")
 public class UserController {
 
-    @Autowired private UserService userService;
+    private final UserService userService;
+
+    public UserController(UserService userService) {
+        this.userService = userService;
+    }
 
     @GetMapping
-    public Page<User> search(
-            @RequestParam(required = false) String email,
-            @RequestParam(required = false) Integer companyId,
-            @RequestParam(required = false) Boolean internal,
-            @RequestParam(required = false) Boolean active,
-            @RequestParam(required = false) Boolean locked,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size) {
+    public Page<User> search(@RequestParam(required = false) String email,
+                             @RequestParam(required = false) Integer companyId,
+                             @RequestParam(required = false) Boolean internal,
+                             @RequestParam(required = false) Boolean active,
+                             @RequestParam(required = false) Boolean locked,
+                             @RequestParam(defaultValue = "0") int page,
+                             @RequestParam(defaultValue = "20") int size) {
         return userService.searchUsers(email, companyId, internal, active, locked, page, size);
     }
 
@@ -67,7 +69,8 @@ public class UserController {
 
     @PostMapping("/{id}/changePassword")
     public ResponseEntity<?> changePassword(@PathVariable Integer id,
-                                            @RequestBody Map<String, String> body, Authentication auth) {
+                                            @RequestBody Map<String, String> body,
+                                            Authentication auth) {
         userService.changePassword(id, body.get("password"), auth.getName());
         return ResponseEntity.ok(Map.of("success", true));
     }

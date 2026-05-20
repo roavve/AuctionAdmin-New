@@ -1,13 +1,9 @@
 package epg.auction.admin.controller;
 
-import epg.auction.admin.entity.Auction;
-import epg.auction.admin.entity.AuctionBid;
-import epg.auction.admin.entity.AuctionComment;
-import epg.auction.admin.entity.AuctionInvitation;
-import epg.auction.admin.entity.AuctionParticipant;
+import epg.auction.admin.entity.*;
 import epg.auction.admin.repository.AuctionParticipantRepository;
+import epg.auction.admin.repository.AuctionRevisionRepository;
 import epg.auction.admin.service.AuctionService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -20,9 +16,17 @@ import java.util.Map;
 @RequestMapping("/api/auctions")
 public class AuctionController {
 
-    @Autowired private AuctionService auctionService;
-    @Autowired private AuctionParticipantRepository participantRepository;
-    @Autowired private epg.auction.admin.repository.AuctionRevisionRepository auctionRevisionRepository;
+    private final AuctionService auctionService;
+    private final AuctionParticipantRepository participantRepository;
+    private final AuctionRevisionRepository auctionRevisionRepository;
+
+    public AuctionController(AuctionService auctionService,
+                             AuctionParticipantRepository participantRepository,
+                             AuctionRevisionRepository auctionRevisionRepository) {
+        this.auctionService = auctionService;
+        this.participantRepository = participantRepository;
+        this.auctionRevisionRepository = auctionRevisionRepository;
+    }
 
     @GetMapping
     public Page<Auction> search(
@@ -63,6 +67,7 @@ public class AuctionController {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
     }
+
     @DeleteMapping("/{id}")
     public ResponseEntity<?> delete(@PathVariable Integer id, Authentication auth) {
         try {
@@ -72,7 +77,6 @@ public class AuctionController {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
     }
-
 
     @PostMapping("/{id}/activate")
     public ResponseEntity<?> activate(@PathVariable Integer id, Authentication auth) {
@@ -104,37 +108,29 @@ public class AuctionController {
         }
     }
 
-    // =================== MONITOR ===================
-
     @GetMapping("/monitor/active")
-    public Page<Auction> monitorActive(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size) {
+    public Page<Auction> monitorActive(@RequestParam(defaultValue = "0") int page,
+                                       @RequestParam(defaultValue = "20") int size) {
         return auctionService.findActiveAuctions(page, size);
     }
 
     @GetMapping("/monitor/planned")
-    public Page<Auction> monitorPlanned(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size) {
+    public Page<Auction> monitorPlanned(@RequestParam(defaultValue = "0") int page,
+                                        @RequestParam(defaultValue = "20") int size) {
         return auctionService.findPlannedAuctions(page, size);
     }
 
     @GetMapping("/monitor/closed")
-    public Page<Auction> monitorClosed(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size) {
+    public Page<Auction> monitorClosed(@RequestParam(defaultValue = "0") int page,
+                                       @RequestParam(defaultValue = "20") int size) {
         return auctionService.findClosedAuctions(page, size);
     }
 
     @GetMapping("/monitor/cancelled")
-    public Page<Auction> monitorCancelled(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size) {
+    public Page<Auction> monitorCancelled(@RequestParam(defaultValue = "0") int page,
+                                          @RequestParam(defaultValue = "20") int size) {
         return auctionService.findCancelledAuctions(page, size);
     }
-
-    // =================== BIDS ===================
 
     @GetMapping("/{id}/bids")
     public ResponseEntity<List<AuctionBid>> getBids(@PathVariable Integer id) {
@@ -150,8 +146,6 @@ public class AuctionController {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
     }
-
-    // =================== INVITATIONS ===================
 
     @GetMapping("/{id}/invitations")
     public ResponseEntity<List<AuctionInvitation>> getInvitations(@PathVariable Integer id) {
@@ -180,7 +174,8 @@ public class AuctionController {
 
     @PostMapping("/{id}/invite-companies")
     public ResponseEntity<?> inviteCompanies(@PathVariable Integer id,
-                                             @RequestBody Map<String, List<Integer>> body, Authentication auth) {
+                                             @RequestBody Map<String, List<Integer>> body,
+                                             Authentication auth) {
         try {
             List<Integer> companyIds = body.get("companyIds");
             auctionService.inviteCompanies(id, companyIds, auth.getName());
@@ -191,10 +186,9 @@ public class AuctionController {
     }
 
     @PostMapping("/project/{projectId}/invite-companies")
-    public ResponseEntity<?> inviteCompaniesToProject(
-            @PathVariable Integer projectId,
-            @RequestBody Map<String, List<Integer>> body,
-            Authentication auth) {
+    public ResponseEntity<?> inviteCompaniesToProject(@PathVariable Integer projectId,
+                                                      @RequestBody Map<String, List<Integer>> body,
+                                                      Authentication auth) {
         try {
             List<Integer> companyIds = body.get("companyIds");
             int count = auctionService.inviteCompaniesToProject(projectId, companyIds, auth.getName());
@@ -203,39 +197,12 @@ public class AuctionController {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
     }
-    // =================== PARTICIPANTS ===================
 
     @GetMapping("/{id}/participants")
     public ResponseEntity<List<AuctionParticipant>> getParticipants(@PathVariable Integer id) {
         return ResponseEntity.ok(auctionService.getParticipantsByAuction(id));
     }
-    @GetMapping("/comments/new")
-    public Page<epg.auction.admin.entity.AuctionComment> getNewComments(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size) {
-        return auctionService.getNewComments(page, size);
-    }
 
-    @GetMapping("/comments/answered")
-    public Page<epg.auction.admin.entity.AuctionComment> getAnsweredComments(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size) {
-        return auctionService.getAnsweredComments(page, size);
-    }
-
-    @GetMapping("/comments/approved")
-    public Page<epg.auction.admin.entity.AuctionComment> getApprovedComments(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size) {
-        return auctionService.getApprovedComments(page, size);
-    }
-
-    @GetMapping("/comments/cancelled")
-    public Page<epg.auction.admin.entity.AuctionComment> getCancelledComments(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size) {
-        return auctionService.getCancelledComments(page, size);
-    }
     @PostMapping("/participants/{partId}/winner")
     public ResponseEntity<?> setWinner(@PathVariable Integer partId, Authentication auth) {
         try {
@@ -246,11 +213,33 @@ public class AuctionController {
         }
     }
 
-    // =================== COMMENTS ===================
-
     @GetMapping("/{id}/comments")
     public ResponseEntity<List<AuctionComment>> getComments(@PathVariable Integer id) {
         return ResponseEntity.ok(auctionService.getCommentsByAuction(id));
+    }
+
+    @GetMapping("/comments/new")
+    public Page<AuctionComment> getNewComments(@RequestParam(defaultValue = "0") int page,
+                                               @RequestParam(defaultValue = "20") int size) {
+        return auctionService.getNewComments(page, size);
+    }
+
+    @GetMapping("/comments/answered")
+    public Page<AuctionComment> getAnsweredComments(@RequestParam(defaultValue = "0") int page,
+                                                    @RequestParam(defaultValue = "20") int size) {
+        return auctionService.getAnsweredComments(page, size);
+    }
+
+    @GetMapping("/comments/approved")
+    public Page<AuctionComment> getApprovedComments(@RequestParam(defaultValue = "0") int page,
+                                                    @RequestParam(defaultValue = "20") int size) {
+        return auctionService.getApprovedComments(page, size);
+    }
+
+    @GetMapping("/comments/cancelled")
+    public Page<AuctionComment> getCancelledComments(@RequestParam(defaultValue = "0") int page,
+                                                     @RequestParam(defaultValue = "20") int size) {
+        return auctionService.getCancelledComments(page, size);
     }
 
     @PostMapping("/comments/{commentId}/approve")
@@ -265,7 +254,8 @@ public class AuctionController {
 
     @PostMapping("/comments/{commentId}/answer")
     public ResponseEntity<?> answerComment(@PathVariable Integer commentId,
-                                           @RequestBody Map<String, String> body, Authentication auth) {
+                                           @RequestBody Map<String, String> body,
+                                           Authentication auth) {
         try {
             auctionService.answerComment(commentId, body.get("text"), auth.getName());
             return ResponseEntity.ok(Map.of("success", true));
@@ -284,11 +274,8 @@ public class AuctionController {
         }
     }
 
-    // =================== REVISIONS ===================
-
     @GetMapping("/{id}/revisions")
-    public ResponseEntity<List<epg.auction.admin.entity.AuctionRevision>> getRevisions(
-            @PathVariable Integer id) {
+    public ResponseEntity<List<AuctionRevision>> getRevisions(@PathVariable Integer id) {
         return ResponseEntity.ok(auctionRevisionRepository.findByAuctionId(id));
     }
 }

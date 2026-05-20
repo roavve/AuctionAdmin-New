@@ -3,7 +3,6 @@ package epg.auction.admin.controller;
 import epg.auction.admin.entity.*;
 import epg.auction.admin.repository.*;
 import jakarta.servlet.http.HttpServletResponse;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
@@ -18,25 +17,30 @@ import java.util.UUID;
 @RequestMapping("/api/auctions")
 public class AuctionFileController {
 
-    @Autowired private AuctionRevisionFileRepository revisionFileRepo;
-    @Autowired private AuctionInternalFileRepository internalFileRepo;
-    @Autowired private AuctionRepository auctionRepository;
+    private final AuctionRevisionFileRepository revisionFileRepo;
+    private final AuctionInternalFileRepository internalFileRepo;
+    private final AuctionRepository auctionRepository;
 
-    // =================== REVISION FILES ===================
+    public AuctionFileController(AuctionRevisionFileRepository revisionFileRepo,
+                                 AuctionInternalFileRepository internalFileRepo,
+                                 AuctionRepository auctionRepository) {
+        this.revisionFileRepo = revisionFileRepo;
+        this.internalFileRepo = internalFileRepo;
+        this.auctionRepository = auctionRepository;
+    }
 
     @GetMapping("/{auctionId}/files")
     public List<AuctionRevisionFile> getRevisionFiles(@PathVariable Integer auctionId) {
         List<AuctionRevisionFile> files = revisionFileRepo.findByAuctionId(auctionId);
-        files.forEach(f -> f.setFileData(null)); // don't send binary in list
+        files.forEach(f -> f.setFileData(null));
         return files;
     }
 
     @PostMapping("/{auctionId}/files")
-    public ResponseEntity<?> uploadRevisionFile(
-            @PathVariable Integer auctionId,
-            @RequestParam("file") MultipartFile file,
-            @RequestParam(value = "description", required = false) String description,
-            Authentication auth) {
+    public ResponseEntity<?> uploadRevisionFile(@PathVariable Integer auctionId,
+                                                @RequestParam("file") MultipartFile file,
+                                                @RequestParam(value = "description", required = false) String description,
+                                                Authentication auth) {
         try {
             Auction auction = new Auction();
             auction.setId(auctionId);
@@ -80,8 +84,6 @@ public class AuctionFileController {
         return ResponseEntity.ok(Map.of("success", true));
     }
 
-    // =================== INTERNAL FILES ===================
-
     @GetMapping("/{auctionId}/internal-files")
     public List<AuctionInternalFile> getInternalFiles(@PathVariable Integer auctionId) {
         List<AuctionInternalFile> files = internalFileRepo.findByAuctionId(auctionId);
@@ -90,11 +92,10 @@ public class AuctionFileController {
     }
 
     @PostMapping("/{auctionId}/internal-files")
-    public ResponseEntity<?> uploadInternalFile(
-            @PathVariable Integer auctionId,
-            @RequestParam("file") MultipartFile file,
-            @RequestParam(value = "description", required = false) String description,
-            Authentication auth) {
+    public ResponseEntity<?> uploadInternalFile(@PathVariable Integer auctionId,
+                                                @RequestParam("file") MultipartFile file,
+                                                @RequestParam(value = "description", required = false) String description,
+                                                Authentication auth) {
         try {
             Auction auction = new Auction();
             auction.setId(auctionId);

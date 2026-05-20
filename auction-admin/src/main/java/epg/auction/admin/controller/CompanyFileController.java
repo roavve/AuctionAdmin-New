@@ -1,10 +1,10 @@
+// CompanyFileController.java
 package epg.auction.admin.controller;
 
 import epg.auction.admin.entity.Company;
 import epg.auction.admin.entity.CompanyFile;
 import epg.auction.admin.repository.CompanyFileRepository;
 import jakarta.servlet.http.HttpServletResponse;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
@@ -19,8 +19,11 @@ import java.util.UUID;
 @RequestMapping("/api/companies")
 public class CompanyFileController {
 
-    @Autowired
-    private CompanyFileRepository companyFileRepository;
+    private final CompanyFileRepository companyFileRepository;
+
+    public CompanyFileController(CompanyFileRepository companyFileRepository) {
+        this.companyFileRepository = companyFileRepository;
+    }
 
     @GetMapping("/{companyId}/files")
     public List<CompanyFile> getFiles(@PathVariable Integer companyId) {
@@ -30,15 +33,13 @@ public class CompanyFileController {
     }
 
     @PostMapping("/{companyId}/files")
-    public ResponseEntity<?> uploadFile(
-            @PathVariable Integer companyId,
-            @RequestParam("file") MultipartFile file,
-            @RequestParam(value = "description", required = false) String description,
-            Authentication auth) {
+    public ResponseEntity<?> uploadFile(@PathVariable Integer companyId,
+                                        @RequestParam("file") MultipartFile file,
+                                        @RequestParam(value = "description", required = false) String description,
+                                        Authentication auth) {
         try {
             Company company = new Company();
             company.setId(companyId);
-
             CompanyFile cf = new CompanyFile();
             cf.setRecordKey(UUID.randomUUID().toString());
             cf.setCompany(company);
@@ -50,7 +51,6 @@ public class CompanyFileController {
             cf.setFileDate(new Date());
             cf.setFileUser(auth.getName());
             cf.setCreateUserId(auth.getName());
-
             companyFileRepository.save(cf);
             return ResponseEntity.ok(Map.of("success", true, "fileName", file.getOriginalFilename()));
         } catch (Exception e) {

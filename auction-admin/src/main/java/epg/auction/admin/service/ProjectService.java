@@ -1,10 +1,8 @@
 package epg.auction.admin.service;
 
 import epg.auction.admin.entity.AuctionProject;
-import epg.auction.admin.entity.DictionaryItem;
 import epg.auction.admin.repository.AuctionProjectRepository;
 import epg.auction.admin.repository.DictionaryItemRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -14,8 +12,14 @@ import java.util.Optional;
 @Service
 public class ProjectService {
 
-    @Autowired private AuctionProjectRepository projectRepository;
-    @Autowired private DictionaryItemRepository dictionaryItemRepository;
+    private final AuctionProjectRepository projectRepository;
+    private final DictionaryItemRepository dictionaryItemRepository;
+
+    public ProjectService(AuctionProjectRepository projectRepository,
+                          DictionaryItemRepository dictionaryItemRepository) {
+        this.projectRepository = projectRepository;
+        this.dictionaryItemRepository = dictionaryItemRepository;
+    }
 
     public List<AuctionProject> getAll() { return projectRepository.findAll(); }
 

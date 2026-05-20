@@ -4,7 +4,6 @@ import epg.auction.admin.entity.RegisterRequest;
 import epg.auction.admin.entity.RegisterRequestFile;
 import epg.auction.admin.repository.RegisterRequestFileRepository;
 import jakarta.servlet.http.HttpServletResponse;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
@@ -19,8 +18,11 @@ import java.util.UUID;
 @RequestMapping("/api/registrations")
 public class RegistrationFileController {
 
-    @Autowired
-    private RegisterRequestFileRepository fileRepository;
+    private final RegisterRequestFileRepository fileRepository;
+
+    public RegistrationFileController(RegisterRequestFileRepository fileRepository) {
+        this.fileRepository = fileRepository;
+    }
 
     @GetMapping("/{requestId}/files")
     public List<RegisterRequestFile> getFiles(@PathVariable Integer requestId) {
@@ -30,15 +32,13 @@ public class RegistrationFileController {
     }
 
     @PostMapping("/{requestId}/files")
-    public ResponseEntity<?> uploadFile(
-            @PathVariable Integer requestId,
-            @RequestParam("file") MultipartFile file,
-            @RequestParam(value = "description", required = false) String description,
-            Authentication auth) {
+    public ResponseEntity<?> uploadFile(@PathVariable Integer requestId,
+                                        @RequestParam("file") MultipartFile file,
+                                        @RequestParam(value = "description", required = false) String description,
+                                        Authentication auth) {
         try {
             RegisterRequest request = new RegisterRequest();
             request.setId(requestId);
-
             RegisterRequestFile rf = new RegisterRequestFile();
             rf.setRecordKey(UUID.randomUUID().toString());
             rf.setRequest(request);
@@ -50,7 +50,6 @@ public class RegistrationFileController {
             rf.setFileDate(new Date());
             rf.setFileUser(auth.getName());
             rf.setCreateUserId(auth.getName());
-
             fileRepository.save(rf);
             return ResponseEntity.ok(Map.of("success", true, "fileName", file.getOriginalFilename()));
         } catch (Exception e) {

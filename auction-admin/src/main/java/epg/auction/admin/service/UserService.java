@@ -3,7 +3,6 @@ package epg.auction.admin.service;
 import epg.auction.admin.entity.User;
 import epg.auction.admin.repository.DictionaryItemRepository;
 import epg.auction.admin.repository.UserRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
@@ -18,15 +17,22 @@ import java.util.UUID;
 @Service
 public class UserService {
 
-    @Autowired private UserRepository userRepository;
-    @Autowired private DictionaryItemRepository dictionaryItemRepository;
+    private final UserRepository userRepository;
+    private final DictionaryItemRepository dictionaryItemRepository;
+
+    public UserService(UserRepository userRepository,
+                       DictionaryItemRepository dictionaryItemRepository) {
+        this.userRepository = userRepository;
+        this.dictionaryItemRepository = dictionaryItemRepository;
+    }
 
     public List<User> getAll() { return userRepository.findAll(); }
 
     public Optional<User> getById(Integer id) { return userRepository.findById(id); }
 
     public Page<User> searchUsers(String email, Integer companyId,
-                                  Boolean internal, Boolean active, Boolean locked, int page, int size) {
+                                  Boolean internal, Boolean active, Boolean locked,
+                                  int page, int size) {
         return userRepository.searchUsers(email, companyId, internal, active, locked,
                 PageRequest.of(page, size));
     }

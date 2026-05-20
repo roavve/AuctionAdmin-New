@@ -2,7 +2,6 @@ package epg.auction.admin.service;
 
 import epg.auction.admin.entity.*;
 import epg.auction.admin.repository.*;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
@@ -18,17 +17,41 @@ import java.util.UUID;
 @Service
 public class AuctionService {
 
-    @Autowired private AuctionRepository auctionRepository;
-    @Autowired private AuctionBidRepository bidRepository;
-    @Autowired private AuctionInvitationRepository invitationRepository;
-    @Autowired private AuctionParticipantRepository participantRepository;
-    @Autowired private AuctionCommentRepository commentRepository;
-    @Autowired private DictionaryItemRepository dictionaryItemRepository;
-    @Autowired private SysAuditRepository sysAuditRepository;
-    @Autowired private epg.auction.admin.repository.AuctionRevisionRepository auctionRevisionRepository;
-    @Autowired private SmsService smsService;
-    @Autowired private CompanyRepository companyRepository;
-    @Autowired private EmailService emailService;
+    private final AuctionRepository auctionRepository;
+    private final AuctionBidRepository bidRepository;
+    private final AuctionInvitationRepository invitationRepository;
+    private final AuctionParticipantRepository participantRepository;
+    private final AuctionCommentRepository commentRepository;
+    private final DictionaryItemRepository dictionaryItemRepository;
+    private final SysAuditRepository sysAuditRepository;
+    private final AuctionRevisionRepository auctionRevisionRepository;
+    private final SmsService smsService;
+    private final CompanyRepository companyRepository;
+    private final EmailService emailService;
+
+    public AuctionService(AuctionRepository auctionRepository,
+                          AuctionBidRepository bidRepository,
+                          AuctionInvitationRepository invitationRepository,
+                          AuctionParticipantRepository participantRepository,
+                          AuctionCommentRepository commentRepository,
+                          DictionaryItemRepository dictionaryItemRepository,
+                          SysAuditRepository sysAuditRepository,
+                          AuctionRevisionRepository auctionRevisionRepository,
+                          SmsService smsService,
+                          CompanyRepository companyRepository,
+                          EmailService emailService) {
+        this.auctionRepository = auctionRepository;
+        this.bidRepository = bidRepository;
+        this.invitationRepository = invitationRepository;
+        this.participantRepository = participantRepository;
+        this.commentRepository = commentRepository;
+        this.dictionaryItemRepository = dictionaryItemRepository;
+        this.sysAuditRepository = sysAuditRepository;
+        this.auctionRevisionRepository = auctionRevisionRepository;
+        this.smsService = smsService;
+        this.companyRepository = companyRepository;
+        this.emailService = emailService;
+    }
 
     private DictionaryItem getStatusByKey(String key) {
         return dictionaryItemRepository.findByKey(key)
@@ -49,8 +72,6 @@ public class AuctionService {
         }
     }
 
-    // =================== AUCTION CRUD ===================
-
     public List<Auction> getAll() { return auctionRepository.findAll(); }
 
     public Optional<Auction> getById(Integer id) { return auctionRepository.findById(id); }
@@ -62,7 +83,6 @@ public class AuctionService {
     public void answerComment(Integer commentId, String text, String userId) {
         AuctionComment original = commentRepository.findById(commentId)
                 .orElseThrow(() -> new RuntimeException("Comment not found"));
-
         original.setStatus(getStatusByKey("key.coment.answered"));
         original.setModifyUserId(userId);
         commentRepository.save(original);
@@ -77,7 +97,6 @@ public class AuctionService {
         reply.setAnswerToKey(original.getRecordKey());
         reply.setCreateUserId(userId);
         commentRepository.save(reply);
-
         audit("ANSWER", "COMMENT", commentId, userId);
     }
 
@@ -88,22 +107,14 @@ public class AuctionService {
         auction.setCreateDate(new Date());
         auction.setCreateUserId(userId);
 
-        if (auction.getAuctionType() != null && auction.getAuctionType().getKey() != null) {
-            dictionaryItemRepository.findByKey(auction.getAuctionType().getKey())
-                    .ifPresent(auction::setAuctionType);
-        }
-        if (auction.getValueType() != null && auction.getValueType().getKey() != null) {
-            dictionaryItemRepository.findByKey(auction.getValueType().getKey())
-                    .ifPresent(auction::setValueType);
-        }
-        if (auction.getUom() != null && auction.getUom().getKey() != null) {
-            dictionaryItemRepository.findByKey(auction.getUom().getKey())
-                    .ifPresent(auction::setUom);
-        }
-        if (auction.getCurrency() != null && auction.getCurrency().getKey() != null) {
-            dictionaryItemRepository.findByKey(auction.getCurrency().getKey())
-                    .ifPresent(auction::setCurrency);
-        }
+        if (auction.getAuctionType() != null && auction.getAuctionType().getKey() != null)
+            dictionaryItemRepository.findByKey(auction.getAuctionType().getKey()).ifPresent(auction::setAuctionType);
+        if (auction.getValueType() != null && auction.getValueType().getKey() != null)
+            dictionaryItemRepository.findByKey(auction.getValueType().getKey()).ifPresent(auction::setValueType);
+        if (auction.getUom() != null && auction.getUom().getKey() != null)
+            dictionaryItemRepository.findByKey(auction.getUom().getKey()).ifPresent(auction::setUom);
+        if (auction.getCurrency() != null && auction.getCurrency().getKey() != null)
+            dictionaryItemRepository.findByKey(auction.getCurrency().getKey()).ifPresent(auction::setCurrency);
         if (auction.getProject() != null && auction.getProject().getId() != null) {
             AuctionProject project = new AuctionProject();
             project.setId(auction.getProject().getId());
@@ -160,22 +171,14 @@ public class AuctionService {
         original.setModifyDate(new Date());
         original.setModifyUserId(userId);
 
-        if (auction.getAuctionType() != null && auction.getAuctionType().getKey() != null) {
-            dictionaryItemRepository.findByKey(auction.getAuctionType().getKey())
-                    .ifPresent(original::setAuctionType);
-        }
-        if (auction.getValueType() != null && auction.getValueType().getKey() != null) {
-            dictionaryItemRepository.findByKey(auction.getValueType().getKey())
-                    .ifPresent(original::setValueType);
-        }
-        if (auction.getUom() != null && auction.getUom().getKey() != null) {
-            dictionaryItemRepository.findByKey(auction.getUom().getKey())
-                    .ifPresent(original::setUom);
-        }
-        if (auction.getCurrency() != null && auction.getCurrency().getKey() != null) {
-            dictionaryItemRepository.findByKey(auction.getCurrency().getKey())
-                    .ifPresent(original::setCurrency);
-        }
+        if (auction.getAuctionType() != null && auction.getAuctionType().getKey() != null)
+            dictionaryItemRepository.findByKey(auction.getAuctionType().getKey()).ifPresent(original::setAuctionType);
+        if (auction.getValueType() != null && auction.getValueType().getKey() != null)
+            dictionaryItemRepository.findByKey(auction.getValueType().getKey()).ifPresent(original::setValueType);
+        if (auction.getUom() != null && auction.getUom().getKey() != null)
+            dictionaryItemRepository.findByKey(auction.getUom().getKey()).ifPresent(original::setUom);
+        if (auction.getCurrency() != null && auction.getCurrency().getKey() != null)
+            dictionaryItemRepository.findByKey(auction.getCurrency().getKey()).ifPresent(original::setCurrency);
         if (auction.getProject() != null && auction.getProject().getId() != null) {
             AuctionProject project = new AuctionProject();
             project.setId(auction.getProject().getId());
@@ -191,9 +194,8 @@ public class AuctionService {
     public void activateAuction(Integer id, String userId) {
         Auction auction = auctionRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Auction not found"));
-        if (!auction.getStatus().getKey().equals("key.auctionStatus.draft")) {
+        if (!auction.getStatus().getKey().equals("key.auctionStatus.draft"))
             throw new RuntimeException("Auction must be in draft status");
-        }
         auction.setStatus(getStatusByKey("key.auctionStatus.active"));
         auction.setActivateDate(new Date());
         auction.setModifyUserId(userId);
@@ -205,9 +207,8 @@ public class AuctionService {
     public void cancelAuction(Integer id, String userId) {
         Auction auction = auctionRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Auction not found"));
-        if (!auction.getStatus().getKey().equals("key.auctionStatus.active")) {
+        if (!auction.getStatus().getKey().equals("key.auctionStatus.active"))
             throw new RuntimeException("Auction must be active to cancel");
-        }
         auction.setStatus(getStatusByKey("key.auctionStatus.cancelled"));
         auction.setCancelDate(new Date());
         auction.setModifyUserId(userId);
@@ -219,9 +220,8 @@ public class AuctionService {
     public void closeAuction(Integer id, String userId) {
         Auction auction = auctionRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Auction not found"));
-        if (!auction.getStatus().getKey().equals("key.auctionStatus.active")) {
+        if (!auction.getStatus().getKey().equals("key.auctionStatus.active"))
             throw new RuntimeException("Auction must be active to close");
-        }
         auction.setStatus(getStatusByKey("key.auctionStatus.completed"));
         auction.setCloseDate(new Date());
         auction.setModifyUserId(userId);
@@ -233,15 +233,12 @@ public class AuctionService {
     public void deleteDraftAuction(Integer auctionId, String userId) {
         Auction auction = auctionRepository.findById(auctionId)
                 .orElseThrow(() -> new RuntimeException("Auction not found"));
-        if (!"key.auctionStatus.draft".equals(auction.getStatus().getKey())) {
+        if (!"key.auctionStatus.draft".equals(auction.getStatus().getKey()))
             throw new RuntimeException("Only draft auctions can be deleted");
-        }
         auctionRevisionRepository.deleteByAuctionId(auctionId);
         auctionRepository.delete(auction);
         audit("DELETE", "AUCTION", auctionId, userId);
     }
-
-    // =================== MONITOR ===================
 
     public Page<Auction> findActiveAuctions(int page, int size) {
         return auctionRepository.findActiveAuctions(PageRequest.of(page, size));
@@ -266,13 +263,11 @@ public class AuctionService {
         if (startDate != null && !startDate.isEmpty()) {
             try {
                 date = new java.text.SimpleDateFormat("yyyy-MM-dd").parse(startDate);
-            } catch (Exception e) {}
+            } catch (Exception e) { /* ignore */ }
         }
         return auctionRepository.searchAuctions(statusId, projectId, rangeStart, rangeEnd,
                 date, PageRequest.of(page, size));
     }
-
-    // =================== BIDS ===================
 
     public List<AuctionBid> getBidsByAuction(Integer auctionId) {
         return bidRepository.findByAuctionId(auctionId);
@@ -298,14 +293,11 @@ public class AuctionService {
         bid.setStatus(getStatusByKey("key.bid.cancelled"));
         bid.setModifyUserId(userId);
         bidRepository.save(bid);
-
         Double lastBid = bidRepository.getLastActiveBidValue(bid.getAuction().getId());
         Auction auction = bid.getAuction();
         auction.setLastBidValue(lastBid);
         auctionRepository.save(auction);
     }
-
-    // =================== INVITATIONS ===================
 
     public List<AuctionInvitation> getInvitationsByAuction(Integer auctionId) {
         return invitationRepository.findByAuctionId(auctionId);
@@ -344,7 +336,6 @@ public class AuctionService {
     public void inviteCompanies(Integer auctionId, List<Integer> companyIds, String userId) {
         Auction auction = auctionRepository.findById(auctionId)
                 .orElseThrow(() -> new RuntimeException("Auction not found"));
-
         DictionaryItem invitedStatus = getStatusByKey("key.auctionInvitation.invited");
 
         for (Integer companyId : companyIds) {
@@ -354,11 +345,9 @@ public class AuctionService {
             AuctionInvitation invitation = new AuctionInvitation();
             invitation.setRecordKey(UUID.randomUUID().toString());
             invitation.setAuction(auction);
-
-            epg.auction.admin.entity.Company company = new epg.auction.admin.entity.Company();
+            Company company = new Company();
             company.setId(companyId);
             invitation.setCompany(company);
-
             invitation.setStatus(invitedStatus);
             invitation.setDateInvited(new Date());
             invitation.setDateSelected(new Date());
@@ -366,20 +355,15 @@ public class AuctionService {
             invitationRepository.save(invitation);
 
             try {
-                epg.auction.admin.entity.Company comp = companyRepository.findById(companyId).orElse(null);
+                Company comp = companyRepository.findById(companyId).orElse(null);
                 if (comp != null) {
                     Map<String, String> vars = new HashMap<>();
                     vars.put("auctionName", auction.getName());
                     vars.put("companyName", comp.getCompanyName());
-
-                    if (comp.getContactMobile() != null) {
-                        smsService.sendSms(comp.getContactMobile(),
-                                "You have been invited to auction: " + auction.getName());
-                    }
-                    if (comp.getContactEmail() != null) {
-                        emailService.sendTemplatedEmail(comp.getContactEmail(),
-                                "key.template.auctionInvitation", vars);
-                    }
+                    if (comp.getContactMobile() != null)
+                        smsService.sendSms(comp.getContactMobile(), "You have been invited to auction: " + auction.getName());
+                    if (comp.getContactEmail() != null)
+                        emailService.sendTemplatedEmail(comp.getContactEmail(), "key.template.auctionInvitation", vars);
                 }
             } catch (Exception e) {
                 System.err.println("Failed to send invitation notifications: " + e.getMessage());
@@ -402,11 +386,9 @@ public class AuctionService {
                 AuctionInvitation invitation = new AuctionInvitation();
                 invitation.setRecordKey(UUID.randomUUID().toString());
                 invitation.setAuction(auction);
-
-                epg.auction.admin.entity.Company company = new epg.auction.admin.entity.Company();
+                Company company = new Company();
                 company.setId(companyId);
                 invitation.setCompany(company);
-
                 invitation.setStatus(invitedStatus);
                 invitation.setDateInvited(new Date());
                 invitation.setDateSelected(new Date());
@@ -415,20 +397,15 @@ public class AuctionService {
                 count++;
 
                 try {
-                    epg.auction.admin.entity.Company comp = companyRepository.findById(companyId).orElse(null);
+                    Company comp = companyRepository.findById(companyId).orElse(null);
                     if (comp != null) {
                         Map<String, String> vars = new HashMap<>();
                         vars.put("auctionName", auction.getName());
                         vars.put("companyName", comp.getCompanyName());
-
-                        if (comp.getContactMobile() != null) {
-                            smsService.sendSms(comp.getContactMobile(),
-                                    "You have been invited to auction: " + auction.getName());
-                        }
-                        if (comp.getContactEmail() != null) {
-                            emailService.sendTemplatedEmail(comp.getContactEmail(),
-                                    "key.template.auctionInvitation", vars);
-                        }
+                        if (comp.getContactMobile() != null)
+                            smsService.sendSms(comp.getContactMobile(), "You have been invited to auction: " + auction.getName());
+                        if (comp.getContactEmail() != null)
+                            emailService.sendTemplatedEmail(comp.getContactEmail(), "key.template.auctionInvitation", vars);
                     }
                 } catch (Exception e) {
                     System.err.println("Failed to send notification: " + e.getMessage());
@@ -438,8 +415,6 @@ public class AuctionService {
         audit("INVITE_PROJECT", "PROJECT", projectId, userId);
         return count;
     }
-
-    // =================== PARTICIPANTS ===================
 
     public List<AuctionParticipant> getParticipantsByAuction(Integer auctionId) {
         return participantRepository.findByAuctionId(auctionId);
@@ -463,7 +438,6 @@ public class AuctionService {
             p.setWinner(false);
             participantRepository.save(p);
         }
-
         winner.setWinner(true);
         winner.setModifyUserId(userId);
         participantRepository.save(winner);
@@ -473,11 +447,8 @@ public class AuctionService {
             String auctionName = winner.getAuction().getName();
             String winnerPhone = winner.getCompany().getContactMobile();
             String winnerEmail = winner.getCompany().getContactEmail();
-
-            if (winnerPhone != null && !winnerPhone.isEmpty()) {
-                smsService.sendSms(winnerPhone,
-                        "Congratulations! Your company has won the auction: " + auctionName);
-            }
+            if (winnerPhone != null && !winnerPhone.isEmpty())
+                smsService.sendSms(winnerPhone, "Congratulations! Your company has won the auction: " + auctionName);
             if (winnerEmail != null && !winnerEmail.isEmpty()) {
                 Map<String, String> vars = new HashMap<>();
                 vars.put("auctionName", auctionName);
@@ -493,8 +464,6 @@ public class AuctionService {
     public void deleteParticipant(Integer id, String userId) {
         participantRepository.deleteById(id);
     }
-
-    // =================== COMMENTS ===================
 
     public List<AuctionComment> getCommentsByAuction(Integer auctionId) {
         return commentRepository.findByAuctionId(auctionId);
@@ -530,9 +499,8 @@ public class AuctionService {
     public void approveComment(Integer id, String userId) {
         AuctionComment comment = commentRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Comment not found"));
-        if (!comment.getStatus().getKey().equals("key.coment.new")) {
+        if (!comment.getStatus().getKey().equals("key.coment.new"))
             throw new RuntimeException("Comment must be new to approve");
-        }
         comment.setStatus(getStatusByKey("key.coment.approved"));
         comment.setModifyUserId(userId);
         commentRepository.save(comment);

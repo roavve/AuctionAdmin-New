@@ -2,7 +2,6 @@ package epg.auction.admin.controller;
 
 import epg.auction.admin.entity.DictionaryItem;
 import epg.auction.admin.repository.DictionaryItemRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -13,12 +12,14 @@ import java.util.Map;
 @RequestMapping("/api/dictionary")
 public class DictionaryController {
 
-    @Autowired private DictionaryItemRepository dictionaryItemRepository;
+    private final DictionaryItemRepository dictionaryItemRepository;
+
+    public DictionaryController(DictionaryItemRepository dictionaryItemRepository) {
+        this.dictionaryItemRepository = dictionaryItemRepository;
+    }
 
     @GetMapping("/items")
-    public List<DictionaryItem> getAll() {
-        return dictionaryItemRepository.findAll();
-    }
+    public List<DictionaryItem> getAll() { return dictionaryItemRepository.findAll(); }
 
     @GetMapping("/items/{id}")
     public ResponseEntity<DictionaryItem> getById(@PathVariable Integer id) {

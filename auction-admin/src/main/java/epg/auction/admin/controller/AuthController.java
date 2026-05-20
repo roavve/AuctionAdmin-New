@@ -5,25 +5,72 @@ import epg.auction.admin.entity.User;
 import epg.auction.admin.repository.UserRepository;
 import epg.auction.admin.security.JwtUtil;
 import epg.auction.admin.service.UserService;
-import org.springframework.beans.factory.annotation.Autowired;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 
 @RestController
 @RequestMapping("/auth")
 public class AuthController {
 
-    @Autowired private UserRepository userRepository;
-    @Autowired private JwtUtil jwtUtil;
+    private final UserRepository userRepository;
+    private final JwtUtil jwtUtil;
+
+    // Simple in-memory rate limiter: max 10 attempts per IP per 15 minutes
+    private final ConcurrentHashMap<String, AtomicInteger> attemptCounts = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<String, Long> lockoutTimes = new ConcurrentHashMap<>();
+    private static final int MAX_ATTEMPTS = 10;
+    private static final long LOCKOUT_DURATION_MS = 15 * 60 * 1000;
+
+    public AuthController(UserRepository userRepository, JwtUtil jwtUtil) {
+        this.userRepository = userRepository;
+        this.jwtUtil = jwtUtil;
+    }
+
+    private boolean isRateLimited(String ip) {
+        Long lockoutTime = lockoutTimes.get(ip);
+        if (lockoutTime != null) {
+            if (System.currentTimeMillis() - lockoutTime < LOCKOUT_DURATION_MS) {
+                return true;
+            } else {
+                lockoutTimes.remove(ip);
+                attemptCounts.remove(ip);
+            }
+        }
+        return false;
+    }
+
+    private void recordFailedAttempt(String ip) {
+        AtomicInteger attempts = attemptCounts.computeIfAbsent(ip, k -> new AtomicInteger(0));
+        if (attempts.incrementAndGet() >= MAX_ATTEMPTS) {
+            lockoutTimes.put(ip, System.currentTimeMillis());
+        }
+    }
+
+    private void clearAttempts(String ip) {
+        attemptCounts.remove(ip);
+        lockoutTimes.remove(ip);
+    }
 
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody LoginRequest request) {
+    public ResponseEntity<?> login(@RequestBody LoginRequest request,
+                                   HttpServletRequest httpRequest) {
+        String ip = httpRequest.getRemoteAddr();
+
+        if (isRateLimited(ip)) {
+            return ResponseEntity.status(429)
+                    .body(Map.of("error", "Too many login attempts. Please try again in 15 minutes."));
+        }
+
         Optional<User> userOpt = userRepository.findByEmail(request.getEmail());
 
         if (userOpt.isEmpty()) {
+            recordFailedAttempt(ip);
             return ResponseEntity.status(401).body(Map.of("error", "Invalid credentials"));
         }
 
@@ -31,6 +78,7 @@ public class AuthController {
         String hashedInput = UserService.hashPassword(request.getPassword());
 
         if (!hashedInput.equals(user.getPassword())) {
+            recordFailedAttempt(ip);
             return ResponseEntity.status(401).body(Map.of("error", "Invalid credentials"));
         }
 
@@ -46,6 +94,7 @@ public class AuthController {
             return ResponseEntity.status(403).body(Map.of("error", "Account is cancelled"));
         }
 
+        clearAttempts(ip);
         String token = jwtUtil.generateToken(user.getEmail(), user.getRole());
 
         return ResponseEntity.ok(Map.of(

@@ -5,19 +5,29 @@ import epg.auction.admin.repository.*;
 import jakarta.servlet.http.HttpServletResponse;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import java.text.SimpleDateFormat;
 import java.util.List;
 
 @RestController
 @RequestMapping("/api/export")
 public class ExportController {
 
-    @Autowired private AuctionRepository auctionRepository;
-    @Autowired private AuctionInvitationRepository invitationRepository;
-    @Autowired private AuctionParticipantRepository participantRepository;
-    @Autowired private AuctionBidRepository bidRepository;
+    private final AuctionRepository auctionRepository;
+    private final AuctionInvitationRepository invitationRepository;
+    private final AuctionParticipantRepository participantRepository;
+    private final AuctionBidRepository bidRepository;
+
+    public ExportController(AuctionRepository auctionRepository,
+                            AuctionInvitationRepository invitationRepository,
+                            AuctionParticipantRepository participantRepository,
+                            AuctionBidRepository bidRepository) {
+        this.auctionRepository = auctionRepository;
+        this.invitationRepository = invitationRepository;
+        this.participantRepository = participantRepository;
+        this.bidRepository = bidRepository;
+    }
 
     private CellStyle headerStyle(Workbook wb) {
         CellStyle style = wb.createCellStyle();
@@ -38,21 +48,25 @@ public class ExportController {
         }
     }
 
-    // Export #4 — Invited companies list
+    private void addInfoRow(Sheet sheet, int rowNum, String label, String value) {
+        Row row = sheet.createRow(rowNum);
+        row.createCell(0).setCellValue(label);
+        row.createCell(1).setCellValue(value);
+    }
+
     @GetMapping("/auction/{auctionId}/invitations")
     public void exportInvitations(@PathVariable Integer auctionId,
                                   HttpServletResponse response) throws Exception {
         Auction auction = auctionRepository.findById(auctionId)
                 .orElseThrow(() -> new RuntimeException("Auction not found"));
         List<AuctionInvitation> invitations = invitationRepository.findByAuctionId(auctionId);
+        SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
 
         Workbook wb = new XSSFWorkbook();
         Sheet sheet = wb.createSheet("Invited Companies");
         CellStyle hs = headerStyle(wb);
 
-        Row titleRow = sheet.createRow(0);
-        titleRow.createCell(0).setCellValue("Auction: " + auction.getName());
-
+        sheet.createRow(0).createCell(0).setCellValue("Auction: " + auction.getName());
         Row header = sheet.createRow(1);
         setHeader(header, hs, "ID", "Company Name", "Tax ID", "Contact Email",
                 "Contact Phone", "Status", "Date Invited");
@@ -66,10 +80,8 @@ public class ExportController {
             row.createCell(3).setCellValue(inv.getCompany() != null ? inv.getCompany().getContactEmail() : "");
             row.createCell(4).setCellValue(inv.getCompany() != null ? inv.getCompany().getContactPhone() : "");
             row.createCell(5).setCellValue(inv.getStatus() != null ? inv.getStatus().getName() : "");
-            row.createCell(6).setCellValue(inv.getDateInvited() != null ?
-                    new java.text.SimpleDateFormat("dd/MM/yyyy").format(inv.getDateInvited()) : "");
+            row.createCell(6).setCellValue(inv.getDateInvited() != null ? sdf.format(inv.getDateInvited()) : "");
         }
-
         for (int i = 0; i < 7; i++) sheet.autoSizeColumn(i);
 
         response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
@@ -79,7 +91,6 @@ public class ExportController {
         wb.close();
     }
 
-    // Export #3 — Participants with first and last bids + auction conditions
     @GetMapping("/auction/{auctionId}/participants")
     public void exportParticipants(@PathVariable Integer auctionId,
                                    HttpServletResponse response) throws Exception {
@@ -87,10 +98,9 @@ public class ExportController {
                 .orElseThrow(() -> new RuntimeException("Auction not found"));
         List<AuctionParticipant> participants = participantRepository.findByAuctionId(auctionId);
         List<AuctionBid> allBids = bidRepository.findByAuctionId(auctionId);
+        SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
 
         Workbook wb = new XSSFWorkbook();
-
-        // Sheet 1 - Auction conditions
         Sheet condSheet = wb.createSheet("Auction Info");
         CellStyle hs = headerStyle(wb);
         int r = 0;
@@ -103,22 +113,15 @@ public class ExportController {
         addInfoRow(condSheet, r++, "Max Bid Value", auction.getMaxBidValue() != null ? auction.getMaxBidValue().toString() : "");
         addInfoRow(condSheet, r++, "Last Bid Value", auction.getLastBidValue() != null ? auction.getLastBidValue().toString() : "");
         addInfoRow(condSheet, r++, "Currency", auction.getCurrency() != null ? auction.getCurrency().getName() : "");
-        addInfoRow(condSheet, r++, "Discuss Start", auction.getDiscussStartDate() != null ?
-                new java.text.SimpleDateFormat("dd/MM/yyyy").format(auction.getDiscussStartDate()) : "");
-        addInfoRow(condSheet, r++, "Discuss End", auction.getDiscussEndDate() != null ?
-                new java.text.SimpleDateFormat("dd/MM/yyyy").format(auction.getDiscussEndDate()) : "");
-        addInfoRow(condSheet, r++, "Auction Start", auction.getAuctionStartDate() != null ?
-                new java.text.SimpleDateFormat("dd/MM/yyyy").format(auction.getAuctionStartDate()) : "");
-        addInfoRow(condSheet, r++, "Auction End", auction.getAuctionEndDate() != null ?
-                new java.text.SimpleDateFormat("dd/MM/yyyy").format(auction.getAuctionEndDate()) : "");
-        addInfoRow(condSheet, r++, "Bid Start", auction.getBidStartDate() != null ?
-                new java.text.SimpleDateFormat("dd/MM/yyyy").format(auction.getBidStartDate()) + " " + auction.getBidStartTime() : "");
-        addInfoRow(condSheet, r++, "Bid End", auction.getBidEndDate() != null ?
-                new java.text.SimpleDateFormat("dd/MM/yyyy").format(auction.getBidEndDate()) + " " + auction.getBidEndTime() : "");
+        addInfoRow(condSheet, r++, "Discuss Start", auction.getDiscussStartDate() != null ? sdf.format(auction.getDiscussStartDate()) : "");
+        addInfoRow(condSheet, r++, "Discuss End", auction.getDiscussEndDate() != null ? sdf.format(auction.getDiscussEndDate()) : "");
+        addInfoRow(condSheet, r++, "Auction Start", auction.getAuctionStartDate() != null ? sdf.format(auction.getAuctionStartDate()) : "");
+        addInfoRow(condSheet, r++, "Auction End", auction.getAuctionEndDate() != null ? sdf.format(auction.getAuctionEndDate()) : "");
+        addInfoRow(condSheet, r++, "Bid Start", auction.getBidStartDate() != null ? sdf.format(auction.getBidStartDate()) + " " + auction.getBidStartTime() : "");
+        addInfoRow(condSheet, r++, "Bid End", auction.getBidEndDate() != null ? sdf.format(auction.getBidEndDate()) + " " + auction.getBidEndTime() : "");
         condSheet.autoSizeColumn(0);
         condSheet.autoSizeColumn(1);
 
-        // Sheet 2 - Participants with bids
         Sheet partSheet = wb.createSheet("Participants & Bids");
         Row header = partSheet.createRow(0);
         setHeader(header, hs, "Company Name", "Tax ID", "Contact Email",
@@ -128,8 +131,6 @@ public class ExportController {
         for (AuctionParticipant p : participants) {
             if (p.getCompany() == null) continue;
             Integer companyId = p.getCompany().getId();
-
-            // find first and last bids for this company
             Double firstBid = null;
             Double lastBid = null;
             int bidCount = 0;
@@ -142,7 +143,6 @@ public class ExportController {
                     lastBid = bid.getBidValue();
                 }
             }
-
             Row row = partSheet.createRow(rowNum++);
             row.createCell(0).setCellValue(p.getCompany().getCompanyName() != null ? p.getCompany().getCompanyName() : "");
             row.createCell(1).setCellValue(p.getCompany().getTaxId() != null ? p.getCompany().getTaxId() : "");
@@ -153,7 +153,6 @@ public class ExportController {
             row.createCell(6).setCellValue(lastBid != null ? lastBid : 0);
             row.createCell(7).setCellValue(bidCount);
         }
-
         for (int i = 0; i < 8; i++) partSheet.autoSizeColumn(i);
 
         response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
@@ -161,11 +160,5 @@ public class ExportController {
                 "attachment; filename=\"participants_auction_" + auctionId + ".xlsx\"");
         wb.write(response.getOutputStream());
         wb.close();
-    }
-
-    private void addInfoRow(Sheet sheet, int rowNum, String label, String value) {
-        Row row = sheet.createRow(rowNum);
-        row.createCell(0).setCellValue(label);
-        row.createCell(1).setCellValue(value);
     }
 }

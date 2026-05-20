@@ -4,7 +4,6 @@ import epg.auction.admin.entity.Auction;
 import epg.auction.admin.entity.DictionaryItem;
 import epg.auction.admin.repository.AuctionRepository;
 import epg.auction.admin.repository.DictionaryItemRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,10 +16,16 @@ import java.util.List;
 @Component
 public class AuctionScheduler {
 
-    @Autowired private AuctionRepository auctionRepository;
-    @Autowired private DictionaryItemRepository dictionaryItemRepository;
+    private final AuctionRepository auctionRepository;
+    private final DictionaryItemRepository dictionaryItemRepository;
 
-    @Scheduled(fixedDelay = 60000) // runs every 60 seconds
+    public AuctionScheduler(AuctionRepository auctionRepository,
+                            DictionaryItemRepository dictionaryItemRepository) {
+        this.auctionRepository = auctionRepository;
+        this.dictionaryItemRepository = dictionaryItemRepository;
+    }
+
+    @Scheduled(fixedDelay = 60000)
     @Transactional
     public void closeActiveAuctions() {
         try {
@@ -28,8 +33,7 @@ public class AuctionScheduler {
             if (activeAuctions == null || activeAuctions.isEmpty()) return;
 
             DictionaryItem completedStatus = dictionaryItemRepository
-                    .findByKey("key.auctionStatus.completed")
-                    .orElse(null);
+                    .findByKey("key.auctionStatus.completed").orElse(null);
             if (completedStatus == null) return;
 
             SimpleDateFormat fmt = new SimpleDateFormat("yyyy-MM-dd HH:mm");
@@ -38,12 +42,8 @@ public class AuctionScheduler {
             for (Auction auction : activeAuctions) {
                 try {
                     if (auction.getBidEndDate() == null || auction.getBidEndTime() == null) continue;
-
-                    String endDateStr = new SimpleDateFormat("yyyy-MM-dd")
-                            .format(auction.getBidEndDate());
-                    String endTimeStr = endDateStr + " " + auction.getBidEndTime();
-                    Date endTime = fmt.parse(endTimeStr);
-
+                    String endDateStr = new SimpleDateFormat("yyyy-MM-dd").format(auction.getBidEndDate());
+                    Date endTime = fmt.parse(endDateStr + " " + auction.getBidEndTime());
                     if (now.after(endTime)) {
                         auction.setStatus(completedStatus);
                         auction.setCloseDate(now);
@@ -60,7 +60,7 @@ public class AuctionScheduler {
         }
     }
 
-    @Scheduled(fixedDelay = 60000) // runs every 60 seconds
+    @Scheduled(fixedDelay = 60000)
     @Transactional
     public void updateAuctionSteps() {
         try {
@@ -100,7 +100,8 @@ public class AuctionScheduler {
 
                         if (now.after(offerStart) && now.before(offerEnd)) {
                             newStep = offerStep;
-                        } else if (auction.getDiscussStartDate() != null && now.after(auction.getDiscussStartDate())
+                        } else if (auction.getDiscussStartDate() != null
+                                && now.after(auction.getDiscussStartDate())
                                 && now.before(offerStart)) {
                             newStep = discussStep;
                         } else {

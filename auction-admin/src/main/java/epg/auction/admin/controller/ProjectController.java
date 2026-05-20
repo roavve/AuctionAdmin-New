@@ -2,7 +2,6 @@ package epg.auction.admin.controller;
 
 import epg.auction.admin.entity.AuctionProject;
 import epg.auction.admin.service.ProjectService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -13,7 +12,11 @@ import java.util.Map;
 @RequestMapping("/api/projects")
 public class ProjectController {
 
-    @Autowired private ProjectService projectService;
+    private final ProjectService projectService;
+
+    public ProjectController(ProjectService projectService) {
+        this.projectService = projectService;
+    }
 
     @GetMapping
     public List<AuctionProject> getAll() { return projectService.getAll(); }

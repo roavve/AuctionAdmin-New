@@ -11,11 +11,14 @@ import java.net.URLEncoder;
 @Service
 public class SmsService {
 
-    @Value("${sms.service.url}")
-    private String serviceUrl;
+    private final String serviceUrl;
+    private final boolean notificationsEnabled;
 
-    @Value("${app.notifications.enabled:false}")
-    private boolean notificationsEnabled;
+    public SmsService(@Value("${sms.service.url}") String serviceUrl,
+                      @Value("${app.notifications.enabled:false}") boolean notificationsEnabled) {
+        this.serviceUrl = serviceUrl;
+        this.notificationsEnabled = notificationsEnabled;
+    }
 
     public boolean sendSms(String phoneNumber, String text) {
         if (!notificationsEnabled) {
