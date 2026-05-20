@@ -16,6 +16,8 @@ import java.util.Map;
 @RequestMapping("/api/companies")
 public class CompanyController {
 
+    @Autowired private epg.auction.admin.repository.CompanyCategoryRepository companyCategoryRepository;
+    @Autowired private epg.auction.admin.repository.CategoryRepository categoryRepository;
     @Autowired private CompanyService companyService;
     @Autowired private epg.auction.admin.repository.AuctionParticipantRepository participantRepository;
     @Autowired private epg.auction.admin.repository.AuctionInvitationRepository invitationRepository;
@@ -27,6 +29,40 @@ public class CompanyController {
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
+    }
+    @GetMapping("/{id}/categories")
+    public ResponseEntity<?> getCategories(@PathVariable Integer id) {
+        return ResponseEntity.ok(companyCategoryRepository.findByCompanyId(id));
+    }
+
+    @PostMapping("/{id}/categories")
+    public ResponseEntity<?> addCategory(@PathVariable Integer id,
+                                         @RequestBody Map<String, Integer> body, Authentication auth) {
+        try {
+            epg.auction.admin.entity.CompanyCategory cc = new epg.auction.admin.entity.CompanyCategory();
+            epg.auction.admin.entity.Company company = new epg.auction.admin.entity.Company();
+            company.setId(id);
+            cc.setCompany(company);
+
+            if (body.get("categoryId") != null) {
+                categoryRepository.findById(body.get("categoryId"))
+                        .ifPresent(cc::setCategory);
+            }
+            if (body.get("subCategoryId") != null) {
+                categoryRepository.findById(body.get("subCategoryId"))
+                        .ifPresent(cc::setSubCategory);
+            }
+            cc.setCreateUserId(auth.getName());
+            return ResponseEntity.ok(companyCategoryRepository.save(cc));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    @DeleteMapping("/categories/{categoryId}")
+    public ResponseEntity<?> deleteCategory(@PathVariable Integer categoryId) {
+        companyCategoryRepository.deleteById(categoryId);
+        return ResponseEntity.ok(Map.of("success", true));
     }
     @GetMapping
     public List<Company> getAll() { return companyService.getAll(); }

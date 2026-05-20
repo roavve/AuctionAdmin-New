@@ -13,7 +13,7 @@ import BusinessIcon from '@mui/icons-material/Business';
 import PersonIcon from '@mui/icons-material/Person';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
 import HistoryIcon from '@mui/icons-material/History';
-
+import { Dialog, DialogTitle, DialogContent, DialogActions } from '@mui/material';
 const EMPTY_FORM = {
     companyName: '', taxId: '', businessDesc: '',
     phisAddress: '', legalAddress: '', webSite: '',
@@ -296,7 +296,125 @@ function AuctionInvitationsTab({ companyId, headers }) {
         </Box>
     );
 }
+function CompanyCategoriesTab({ companyId, headers }) {
+    const [categories, setCategories] = useState([]);
+    const [allCategories, setAllCategories] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [addDialog, setAddDialog] = useState(false);
+    const [form, setForm] = useState({ categoryId: '', subCategoryId: '' });
+    const [subCategories, setSubCategories] = useState([]);
 
+    const load = async () => {
+        setLoading(true);
+        try {
+            const [catRes, allCatRes] = await Promise.all([
+                fetch(`http://localhost:8080/api/companies/${companyId}/categories`, { headers })
+                    .then(r => r.json()),
+                fetch('http://localhost:8080/api/categories', { headers })
+                    .then(r => r.json()),
+            ]);
+            setCategories(catRes);
+            setAllCategories(allCatRes.filter(c => !c.parent));
+        } catch {}
+        setLoading(false);
+    };
+
+    useEffect(() => { load(); }, [companyId]);
+
+    const handleCategoryChange = async (categoryId) => {
+        setForm(f => ({ ...f, categoryId, subCategoryId: '' }));
+        try {
+            const res = await fetch('http://localhost:8080/api/categories', { headers });
+            const all = await res.json();
+            setSubCategories(all.filter(c => c.parent?.id === parseInt(categoryId)));
+        } catch {}
+    };
+
+    const handleAdd = async () => {
+        try {
+            await fetch(`http://localhost:8080/api/companies/${companyId}/categories`, {
+                method: 'POST',
+                headers: { ...headers, 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    categoryId: parseInt(form.categoryId),
+                    subCategoryId: parseInt(form.subCategoryId)
+                })
+            });
+            setAddDialog(false);
+            setForm({ categoryId: '', subCategoryId: '' });
+            load();
+        } catch {}
+    };
+
+    const handleDelete = async (id) => {
+        await fetch(`http://localhost:8080/api/companies/categories/${id}`, {
+            method: 'DELETE', headers
+        });
+        load();
+    };
+
+    const columns = [
+        { field: 'id', headerName: 'ID', width: 70 },
+        { field: 'category', headerName: 'Category', flex: 1,
+            renderCell: p => p.value?.name || '-' },
+        { field: 'subCategory', headerName: 'Sub Category', flex: 1,
+            renderCell: p => p.value?.name || '-' },
+        { field: 'actions', headerName: '', width: 100, sortable: false,
+            renderCell: p => (
+                <Button size="small" color="error"
+                        onClick={() => handleDelete(p.row.id)}>Remove</Button>
+            )}
+    ];
+
+    return (
+        <Box>
+            <Box display="flex" alignItems="center" gap={2} mb={2}>
+                <Typography variant="subtitle1" fontWeight="bold">
+                    Company Categories ({categories.length})
+                </Typography>
+                <Button variant="contained" size="small"
+                        onClick={() => setAddDialog(true)}>
+                    Add Category
+                </Button>
+            </Box>
+
+            <DataGrid rows={categories} columns={columns} autoHeight
+                      loading={loading} pageSizeOptions={[10, 20]}
+                      disableRowSelectionOnClick />
+
+            <Dialog open={addDialog} onClose={() => setAddDialog(false)} maxWidth="sm" fullWidth>
+                <DialogTitle>Add Category</DialogTitle>
+                <DialogContent>
+                    <FormControl fullWidth sx={{ mt: 1, mb: 2 }}>
+                        <InputLabel>Category</InputLabel>
+                        <Select value={form.categoryId} label="Category"
+                                onChange={e => handleCategoryChange(e.target.value)}>
+                            {allCategories.map(c => (
+                                <MenuItem key={c.id} value={c.id}>{c.name}</MenuItem>
+                            ))}
+                        </Select>
+                    </FormControl>
+                    <FormControl fullWidth disabled={!form.categoryId}>
+                        <InputLabel>Sub Category</InputLabel>
+                        <Select value={form.subCategoryId} label="Sub Category"
+                                onChange={e => setForm(f => ({ ...f, subCategoryId: e.target.value }))}>
+                            {subCategories.map(c => (
+                                <MenuItem key={c.id} value={c.id}>{c.name}</MenuItem>
+                            ))}
+                        </Select>
+                    </FormControl>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={() => setAddDialog(false)}>Cancel</Button>
+                    <Button variant="contained" onClick={handleAdd}
+                            disabled={!form.categoryId || !form.subCategoryId}>
+                        Add
+                    </Button>
+                </DialogActions>
+            </Dialog>
+        </Box>
+    );
+}
 export default function CompanyDetail() {
     const { id } = useParams();
     const navigate = useNavigate();
@@ -557,6 +675,7 @@ export default function CompanyDetail() {
                 <Tab label="Bid History" />
                 <Tab label="Project Stats" />
                 <Tab label="Auction Invitations" />
+                <Tab label="Categories" />
             </Tabs>
 
             {tab === 0 && company && (
@@ -640,6 +759,7 @@ export default function CompanyDetail() {
             {tab === 3 && <BidHistoryTab companyId={id} headers={headers} />}
             {tab === 4 && <ProjectStatsTab companyId={id} headers={headers} />}
             {tab === 5 && <AuctionInvitationsTab companyId={id} headers={headers} />}
+            {tab === 6 && <CompanyCategoriesTab companyId={id} headers={headers} />}
         </Box>
     );
 }
