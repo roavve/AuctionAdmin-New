@@ -1,2 +1,26 @@
 # Project exclude paths
 /auction-admin/target/
+
+# Build output
+auction-admin/target/
+frontend/node_modules/
+frontend/build/
+
+# Credentials
+.env
+.env.local
+*.env
+
+# IDE files
+.idea/
+*.iml
+.vscode/
+*.class
+
+# Logs
+*.log
+logs/
+
+# OS files
+.DS_Store
+Thumbs.db
