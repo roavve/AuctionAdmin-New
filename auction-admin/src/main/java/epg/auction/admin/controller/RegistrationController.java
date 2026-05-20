@@ -12,7 +12,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import jakarta.servlet.http.HttpServletResponse;
+
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -57,6 +59,7 @@ public class RegistrationController {
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
+
     @GetMapping("/{id}/policy")
     public void downloadPolicy(@PathVariable Integer id, HttpServletResponse response) {
         registerRequestRepository.findById(id).ifPresent(req -> {
@@ -73,6 +76,7 @@ public class RegistrationController {
             }
         });
     }
+
     @PostMapping("/{id}/createCompany")
     public ResponseEntity<?> approve(@PathVariable Integer id, Authentication auth) {
         return registerRequestRepository.findById(id).map(req -> {
@@ -150,16 +154,13 @@ public class RegistrationController {
                 user.setPassword(UserService.hashPassword(rawPassword));
                 userRepository.save(user);
 
-                // Send email with credentials
-                emailService.sendEmail(
-                        req.getContactEmail(),
-                        "რეგისტრაცია დადასტურებულია / Registration Approved",
-                        "<p>თქვენი რეგისტრაცია დადასტურებულია.</p>" +
-                                "<p>Your registration has been approved.</p>" +
-                                "<p>Email: " + req.getContactEmail() + "</p>" +
-                                "<p>Password: " + rawPassword + "</p>" +
-                                "<p>Company: " + req.getCompanyName() + "</p>"
-                );
+                // Send email using template
+                Map<String, String> vars = new HashMap<>();
+                vars.put("email", req.getContactEmail());
+                vars.put("password", rawPassword);
+                vars.put("companyName", req.getCompanyName());
+                emailService.sendTemplatedEmail(req.getContactEmail(),
+                        "key.template.registrationApproved", vars);
 
                 // Send SMS
                 if (req.getContactMobile() != null) {
@@ -181,6 +182,7 @@ public class RegistrationController {
             }
         }).orElse(ResponseEntity.notFound().build());
     }
+
     @PostMapping("/{id}/acceptPolicy")
     public ResponseEntity<?> acceptPolicy(@PathVariable Integer id) {
         return registerRequestRepository.findById(id).map(req -> {
@@ -189,6 +191,7 @@ public class RegistrationController {
             return ResponseEntity.ok(Map.of("success", true));
         }).orElse(ResponseEntity.notFound().build());
     }
+
     @PostMapping("/{id}/reject")
     public ResponseEntity<?> reject(@PathVariable Integer id, Authentication auth) {
         return registerRequestRepository.findById(id).map(req -> {
@@ -198,13 +201,11 @@ public class RegistrationController {
                         registerRequestRepository.save(req);
                     });
 
-            // Send rejection email
-            emailService.sendEmail(
-                    req.getContactEmail(),
-                    "რეგისტრაცია უარყოფილია / Registration Rejected",
-                    "<p>სამწუხაროდ, თქვენი რეგისტრაცია უარყოფილია.</p>" +
-                            "<p>Unfortunately, your registration has been rejected.</p>"
-            );
+            // Send rejection email using template
+            Map<String, String> vars = new HashMap<>();
+            vars.put("companyName", req.getCompanyName());
+            emailService.sendTemplatedEmail(req.getContactEmail(),
+                    "key.template.registrationRejected", vars);
 
             return ResponseEntity.ok(Map.of("success", true));
         }).orElse(ResponseEntity.notFound().build());

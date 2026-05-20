@@ -13,7 +13,8 @@ public interface AuctionInvitationRepository extends JpaRepository<AuctionInvita
 
     @Query("SELECT i FROM AuctionInvitation i WHERE i.auction.id = :auctionId")
     List<AuctionInvitation> findByAuctionId(@Param("auctionId") Integer auctionId);
-
+    @Query("SELECT i FROM AuctionInvitation i WHERE i.company.id = :companyId ORDER BY i.dateInvited DESC")
+    List<AuctionInvitation> findByCompanyId(@Param("companyId") Integer companyId);
     @Query("SELECT COUNT(i) FROM AuctionInvitation i WHERE i.auction.id = :auctionId AND i.company.id = :companyId AND i.status.key != 'key.auctionInvitation.cancelled'")
     Long countActiveInvitation(@Param("auctionId") Integer auctionId, @Param("companyId") Integer companyId);
 }

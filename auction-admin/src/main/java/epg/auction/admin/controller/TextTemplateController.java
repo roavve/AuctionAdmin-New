@@ -27,6 +27,9 @@ public class TextTemplateController {
         return textTemplateRepository.findById(id).map(t -> {
             t.setName(template.getName());
             t.setDisabled(template.getDisabled());
+            t.setSubject(template.getSubject());
+            t.setEmailBody(template.getEmailBody());
+            t.setSmsBody(template.getSmsBody());
             return ResponseEntity.ok(textTemplateRepository.save(t));
         }).orElse(ResponseEntity.notFound().build());
     }

@@ -9,7 +9,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -55,17 +57,16 @@ public class AuctionService {
 
     @Transactional
     public Auction save(Auction auction) { return auctionRepository.save(auction); }
+
     @Transactional
     public void answerComment(Integer commentId, String text, String userId) {
         AuctionComment original = commentRepository.findById(commentId)
                 .orElseThrow(() -> new RuntimeException("Comment not found"));
 
-        // Mark original as answered (not approved)
         original.setStatus(getStatusByKey("key.coment.answered"));
         original.setModifyUserId(userId);
         commentRepository.save(original);
 
-        // Create reply comment as approved
         AuctionComment reply = new AuctionComment();
         reply.setRecordKey(UUID.randomUUID().toString());
         reply.setAuction(original.getAuction());
@@ -79,9 +80,10 @@ public class AuctionService {
 
         audit("ANSWER", "COMMENT", commentId, userId);
     }
+
     @Transactional
     public Auction createAuction(Auction auction, String userId) {
-        auction.setRecordKey(java.util.UUID.randomUUID().toString());
+        auction.setRecordKey(UUID.randomUUID().toString());
         auction.setStatus(getStatusByKey("key.auctionStatus.draft"));
         auction.setCreateDate(new Date());
         auction.setCreateUserId(userId);
@@ -110,9 +112,8 @@ public class AuctionService {
 
         Auction saved = auctionRepository.save(auction);
 
-// Create initial revision #1
         AuctionRevision revision = new AuctionRevision();
-        revision.setRecordKey(java.util.UUID.randomUUID().toString());
+        revision.setRecordKey(UUID.randomUUID().toString());
         revision.setAuction(saved);
         revision.setRevisionNum(1);
         revision.setRevisionDate(new Date());
@@ -123,7 +124,8 @@ public class AuctionService {
         auctionRevisionRepository.save(revision);
 
         audit("CREATE", "AUCTION", saved.getId(), userId);
-        return saved;}
+        return saved;
+    }
 
     @Transactional
     public Auction updateAuction(Integer id, Auction auction, String userId) {
@@ -227,6 +229,18 @@ public class AuctionService {
         audit("CLOSE", "AUCTION", id, userId);
     }
 
+    @Transactional
+    public void deleteDraftAuction(Integer auctionId, String userId) {
+        Auction auction = auctionRepository.findById(auctionId)
+                .orElseThrow(() -> new RuntimeException("Auction not found"));
+        if (!"key.auctionStatus.draft".equals(auction.getStatus().getKey())) {
+            throw new RuntimeException("Only draft auctions can be deleted");
+        }
+        auctionRevisionRepository.deleteByAuctionId(auctionId);
+        auctionRepository.delete(auction);
+        audit("DELETE", "AUCTION", auctionId, userId);
+    }
+
     // =================== MONITOR ===================
 
     public Page<Auction> findActiveAuctions(int page, int size) {
@@ -276,18 +290,7 @@ public class AuctionService {
         bid.setCreateUserId(userId);
         return bidRepository.save(bid);
     }
-    @Transactional
-    public void deleteDraftAuction(Integer auctionId, String userId) {
-        Auction auction = auctionRepository.findById(auctionId)
-                .orElseThrow(() -> new RuntimeException("Auction not found"));
-        if (!"key.auctionStatus.draft".equals(auction.getStatus().getKey())) {
-            throw new RuntimeException("Only draft auctions can be deleted");
-        }
-        // Delete related records first
-        auctionRevisionRepository.deleteByAuctionId(auctionId);
-        auctionRepository.delete(auction);
-        audit("DELETE", "AUCTION", auctionId, userId);
-    }
+
     @Transactional
     public void cancelBid(Integer bidId, String userId) {
         AuctionBid bid = bidRepository.findById(bidId)
@@ -337,6 +340,105 @@ public class AuctionService {
         invitationRepository.save(inv);
     }
 
+    @Transactional
+    public void inviteCompanies(Integer auctionId, List<Integer> companyIds, String userId) {
+        Auction auction = auctionRepository.findById(auctionId)
+                .orElseThrow(() -> new RuntimeException("Auction not found"));
+
+        DictionaryItem invitedStatus = getStatusByKey("key.auctionInvitation.invited");
+
+        for (Integer companyId : companyIds) {
+            Long existing = invitationRepository.countActiveInvitation(auctionId, companyId);
+            if (existing > 0) continue;
+
+            AuctionInvitation invitation = new AuctionInvitation();
+            invitation.setRecordKey(UUID.randomUUID().toString());
+            invitation.setAuction(auction);
+
+            epg.auction.admin.entity.Company company = new epg.auction.admin.entity.Company();
+            company.setId(companyId);
+            invitation.setCompany(company);
+
+            invitation.setStatus(invitedStatus);
+            invitation.setDateInvited(new Date());
+            invitation.setDateSelected(new Date());
+            invitation.setCreateUserId(userId);
+            invitationRepository.save(invitation);
+
+            try {
+                epg.auction.admin.entity.Company comp = companyRepository.findById(companyId).orElse(null);
+                if (comp != null) {
+                    Map<String, String> vars = new HashMap<>();
+                    vars.put("auctionName", auction.getName());
+                    vars.put("companyName", comp.getCompanyName());
+
+                    if (comp.getContactMobile() != null) {
+                        smsService.sendSms(comp.getContactMobile(),
+                                "You have been invited to auction: " + auction.getName());
+                    }
+                    if (comp.getContactEmail() != null) {
+                        emailService.sendTemplatedEmail(comp.getContactEmail(),
+                                "key.template.auctionInvitation", vars);
+                    }
+                }
+            } catch (Exception e) {
+                System.err.println("Failed to send invitation notifications: " + e.getMessage());
+            }
+        }
+        audit("INVITE", "AUCTION", auctionId, userId);
+    }
+
+    @Transactional
+    public int inviteCompaniesToProject(Integer projectId, List<Integer> companyIds, String userId) {
+        List<Auction> activeAuctions = auctionRepository.findActiveAuctionsByProject(projectId);
+        DictionaryItem invitedStatus = getStatusByKey("key.auctionInvitation.invited");
+        int count = 0;
+
+        for (Auction auction : activeAuctions) {
+            for (Integer companyId : companyIds) {
+                Long existing = invitationRepository.countActiveInvitation(auction.getId(), companyId);
+                if (existing > 0) continue;
+
+                AuctionInvitation invitation = new AuctionInvitation();
+                invitation.setRecordKey(UUID.randomUUID().toString());
+                invitation.setAuction(auction);
+
+                epg.auction.admin.entity.Company company = new epg.auction.admin.entity.Company();
+                company.setId(companyId);
+                invitation.setCompany(company);
+
+                invitation.setStatus(invitedStatus);
+                invitation.setDateInvited(new Date());
+                invitation.setDateSelected(new Date());
+                invitation.setCreateUserId(userId);
+                invitationRepository.save(invitation);
+                count++;
+
+                try {
+                    epg.auction.admin.entity.Company comp = companyRepository.findById(companyId).orElse(null);
+                    if (comp != null) {
+                        Map<String, String> vars = new HashMap<>();
+                        vars.put("auctionName", auction.getName());
+                        vars.put("companyName", comp.getCompanyName());
+
+                        if (comp.getContactMobile() != null) {
+                            smsService.sendSms(comp.getContactMobile(),
+                                    "You have been invited to auction: " + auction.getName());
+                        }
+                        if (comp.getContactEmail() != null) {
+                            emailService.sendTemplatedEmail(comp.getContactEmail(),
+                                    "key.template.auctionInvitation", vars);
+                        }
+                    }
+                } catch (Exception e) {
+                    System.err.println("Failed to send notification: " + e.getMessage());
+                }
+            }
+        }
+        audit("INVITE_PROJECT", "PROJECT", projectId, userId);
+        return count;
+    }
+
     // =================== PARTICIPANTS ===================
 
     public List<AuctionParticipant> getParticipantsByAuction(Integer auctionId) {
@@ -367,7 +469,6 @@ public class AuctionService {
         participantRepository.save(winner);
         audit("SET_WINNER", "PARTICIPANT", participantId, userId);
 
-        // Send SMS and email to winner
         try {
             String auctionName = winner.getAuction().getName();
             String winnerPhone = winner.getCompany().getContactMobile();
@@ -378,26 +479,13 @@ public class AuctionService {
                         "Congratulations! Your company has won the auction: " + auctionName);
             }
             if (winnerEmail != null && !winnerEmail.isEmpty()) {
-                emailService.sendEmail(
-                        winnerEmail,
-                        "გილოცავთ / Congratulations",
-                        "<p>გილოცავთ! თქვენი კომპანია გაიმარჯვა აუქციონზე: <b>" + auctionName + "</b></p>" +
-                                "<p>Congratulations! Your company has won the auction: <b>" + auctionName + "</b></p>"
-                );
+                Map<String, String> vars = new HashMap<>();
+                vars.put("auctionName", auctionName);
+                vars.put("companyName", winner.getCompany().getCompanyName());
+                emailService.sendTemplatedEmail(winnerEmail, "key.template.auctionActivated", vars);
             }
         } catch (Exception e) {
             System.err.println("Failed to send winner notifications: " + e.getMessage());
-        }
-
-        // Send SMS to winner
-        try {
-            String winnerPhone = winner.getCompany().getContactMobile();
-            if (winnerPhone != null && !winnerPhone.isEmpty()) {
-                String auctionName = winner.getAuction().getName();
-                smsService.sendSms(winnerPhone, "Congratulations! Your company has won the auction: " + auctionName);
-            }
-        } catch (Exception e) {
-            System.err.println("Failed to send winner SMS: " + e.getMessage());
         }
     }
 
@@ -460,99 +548,4 @@ public class AuctionService {
         commentRepository.save(comment);
         audit("CANCEL", "COMMENT", id, userId);
     }
-    @Transactional
-    public void inviteCompanies(Integer auctionId, List<Integer> companyIds, String userId) {
-        Auction auction = auctionRepository.findById(auctionId)
-                .orElseThrow(() -> new RuntimeException("Auction not found"));
-
-        DictionaryItem invitedStatus = getStatusByKey("key.auctionInvitation.invited");
-
-        for (Integer companyId : companyIds) {
-            Long existing = invitationRepository.countActiveInvitation(auctionId, companyId);
-            if (existing > 0) continue;
-
-            AuctionInvitation invitation = new AuctionInvitation();
-            invitation.setRecordKey(java.util.UUID.randomUUID().toString());
-            invitation.setAuction(auction);
-
-            epg.auction.admin.entity.Company company = new epg.auction.admin.entity.Company();
-            company.setId(companyId);
-            invitation.setCompany(company);
-
-            invitation.setStatus(invitedStatus);
-            invitation.setDateInvited(new java.util.Date());
-            invitation.setDateSelected(new java.util.Date());
-            invitation.setCreateUserId(userId);
-            invitationRepository.save(invitation);
-
-            // Send SMS and email invitation
-            try {
-                epg.auction.admin.entity.Company comp = companyRepository.findById(companyId).orElse(null);
-                if (comp != null) {
-                    if (comp.getContactMobile() != null) {
-                        smsService.sendSms(comp.getContactMobile(),
-                                "You have been invited to auction: " + auction.getName());
-                    }
-                    if (comp.getContactEmail() != null) {
-                        emailService.sendEmail(
-                                comp.getContactEmail(),
-                                "მოწვევა აუქციონზე / Auction Invitation",
-                                "<p>თქვენ მოწვეული ხართ აუქციონზე: <b>" + auction.getName() + "</b></p>" +
-                                        "<p>You have been invited to auction: <b>" + auction.getName() + "</b></p>"
-                        );
-                    }
-                }
-            } catch (Exception e) {
-                System.err.println("Failed to send invitation notifications: " + e.getMessage());
-            }
-        }
-        audit("INVITE", "AUCTION", auctionId, userId);
-    }
-    @Transactional
-    public int inviteCompaniesToProject(Integer projectId, List<Integer> companyIds, String userId) {
-        List<Auction> activeAuctions = auctionRepository.findActiveAuctionsByProject(projectId);
-        DictionaryItem invitedStatus = getStatusByKey("key.auctionInvitation.invited");
-        int count = 0;
-
-        for (Auction auction : activeAuctions) {
-            for (Integer companyId : companyIds) {
-                Long existing = invitationRepository.countActiveInvitation(auction.getId(), companyId);
-                if (existing > 0) continue;
-
-                AuctionInvitation invitation = new AuctionInvitation();
-                invitation.setRecordKey(java.util.UUID.randomUUID().toString());
-                invitation.setAuction(auction);
-
-                epg.auction.admin.entity.Company company = new epg.auction.admin.entity.Company();
-                company.setId(companyId);
-                invitation.setCompany(company);
-
-                invitation.setStatus(invitedStatus);
-                invitation.setDateInvited(new java.util.Date());
-                invitation.setDateSelected(new java.util.Date());
-                invitation.setCreateUserId(userId);
-                invitationRepository.save(invitation);
-                count++;
-
-                // Send SMS and email
-                try {
-                    epg.auction.admin.entity.Company comp = companyRepository.findById(companyId).orElse(null);
-                    if (comp != null) {
-                        if (comp.getContactMobile() != null) {
-                            smsService.sendSms(comp.getContactMobile(),
-                                    "You have been invited to project auctions: " + auction.getName());
-                        }
-                        if (comp.getContactEmail() != null) {
-                            emailService.sendEmail(comp.getContactEmail(),
-                                    "მოწვევა პროექტის აუქციონზე / Project Auction Invitation",
-                                    "<p>You have been invited to auction: <b>" + auction.getName() + "</b></p>");
-                        }
-                    }
-                } catch (Exception e) {
-                    System.err.println("Failed to send notification: " + e.getMessage());
-                }
-            }
-        }
-        audit("INVITE_PROJECT", "PROJECT", projectId, userId);
-        return count;
-    }}
+}

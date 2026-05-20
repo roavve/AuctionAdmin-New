@@ -61,6 +61,12 @@ public class Company extends MainEntity implements Serializable {
     @Column(name = "FLOW_DATE_CREATED")
     private Date flowDateCreated;
 
+    @Column(name = "FLOW_DATE_INVITED")
+    private Date flowDateInvited;
+
+    @Column(name = "FLOW_DATE_REGISTERED")
+    private Date flowDateRegistered;
+
     @Column(name = "FLOW_DATE_ACTIVATED")
     private Date flowDateActivated;
 
@@ -70,8 +76,14 @@ public class Company extends MainEntity implements Serializable {
     @Column(name = "FLOW_CREATED_BY")
     private String flowCreatedBy;
 
+    @Column(name = "FLOW_INVITED_BY")
+    private String flowInvitedBy;
+
     @Column(name = "FLOW_CANCELLED_BY")
     private String flowCancelledBy;
+
+    @Column(name = "ADMIN_USER")
+    private String adminUser;
 
     @Column(name = "CONTACT_EMAIL")
     private String contactEmail;
@@ -129,14 +141,22 @@ public class Company extends MainEntity implements Serializable {
     public void setNote(String note) { this.note = note; }
     public Date getFlowDateCreated() { return flowDateCreated; }
     public void setFlowDateCreated(Date flowDateCreated) { this.flowDateCreated = flowDateCreated; }
+    public Date getFlowDateInvited() { return flowDateInvited; }
+    public void setFlowDateInvited(Date flowDateInvited) { this.flowDateInvited = flowDateInvited; }
+    public Date getFlowDateRegistered() { return flowDateRegistered; }
+    public void setFlowDateRegistered(Date flowDateRegistered) { this.flowDateRegistered = flowDateRegistered; }
     public Date getFlowDateActivated() { return flowDateActivated; }
     public void setFlowDateActivated(Date flowDateActivated) { this.flowDateActivated = flowDateActivated; }
     public Date getFlowDateCancelled() { return flowDateCancelled; }
     public void setFlowDateCancelled(Date flowDateCancelled) { this.flowDateCancelled = flowDateCancelled; }
     public String getFlowCreatedBy() { return flowCreatedBy; }
     public void setFlowCreatedBy(String flowCreatedBy) { this.flowCreatedBy = flowCreatedBy; }
+    public String getFlowInvitedBy() { return flowInvitedBy; }
+    public void setFlowInvitedBy(String flowInvitedBy) { this.flowInvitedBy = flowInvitedBy; }
     public String getFlowCancelledBy() { return flowCancelledBy; }
     public void setFlowCancelledBy(String flowCancelledBy) { this.flowCancelledBy = flowCancelledBy; }
+    public String getAdminUser() { return adminUser; }
+    public void setAdminUser(String adminUser) { this.adminUser = adminUser; }
     public String getContactEmail() { return contactEmail; }
     public void setContactEmail(String contactEmail) { this.contactEmail = contactEmail; }
     public String getContactPhone() { return contactPhone; }

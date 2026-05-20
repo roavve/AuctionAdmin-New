@@ -4,11 +4,15 @@ import { companyApi } from '../api/companies';
 import {
     Box, Typography, Button, Chip, Paper, Grid,
     CircularProgress, Alert, TextField, MenuItem,
-    Select, FormControl, InputLabel, Tabs, Tab
+    Select, FormControl, InputLabel, Tabs, Tab, Divider
 } from '@mui/material';
 import { DataGrid } from '@mui/x-data-grid';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import SaveIcon from '@mui/icons-material/Save';
+import BusinessIcon from '@mui/icons-material/Business';
+import PersonIcon from '@mui/icons-material/Person';
+import LocationOnIcon from '@mui/icons-material/LocationOn';
+import HistoryIcon from '@mui/icons-material/History';
 
 const EMPTY_FORM = {
     companyName: '', taxId: '', businessDesc: '',
@@ -20,13 +24,33 @@ const EMPTY_FORM = {
     type: null, category: null,
 };
 
+function SectionTitle({ icon, title }) {
+    return (
+        <Box display="flex" alignItems="center" gap={1} mb={2}>
+            {icon}
+            <Typography variant="subtitle1" fontWeight="700" color="primary.main">
+                {title}
+            </Typography>
+            <Divider sx={{ flex: 1, ml: 1 }} />
+        </Box>
+    );
+}
+
 function InfoRow({ label, value }) {
     return (
-        <Box display="flex" py={0.5}>
-            <Typography variant="body2" color="text.secondary" sx={{ width: 200, flexShrink: 0 }}>
+        <Box display="flex" alignItems="flex-start" py={0.6}>
+            <Typography variant="body2" sx={{
+                width: 160, flexShrink: 0, color: 'text.secondary',
+                fontWeight: 500, fontSize: '0.78rem', pt: 0.1
+            }}>
                 {label}
             </Typography>
-            <Typography variant="body2">{value ?? '-'}</Typography>
+            <Typography variant="body2" sx={{
+                fontWeight: 400, wordBreak: 'break-word',
+                color: value && value !== '-' ? 'text.primary' : 'text.disabled'
+            }}>
+                {value ?? '-'}
+            </Typography>
         </Box>
     );
 }
@@ -141,6 +165,7 @@ function CompanyForm({ initial, categories, companyTypes, onSave, onCancel, savi
         </Paper>
     );
 }
+
 function BidHistoryTab({ companyId, headers }) {
     const [history, setHistory] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -179,7 +204,7 @@ function BidHistoryTab({ companyId, headers }) {
 
     return (
         <Box>
-            <Typography variant="subtitle1" mb={2}>
+            <Typography variant="subtitle1" mb={2} fontWeight="bold">
                 Bid History ({history.length} auctions participated)
             </Typography>
             <DataGrid rows={history} columns={columns} autoHeight
@@ -188,6 +213,90 @@ function BidHistoryTab({ companyId, headers }) {
         </Box>
     );
 }
+
+function ProjectStatsTab({ companyId, headers }) {
+    const [stats, setStats] = useState([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        fetch(`http://localhost:8080/api/companies/${companyId}/project-stats`, { headers })
+            .then(r => r.json())
+            .then(data => { setStats(data); setLoading(false); })
+            .catch(() => setLoading(false));
+    }, [companyId]);
+
+    const columns = [
+        { field: 'projectId', headerName: 'ID', width: 70 },
+        { field: 'projectName', headerName: 'Project', flex: 1 },
+        { field: 'auctionCount', headerName: 'Total Auctions', width: 130 },
+        { field: 'wonCount', headerName: 'Won', width: 90,
+            renderCell: p => <Chip label={p.value} color="success" size="small" /> },
+        { field: 'lostCount', headerName: 'Lost', width: 90,
+            renderCell: p => <Chip label={p.value} color="error" size="small" /> },
+        { field: 'winRate', headerName: 'Win Rate', width: 110,
+            valueGetter: (value, row) => row.auctionCount > 0
+                ? ((row.wonCount / row.auctionCount) * 100).toFixed(1) + '%'
+                : '0%' },
+    ];
+
+    return (
+        <Box>
+            <Typography variant="subtitle1" mb={2} fontWeight="bold">
+                Project Statistics ({stats.length} projects participated)
+            </Typography>
+            <DataGrid
+                rows={stats}
+                getRowId={row => row.projectId}
+                columns={columns}
+                autoHeight
+                loading={loading}
+                pageSizeOptions={[10, 20]}
+                disableRowSelectionOnClick
+            />
+        </Box>
+    );
+}
+
+function AuctionInvitationsTab({ companyId, headers }) {
+    const [invitations, setInvitations] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const navigate = useNavigate();
+
+    useEffect(() => {
+        fetch(`http://localhost:8080/api/companies/${companyId}/invitations`, { headers })
+            .then(r => r.json())
+            .then(data => { setInvitations(data); setLoading(false); })
+            .catch(() => setLoading(false));
+    }, [companyId]);
+
+    const columns = [
+        { field: 'id', headerName: 'ID', width: 70 },
+        { field: 'auction', headerName: 'Auction', flex: 1,
+            renderCell: p => (
+                <Button size="small" onClick={() => navigate(`/auctions/${p.value?.id}`)}>
+                    {p.value?.name || '-'}
+                </Button>
+            )},
+        { field: 'status', headerName: 'Status', width: 130,
+            renderCell: p => <Chip label={p.value?.name || ''} size="small" /> },
+        { field: 'dateInvited', headerName: 'Date Invited', width: 160,
+            renderCell: p => p.value ? new Date(p.value).toLocaleDateString() : '-' },
+        { field: 'dateAccepted', headerName: 'Date Accepted', width: 160,
+            renderCell: p => p.value ? new Date(p.value).toLocaleDateString() : '-' },
+    ];
+
+    return (
+        <Box>
+            <Typography variant="subtitle1" mb={2} fontWeight="bold">
+                Auction Invitations ({invitations.length})
+            </Typography>
+            <DataGrid rows={invitations} columns={columns} autoHeight
+                      loading={loading} pageSizeOptions={[10, 20]}
+                      disableRowSelectionOnClick />
+        </Box>
+    );
+}
+
 export default function CompanyDetail() {
     const { id } = useParams();
     const navigate = useNavigate();
@@ -284,6 +393,7 @@ export default function CompanyDetail() {
             setActionMsg('Action failed');
         }
     };
+
     const handleInvite = async () => {
         try {
             await fetch(`http://localhost:8080/api/companies/${id}/invite`, {
@@ -295,6 +405,7 @@ export default function CompanyDetail() {
             setActionMsg('Invite failed');
         }
     };
+
     const downloadFile = async (url, fileName) => {
         try {
             const res = await fetch(url, { headers });
@@ -332,6 +443,8 @@ export default function CompanyDetail() {
             e.target.value = '';
         }
     };
+
+    const fmt = (date) => date ? new Date(date).toLocaleDateString() : '-';
 
     const userColumns = [
         { field: 'id', headerName: 'ID', width: 70 },
@@ -410,62 +523,95 @@ export default function CompanyDetail() {
 
     return (
         <Box>
-            <Box display="flex" alignItems="center" mb={2} gap={2}>
-                <Button startIcon={<ArrowBackIcon />} onClick={() => navigate('/companies')}>Back</Button>
-                <Typography variant="h5" sx={{ flexGrow: 1 }}>{company?.companyName}</Typography>
-                {company && <Chip label={company.status?.name || ''} size="small" />}
-                <Button variant="outlined" onClick={() => setEditing(true)}>Edit</Button>
-                {company && company.status?.key === 'key.companyStatus.created' && (
-                    <Button variant="contained" color="primary" onClick={handleInvite}>
-                        Invite Company
-                    </Button>
-                )}
-                {company && company.status?.key !== 'key.companyStatus.cancelled' && (
-                    <Button variant="contained" color="error" onClick={handleCancel}>Cancel Company</Button>
-                )}
+            {/* Header Banner */}
+            <Box display="flex" alignItems="center" gap={2} mb={2} flexWrap="wrap">
+                <Button startIcon={<ArrowBackIcon />} onClick={() => navigate('/companies')} variant="outlined">
+                    Back
+                </Button>
+                <Box sx={{ flexGrow: 1 }}>
+                    <Typography variant="h5" fontWeight="700">{company?.companyName}</Typography>
+                    <Box display="flex" gap={1} mt={0.5} flexWrap="wrap">
+                        <Chip label={company?.status?.name || 'Unknown'} size="small" color="primary" />
+                        {company?.taxId && <Chip label={`Tax ID: ${company.taxId}`} size="small" variant="outlined" />}
+                        {company?.category && <Chip label={company.category.name} size="small" variant="outlined" />}
+                    </Box>
+                </Box>
+                <Box display="flex" gap={1}>
+                    <Button variant="outlined" onClick={() => setEditing(true)}>Edit</Button>
+                    {company?.status?.key === 'key.companyStatus.created' && (
+                        <Button variant="contained" color="success" onClick={handleInvite}>Invite</Button>
+                    )}
+                    {company?.status?.key !== 'key.companyStatus.cancelled' && (
+                        <Button variant="contained" color="error" onClick={handleCancel}>Cancel</Button>
+                    )}
+                </Box>
             </Box>
 
             {actionMsg && <Alert severity="info" sx={{ mb: 2 }} onClose={() => setActionMsg('')}>{actionMsg}</Alert>}
 
-            <Tabs value={tab} onChange={(_, v) => setTab(v)} sx={{ mb: 2 }}>
+            <Tabs value={tab} onChange={(_, v) => setTab(v)} sx={{ mb: 2 }}
+                  variant="scrollable" scrollButtons="auto">
                 <Tab label="Details" />
                 <Tab label="Users" />
                 <Tab label="Files" />
                 <Tab label="Bid History" />
+                <Tab label="Project Stats" />
+                <Tab label="Auction Invitations" />
             </Tabs>
 
             {tab === 0 && company && (
-                <Paper sx={{ p: 3 }}>
-                    <Grid container spacing={3}>
-                        <Grid size={{ xs: 12, md: 6 }}>
-                            <Typography variant="subtitle1" fontWeight="bold" mb={1}>Company Info</Typography>
+                <Grid container spacing={2}>
+                    <Grid size={{ xs: 12, md: 4 }}>
+                        <Paper sx={{ p: 2.5, height: '100%' }}>
+                            <SectionTitle icon={<BusinessIcon color="primary" fontSize="small" />} title="Company Info" />
                             <InfoRow label="ID" value={company.id} />
                             <InfoRow label="Company Name" value={company.companyName} />
                             <InfoRow label="Tax ID" value={company.taxId} />
                             <InfoRow label="Type" value={company.type?.name} />
                             <InfoRow label="Status" value={company.status?.name} />
                             <InfoRow label="Category" value={company.category?.name} />
+                            <InfoRow label="Sub Category" value={company.subCategory?.name} />
                             <InfoRow label="VAT Payer" value={company.vatPayer ? 'Yes' : 'No'} />
                             <InfoRow label="Website" value={company.webSite} />
                             <InfoRow label="Business Desc" value={company.businessDesc} />
                             <InfoRow label="Note" value={company.note} />
-                        </Grid>
-                        <Grid size={{ xs: 12, md: 6 }}>
-                            <Typography variant="subtitle1" fontWeight="bold" mb={1}>Contact</Typography>
-                            <InfoRow label="Contact Name" value={company.contactName} />
-                            <InfoRow label="Contact Surname" value={company.contactSurname} />
-                            <InfoRow label="Contact Position" value={company.contactPosition} />
+                        </Paper>
+                    </Grid>
+
+                    <Grid size={{ xs: 12, md: 4 }}>
+                        <Paper sx={{ p: 2.5, mb: 2 }}>
+                            <SectionTitle icon={<PersonIcon color="primary" fontSize="small" />} title="Contact" />
+                            <InfoRow label="Name" value={`${company.contactName || ''} ${company.contactSurname || ''}`.trim() || '-'} />
+                            <InfoRow label="Position" value={company.contactPosition} />
                             <InfoRow label="Email" value={company.contactEmail} />
                             <InfoRow label="Phone" value={company.contactPhone} />
                             <InfoRow label="Mobile" value={company.contactMobile} />
-                            <Typography variant="subtitle1" fontWeight="bold" mb={1} mt={2}>Address & Banking</Typography>
+                        </Paper>
+                        <Paper sx={{ p: 2.5 }}>
+                            <SectionTitle icon={<LocationOnIcon color="primary" fontSize="small" />} title="Address & Banking" />
                             <InfoRow label="Physical Address" value={company.phisAddress} />
                             <InfoRow label="Legal Address" value={company.legalAddress} />
                             <InfoRow label="Bank Code" value={company.bankCode1} />
                             <InfoRow label="Bank Account" value={company.bankAccount1} />
-                        </Grid>
+                        </Paper>
                     </Grid>
-                </Paper>
+
+                    <Grid size={{ xs: 12, md: 4 }}>
+                        <Paper sx={{ p: 2.5, height: '100%' }}>
+                            <SectionTitle icon={<HistoryIcon color="primary" fontSize="small" />} title="Dates & History" />
+                            <InfoRow label="Created By" value={company.flowCreatedBy} />
+                            <InfoRow label="Admin User" value={company.adminUser} />
+                            <InfoRow label="Create Date" value={fmt(company.flowDateCreated)} />
+                            <InfoRow label="Invite Date" value={fmt(company.flowDateInvited)} />
+                            <InfoRow label="Invited By" value={company.flowInvitedBy} />
+                            <InfoRow label="Register Date" value={fmt(company.flowDateRegistered)} />
+                            <InfoRow label="Activation Date" value={fmt(company.flowDateActivated)} />
+                            <InfoRow label="Cancel Date" value={fmt(company.flowDateCancelled)} />
+                            <InfoRow label="Cancelled By" value={company.flowCancelledBy} />
+                            <InfoRow label="Request ID" value={company.fromReqId} />
+                        </Paper>
+                    </Grid>
+                </Grid>
             )}
 
             {tab === 1 && (
@@ -475,7 +621,7 @@ export default function CompanyDetail() {
 
             {tab === 2 && (
                 <Box>
-                    <Box mb={2} display="flex" gap={2} alignItems="center" flexWrap="wrap">
+                    <Box mb={2} display="flex" gap={2} alignItems="center">
                         <Typography variant="subtitle1">Company Files</Typography>
                         <TextField size="small" label="Description (optional)"
                                    value={fileDescription}
@@ -490,10 +636,10 @@ export default function CompanyDetail() {
                               pageSizeOptions={[10, 20]} disableRowSelectionOnClick />
                 </Box>
             )}
-            {tab === 3 && (
-                <BidHistoryTab companyId={id} headers={headers} />
-            )}
 
+            {tab === 3 && <BidHistoryTab companyId={id} headers={headers} />}
+            {tab === 4 && <ProjectStatsTab companyId={id} headers={headers} />}
+            {tab === 5 && <AuctionInvitationsTab companyId={id} headers={headers} />}
         </Box>
     );
 }

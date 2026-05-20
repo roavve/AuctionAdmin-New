@@ -7,11 +7,16 @@ import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 
+import java.util.Map;
+
 @Service
 public class EmailService {
 
     @Autowired
     private JavaMailSender mailSender;
+
+    @Autowired
+    private epg.auction.admin.repository.TextTemplateRepository templateRepository;
 
     @Value("${app.notifications.enabled:false}")
     private boolean notificationsEnabled;
@@ -35,5 +40,35 @@ public class EmailService {
             System.err.println("Email failed to: " + to + " - " + e.getMessage());
             return false;
         }
+    }
+
+    public String processTemplate(String templateKey, Map<String, String> vars) {
+        return templateRepository.findByTkey(templateKey).map(t -> {
+            String body = t.getEmailBody() != null ? t.getEmailBody() : "";
+            for (Map.Entry<String, String> entry : vars.entrySet()) {
+                body = body.replace("{" + entry.getKey() + "}", entry.getValue() != null ? entry.getValue() : "");
+            }
+            return body;
+        }).orElse("");
+    }
+
+    public String processSubject(String templateKey, Map<String, String> vars) {
+        return templateRepository.findByTkey(templateKey).map(t -> {
+            String subject = t.getSubject() != null ? t.getSubject() : "";
+            for (Map.Entry<String, String> entry : vars.entrySet()) {
+                subject = subject.replace("{" + entry.getKey() + "}", entry.getValue() != null ? entry.getValue() : "");
+            }
+            return subject;
+        }).orElse("");
+    }
+
+    public boolean sendTemplatedEmail(String to, String templateKey, Map<String, String> vars) {
+        String subject = processSubject(templateKey, vars);
+        String body = processTemplate(templateKey, vars);
+        if (subject.isEmpty() && body.isEmpty()) {
+            System.err.println("Template not found: " + templateKey);
+            return false;
+        }
+        return sendEmail(to, subject, body);
     }
 }

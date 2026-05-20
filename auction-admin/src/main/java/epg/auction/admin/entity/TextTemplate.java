@@ -19,6 +19,15 @@ public class TextTemplate extends MainEntity {
     @Column(name = "disabled")
     private Boolean disabled;
 
+    @Column(name = "subject")
+    private String subject;
+
+    @Column(name = "email_body", columnDefinition = "NVARCHAR(MAX)")
+    private String emailBody;
+
+    @Column(name = "sms_body", columnDefinition = "NVARCHAR(4000)")
+    private String smsBody;
+
     public Integer getId() { return id; }
     public void setId(Integer id) { this.id = id; }
     public String getName() { return name; }
@@ -27,4 +36,10 @@ public class TextTemplate extends MainEntity {
     public void setTkey(String tkey) { this.tkey = tkey; }
     public Boolean getDisabled() { return disabled; }
     public void setDisabled(Boolean disabled) { this.disabled = disabled; }
+    public String getSubject() { return subject; }
+    public void setSubject(String subject) { this.subject = subject; }
+    public String getEmailBody() { return emailBody; }
+    public void setEmailBody(String emailBody) { this.emailBody = emailBody; }
+    public String getSmsBody() { return smsBody; }
+    public void setSmsBody(String smsBody) { this.smsBody = smsBody; }
 }

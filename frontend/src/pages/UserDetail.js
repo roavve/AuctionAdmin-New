@@ -6,18 +6,39 @@ import {
     CircularProgress, Alert, TextField, Dialog,
     DialogTitle, DialogContent, DialogActions,
     FormControl, InputLabel, Select, MenuItem,
-    FormControlLabel, Switch
+    FormControlLabel, Switch, Divider
 } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import SaveIcon from '@mui/icons-material/Save';
+import PersonIcon from '@mui/icons-material/Person';
+import ContactMailIcon from '@mui/icons-material/ContactMail';
+import HistoryIcon from '@mui/icons-material/History';
+
+function SectionTitle({ icon, title }) {
+    return (
+        <Box display="flex" alignItems="center" gap={1} mb={2}>
+            {icon}
+            <Typography variant="subtitle1" fontWeight="700" color="primary.main">{title}</Typography>
+            <Divider sx={{ flex: 1, ml: 1 }} />
+        </Box>
+    );
+}
 
 function InfoRow({ label, value }) {
     return (
-        <Box display="flex" py={0.5}>
-            <Typography variant="body2" color="text.secondary" sx={{ width: 200, flexShrink: 0 }}>
+        <Box display="flex" alignItems="flex-start" py={0.6}>
+            <Typography variant="body2" sx={{
+                width: 160, flexShrink: 0, color: 'text.secondary',
+                fontWeight: 500, fontSize: '0.78rem', pt: 0.1
+            }}>
                 {label}
             </Typography>
-            <Typography variant="body2">{value ?? '-'}</Typography>
+            <Typography variant="body2" sx={{
+                wordBreak: 'break-word',
+                color: value && value !== '-' ? 'text.primary' : 'text.disabled'
+            }}>
+                {value ?? '-'}
+            </Typography>
         </Box>
     );
 }
@@ -79,17 +100,14 @@ function UserForm({ initial, onSave, onCancel, saving, saveError }) {
                     <FormControlLabel
                         control={<Switch checked={form.internal || false}
                                          onChange={e => set('internal', e.target.checked)} />}
-                        label="Internal User"
-                    />
+                        label="Internal User" />
                 </Grid>
                 <Grid size={{ xs: 12, md: 3 }}>
                     <FormControlLabel
                         control={<Switch checked={form.external || false}
                                          onChange={e => set('external', e.target.checked)} />}
-                        label="External User"
-                    />
+                        label="External User" />
                 </Grid>
-
                 <Grid size={{ xs: 12 }}>
                     <Typography variant="subtitle1" fontWeight="bold" mt={1}>Contact</Typography>
                 </Grid>
@@ -109,7 +127,6 @@ function UserForm({ initial, onSave, onCancel, saving, saveError }) {
                     <TextField fullWidth label="Contact Position" value={form.contactPosition || ''}
                                onChange={e => set('contactPosition', e.target.value)} />
                 </Grid>
-
                 <Grid size={{ xs: 12 }}>
                     <Box display="flex" gap={2} mt={2}>
                         <Button variant="contained" startIcon={<SaveIcon />}
@@ -195,6 +212,9 @@ export default function UserDetail() {
         }
     };
 
+    const fmt = (date) => date ? new Date(date).toLocaleDateString() : '-';
+    const fmtTime = (date) => date ? new Date(date).toLocaleString() : '-';
+
     if (isNew) {
         return (
             <Box>
@@ -202,12 +222,8 @@ export default function UserDetail() {
                     <Button startIcon={<ArrowBackIcon />} onClick={() => navigate('/users')}>Back</Button>
                     <Typography variant="h5">New User</Typography>
                 </Box>
-                <UserForm
-                    onSave={handleSave}
-                    onCancel={() => navigate('/users')}
-                    saving={saving}
-                    saveError={saveError}
-                />
+                <UserForm onSave={handleSave} onCancel={() => navigate('/users')}
+                          saving={saving} saveError={saveError} />
             </Box>
         );
     }
@@ -223,66 +239,87 @@ export default function UserDetail() {
                     <Button startIcon={<ArrowBackIcon />} onClick={() => setEditing(false)}>Back</Button>
                     <Typography variant="h5">Edit: {user.firstName} {user.lastName}</Typography>
                 </Box>
-                <UserForm
-                    initial={user}
-                    onSave={handleSave}
-                    onCancel={() => setEditing(false)}
-                    saving={saving}
-                    saveError={saveError}
-                />
+                <UserForm initial={user} onSave={handleSave} onCancel={() => setEditing(false)}
+                          saving={saving} saveError={saveError} />
             </Box>
         );
     }
 
+    const roleLabel = { ROLE_ADMIN: 'Admin', ROLE_USER: 'User', ROLE_VIEWER: 'Viewer' }[user.role] || user.role;
+
     return (
         <Box>
-            <Box display="flex" alignItems="center" mb={2} gap={2}>
-                <Button startIcon={<ArrowBackIcon />} onClick={() => navigate('/users')}>Back</Button>
-                <Typography variant="h5" sx={{ flexGrow: 1 }}>
-                    {user.firstName} {user.lastName}
-                </Typography>
-                <Chip label={user.active ? 'Active' : 'Inactive'}
-                      color={user.active ? 'success' : 'default'} />
-                {user.locked && <Chip label="Locked" color="warning" />}
-                <Button variant="outlined" onClick={() => setEditing(true)}>Edit</Button>
-                <Button variant="outlined" onClick={() => setPwDialog(true)}>Change Password</Button>
-                {!user.locked
-                    ? <Button variant="contained" color="warning"
-                              onClick={() => handleAction('lock')}>Lock</Button>
-                    : <Button variant="contained" color="success"
-                              onClick={() => handleAction('unlock')}>Unlock</Button>}
-                {!user.cancelled &&
-                    <Button variant="contained" color="error"
-                            onClick={() => handleAction('cancel')}>Cancel</Button>}
+            {/* Header */}
+            <Box display="flex" alignItems="center" gap={2} mb={2} flexWrap="wrap">
+                <Button startIcon={<ArrowBackIcon />} onClick={() => navigate('/users')} variant="outlined">
+                    Back
+                </Button>
+                <Box sx={{ flexGrow: 1 }}>
+                    <Typography variant="h5" fontWeight="700">
+                        {user.firstName} {user.lastName}
+                    </Typography>
+                    <Box display="flex" gap={1} mt={0.5} flexWrap="wrap">
+                        <Chip label={user.active ? 'Active' : 'Inactive'}
+                              color={user.active ? 'success' : 'default'} size="small" />
+                        {user.locked && <Chip label="Locked" color="warning" size="small" />}
+                        {user.cancelled && <Chip label="Cancelled" color="error" size="small" />}
+                        <Chip label={roleLabel} size="small" variant="outlined" />
+                        {user.internal && <Chip label="Internal" size="small" variant="outlined" />}
+                        {user.external && <Chip label="External" size="small" variant="outlined" />}
+                    </Box>
+                </Box>
+                <Box display="flex" gap={1} flexWrap="wrap">
+                    <Button variant="outlined" onClick={() => setEditing(true)}>Edit</Button>
+                    <Button variant="outlined" onClick={() => setPwDialog(true)}>Change Password</Button>
+                    {!user.locked
+                        ? <Button variant="contained" color="warning" onClick={() => handleAction('lock')}>Lock</Button>
+                        : <Button variant="contained" color="success" onClick={() => handleAction('unlock')}>Unlock</Button>}
+                    {!user.cancelled &&
+                        <Button variant="contained" color="error" onClick={() => handleAction('cancel')}>Cancel</Button>}
+                </Box>
             </Box>
 
             {actionMsg && <Alert severity="info" sx={{ mb: 2 }} onClose={() => setActionMsg('')}>{actionMsg}</Alert>}
 
-            <Paper sx={{ p: 3 }}>
-                <Grid container spacing={3}>
-                    <Grid size={{ xs: 12, md: 6 }}>
-                        <Typography variant="subtitle1" fontWeight="bold" mb={1}>User Info</Typography>
+            <Grid container spacing={2}>
+                <Grid size={{ xs: 12, md: 4 }}>
+                    <Paper sx={{ p: 2.5 }}>
+                        <SectionTitle icon={<PersonIcon color="primary" fontSize="small" />} title="User Info" />
                         <InfoRow label="ID" value={user.id} />
                         <InfoRow label="First Name" value={user.firstName} />
                         <InfoRow label="Last Name" value={user.lastName} />
                         <InfoRow label="Email" value={user.email} />
-                        <InfoRow label="Role" value={user.role} />
+                        <InfoRow label="Role" value={roleLabel} />
                         <InfoRow label="Internal" value={user.internal ? 'Yes' : 'No'} />
                         <InfoRow label="External" value={user.external ? 'Yes' : 'No'} />
                         <InfoRow label="Status" value={user.status} />
-                    </Grid>
-                    <Grid size={{ xs: 12, md: 6 }}>
-                        <Typography variant="subtitle1" fontWeight="bold" mb={1}>Contact & Dates</Typography>
+                        {user.company && (
+                            <InfoRow label="Company" value={user.company.companyName || `ID: ${user.company.id}`} />
+                        )}
+                    </Paper>
+                </Grid>
+
+                <Grid size={{ xs: 12, md: 4 }}>
+                    <Paper sx={{ p: 2.5 }}>
+                        <SectionTitle icon={<ContactMailIcon color="primary" fontSize="small" />} title="Contact" />
                         <InfoRow label="Contact Email" value={user.contactEmail} />
                         <InfoRow label="Contact Phone" value={user.contactPhone} />
                         <InfoRow label="Contact Mobile" value={user.contactMobile} />
                         <InfoRow label="Contact Position" value={user.contactPosition} />
-                        <InfoRow label="Register Date" value={user.registerDate ? new Date(user.registerDate).toLocaleDateString() : null} />
-                        <InfoRow label="Last Login" value={user.loginDate ? new Date(user.loginDate).toLocaleString() : null} />
-                        <InfoRow label="Company ID" value={user.company?.id} />
-                    </Grid>
+                    </Paper>
                 </Grid>
-            </Paper>
+
+                <Grid size={{ xs: 12, md: 4 }}>
+                    <Paper sx={{ p: 2.5 }}>
+                        <SectionTitle icon={<HistoryIcon color="primary" fontSize="small" />} title="Dates" />
+                        <InfoRow label="Register Date" value={fmt(user.registerDate)} />
+                        <InfoRow label="Activate Date" value={fmt(user.activateDate)} />
+                        <InfoRow label="Last Login" value={fmtTime(user.loginDate)} />
+                        <InfoRow label="Lock Date" value={fmt(user.lockDate)} />
+                        <InfoRow label="Cancel Date" value={fmt(user.cancelledDate)} />
+                    </Paper>
+                </Grid>
+            </Grid>
 
             <Dialog open={pwDialog} onClose={() => setPwDialog(false)}>
                 <DialogTitle>Change Password</DialogTitle>

@@ -5,11 +5,15 @@ import {
   Box, Typography, Button, Chip, Tabs, Tab, CircularProgress,
   Alert, Grid, Paper, TextField, MenuItem, Select, FormControl,
   InputLabel, Dialog, DialogTitle, DialogContent, DialogActions,
-  List, ListItem, ListItemText, ListItemButton, Checkbox
+  List, ListItem, ListItemText, ListItemButton, Checkbox, Divider
 } from '@mui/material';
 import { DataGrid } from '@mui/x-data-grid';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import SaveIcon from '@mui/icons-material/Save';
+import GavelIcon from '@mui/icons-material/Gavel';
+import ScheduleIcon from '@mui/icons-material/Schedule';
+import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
+import InfoIcon from '@mui/icons-material/Info';
 
 const STATUS_COLORS = {
   'key.auctionStatus.draft': 'default',
@@ -19,13 +23,31 @@ const STATUS_COLORS = {
   'key.auctionStatus.cancelled': 'error',
 };
 
+function SectionTitle({ icon, title }) {
+  return (
+      <Box display="flex" alignItems="center" gap={1} mb={2}>
+        {icon}
+        <Typography variant="subtitle1" fontWeight="700" color="primary.main">{title}</Typography>
+        <Divider sx={{ flex: 1, ml: 1 }} />
+      </Box>
+  );
+}
+
 function InfoRow({ label, value }) {
   return (
-      <Box display="flex" py={0.5}>
-        <Typography variant="body2" color="text.secondary" sx={{ width: 200, flexShrink: 0 }}>
+      <Box display="flex" alignItems="flex-start" py={0.6}>
+        <Typography variant="body2" sx={{
+          width: 160, flexShrink: 0, color: 'text.secondary',
+          fontWeight: 500, fontSize: '0.78rem', pt: 0.1
+        }}>
           {label}
         </Typography>
-        <Typography variant="body2">{value ?? '-'}</Typography>
+        <Typography variant="body2" sx={{
+          wordBreak: 'break-word',
+          color: value && value !== '-' ? 'text.primary' : 'text.disabled'
+        }}>
+          {value ?? '-'}
+        </Typography>
       </Box>
   );
 }
@@ -49,10 +71,8 @@ const EMPTY_FORM = {
 
 function AuctionForm({ initial, projects, dictionaryItems, onSave, onCancel, saving, saveError }) {
   const [form, setForm] = useState(initial || EMPTY_FORM);
-
   const set = (field, value) => setForm(f => ({ ...f, [field]: value }));
   const setObj = (field, key) => setForm(f => ({ ...f, [field]: { key } }));
-
   const itemsForKey = (prefix) => dictionaryItems.filter(d => d.key.startsWith(prefix));
 
   return (
@@ -104,7 +124,6 @@ function AuctionForm({ initial, projects, dictionaryItems, onSave, onCancel, sav
             <TextField fullWidth label="Invite Text" value={form.inviteText || ''}
                        onChange={e => set('inviteText', e.target.value)} multiline rows={2} />
           </Grid>
-
           <Grid size={{ xs: 12 }}>
             <Typography variant="subtitle1" fontWeight="bold" mt={1}>Bidding</Typography>
           </Grid>
@@ -148,7 +167,6 @@ function AuctionForm({ initial, projects, dictionaryItems, onSave, onCancel, sav
               </Select>
             </FormControl>
           </Grid>
-
           <Grid size={{ xs: 12 }}>
             <Typography variant="subtitle1" fontWeight="bold" mt={1}>Schedule</Typography>
           </Grid>
@@ -178,17 +196,14 @@ function AuctionForm({ initial, projects, dictionaryItems, onSave, onCancel, sav
           </Grid>
           <Grid size={{ xs: 12, md: 2 }}>
             <TextField fullWidth label="Start Time (HH:mm)"
-                       value={form.startTime || ''}
-                       onChange={e => set('startTime', e.target.value)}
+                       value={form.startTime || ''} onChange={e => set('startTime', e.target.value)}
                        placeholder="14:00" />
           </Grid>
           <Grid size={{ xs: 12, md: 2 }}>
             <TextField fullWidth label="End Time (HH:mm)"
-                       value={form.endTime || ''}
-                       onChange={e => set('endTime', e.target.value)}
+                       value={form.endTime || ''} onChange={e => set('endTime', e.target.value)}
                        placeholder="16:00" />
           </Grid>
-
           <Grid size={{ xs: 12 }}>
             <Typography variant="subtitle1" fontWeight="bold" mt={1}>Bid Period</Typography>
           </Grid>
@@ -206,14 +221,12 @@ function AuctionForm({ initial, projects, dictionaryItems, onSave, onCancel, sav
           </Grid>
           <Grid size={{ xs: 12, md: 2 }}>
             <TextField fullWidth label="Bid Start Time"
-                       value={form.bidStartTime || ''}
-                       onChange={e => set('bidStartTime', e.target.value)}
+                       value={form.bidStartTime || ''} onChange={e => set('bidStartTime', e.target.value)}
                        placeholder="14:00" />
           </Grid>
           <Grid size={{ xs: 12, md: 2 }}>
             <TextField fullWidth label="Bid End Time"
-                       value={form.bidEndTime || ''}
-                       onChange={e => set('bidEndTime', e.target.value)}
+                       value={form.bidEndTime || ''} onChange={e => set('bidEndTime', e.target.value)}
                        placeholder="16:00" />
           </Grid>
           <Grid size={{ xs: 12, md: 3 }}>
@@ -221,7 +234,6 @@ function AuctionForm({ initial, projects, dictionaryItems, onSave, onCancel, sav
                        value={form.additionalMinute || ''}
                        onChange={e => set('additionalMinute', e.target.value)} />
           </Grid>
-
           <Grid size={{ xs: 12 }}>
             <Box display="flex" gap={2} mt={2}>
               <Button variant="contained" startIcon={<SaveIcon />}
@@ -246,6 +258,9 @@ export default function AuctionDetail() {
   const [invitations, setInvitations] = useState([]);
   const [participants, setParticipants] = useState([]);
   const [comments, setComments] = useState([]);
+  const [revisions, setRevisions] = useState([]);
+  const [revisionFiles, setRevisionFiles] = useState([]);
+  const [internalFiles, setInternalFiles] = useState([]);
   const [tab, setTab] = useState(0);
   const [loading, setLoading] = useState(!isNew);
   const [error, setError] = useState('');
@@ -253,9 +268,6 @@ export default function AuctionDetail() {
   const [editing, setEditing] = useState(isNew);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState('');
-  const [revisions, setRevisions] = useState([]);
-  const [revisionFiles, setRevisionFiles] = useState([]);
-  const [internalFiles, setInternalFiles] = useState([]);
   const [uploadingFile, setUploadingFile] = useState(false);
   const [fileDescription, setFileDescription] = useState('');
   const [allCompanies, setAllCompanies] = useState([]);
@@ -264,6 +276,7 @@ export default function AuctionDetail() {
   const [inviteLoading, setInviteLoading] = useState(false);
   const [projects, setProjects] = useState([]);
   const [dictionaryItems, setDictionaryItems] = useState([]);
+
   const token = localStorage.getItem('token');
   const headers = { Authorization: `Bearer ${token}` };
 
@@ -302,7 +315,6 @@ export default function AuctionDetail() {
       if (t === 2) setInvitations((await auctionApi.getInvitations(id)).data);
       if (t === 3) setParticipants((await auctionApi.getParticipants(id)).data);
       if (t === 4) setComments((await auctionApi.getComments(id)).data);
-
       if (t === 5) {
         const res = await fetch(`http://localhost:8080/api/auctions/${id}/files`, { headers });
         setRevisionFiles(await res.json());
@@ -346,7 +358,6 @@ export default function AuctionDetail() {
         currency: form.currency?.key ? { key: form.currency.key } : null,
         project: form.project?.id ? { id: form.project.id } : null,
       };
-
       if (isNew) {
         const res = await auctionApi.create(payload);
         navigate(`/auctions/${res.data.id}`);
@@ -395,6 +406,7 @@ export default function AuctionDetail() {
       setInviteLoading(false);
     }
   };
+
   const handleFileUpload = async (e, type) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -406,14 +418,9 @@ export default function AuctionDetail() {
       const url = type === 'internal'
           ? `http://localhost:8080/api/auctions/${id}/internal-files`
           : `http://localhost:8080/api/auctions/${id}/files`;
-      await fetch(url, {
-        method: 'POST',
-        headers,
-        body: formData
-      });
+      await fetch(url, { method: 'POST', headers, body: formData });
       setActionMsg(`File "${file.name}" uploaded successfully`);
-      if (type === 'internal') loadTab(6);
-      else loadTab(5);
+      loadTab(type === 'internal' ? 6 : 5);
     } catch {
       setActionMsg('Upload failed');
     } finally {
@@ -421,28 +428,7 @@ export default function AuctionDetail() {
       e.target.value = '';
     }
   };
-  if (isNew) {
-    return (
-        <Box>
-          <Box display="flex" alignItems="center" mb={2} gap={2}>
-            <Button startIcon={<ArrowBackIcon />} onClick={() => navigate('/auctions')}>Back</Button>
-            <Typography variant="h5">New Auction</Typography>
-          </Box>
-          {dictionaryItems.length > 0 ? (
-              <AuctionForm
-                  projects={projects}
-                  dictionaryItems={dictionaryItems}
-                  onSave={handleSave}
-                  onCancel={() => navigate('/auctions')}
-                  saving={saving}
-                  saveError={saveError}
-              />
-          ) : (
-              <Box display="flex" justifyContent="center" mt={4}><CircularProgress /></Box>
-          )}
-        </Box>
-    );
-  }
+
   const downloadFile = async (url, fileName) => {
     try {
       const res = await fetch(url, { headers });
@@ -459,11 +445,56 @@ export default function AuctionDetail() {
       setActionMsg('Download failed');
     }
   };
+
+  const fmt = (date) => date ? new Date(date).toLocaleDateString() : '-';
+
+  if (isNew) {
+    return (
+        <Box>
+          <Box display="flex" alignItems="center" mb={2} gap={2}>
+            <Button startIcon={<ArrowBackIcon />} onClick={() => navigate('/auctions')}>Back</Button>
+            <Typography variant="h5">New Auction</Typography>
+          </Box>
+          {dictionaryItems.length > 0 ? (
+              <AuctionForm projects={projects} dictionaryItems={dictionaryItems}
+                           onSave={handleSave} onCancel={() => navigate('/auctions')}
+                           saving={saving} saveError={saveError} />
+          ) : (
+              <Box display="flex" justifyContent="center" mt={4}><CircularProgress /></Box>
+          )}
+        </Box>
+    );
+  }
+
   if (loading) return <Box display="flex" justifyContent="center" mt={4}><CircularProgress /></Box>;
   if (error) return <Alert severity="error">{error}</Alert>;
   if (!auction) return null;
 
+  if (editing) {
+    return (
+        <Box>
+          <Box display="flex" alignItems="center" mb={2} gap={2}>
+            <Button startIcon={<ArrowBackIcon />} onClick={() => setEditing(false)}>Back</Button>
+            <Typography variant="h5">Edit: {auction.name}</Typography>
+          </Box>
+          <AuctionForm initial={auction} projects={projects} dictionaryItems={dictionaryItems}
+                       onSave={handleSave} onCancel={() => setEditing(false)}
+                       saving={saving} saveError={saveError} />
+        </Box>
+    );
+  }
+
   const statusKey = auction.status?.key;
+
+  const fileColumns = [
+    { field: 'id', headerName: 'ID', width: 70 },
+    { field: 'fileName', headerName: 'File Name', flex: 1 },
+    { field: 'fileDescription', headerName: 'Description', width: 200 },
+    { field: 'fileSize', headerName: 'Size (bytes)', width: 120 },
+    { field: 'fileDate', headerName: 'Date', width: 160,
+      renderCell: p => p.value ? new Date(p.value).toLocaleString() : '-' },
+    { field: 'fileUser', headerName: 'Uploaded By', width: 150 },
+  ];
 
   const bidColumns = [
     { field: 'id', headerName: 'ID', width: 70 },
@@ -493,7 +524,7 @@ export default function AuctionDetail() {
       renderCell: p => p.value ? new Date(p.value).toLocaleDateString() : '-' },
     { field: 'actions', headerName: '', width: 160,
       renderCell: p => (
-          <Box>
+          <Box display="flex" gap={0.5}>
             <Button size="small" color="warning"
                     onClick={() => auctionApi.cancelInvitation(p.row.id).then(() => loadTab(2))}>Cancel</Button>
             <Button size="small"
@@ -527,12 +558,13 @@ export default function AuctionDetail() {
     { field: 'actions', headerName: '', width: 240,
       renderCell: p => (
           <Box display="flex" gap={0.5}>
-            {p.row.status?.key === 'key.coment.new' &&
+            {p.row.status?.key === 'key.coment.new' && (
                 <Button size="small" color="success"
                         onClick={() => auctionApi.approveComment(p.row.id).then(() => loadTab(4))}>
                   Approve
-                </Button>}
-            {p.row.status?.key === 'key.coment.new' &&
+                </Button>
+            )}
+            {p.row.status?.key === 'key.coment.new' && (
                 <Button size="small" color="primary"
                         onClick={() => {
                           const text = window.prompt('Enter reply:');
@@ -545,7 +577,8 @@ export default function AuctionDetail() {
                           }
                         }}>
                   Answer
-                </Button>}
+                </Button>
+            )}
             <Button size="small" color="error"
                     onClick={() => auctionApi.cancelComment(p.row.id).then(() => loadTab(4))}>
               Cancel
@@ -554,63 +587,59 @@ export default function AuctionDetail() {
       )}
   ];
 
-  if (editing) {
-    return (
-        <Box>
-          <Box display="flex" alignItems="center" mb={2} gap={2}>
-            <Button startIcon={<ArrowBackIcon />} onClick={() => setEditing(false)}>Back</Button>
-            <Typography variant="h5">Edit: {auction.name}</Typography>
-          </Box>
-          <AuctionForm
-              initial={auction}
-              projects={projects}
-              dictionaryItems={dictionaryItems}
-              onSave={handleSave}
-              onCancel={() => setEditing(false)}
-              saving={saving}
-              saveError={saveError}
-          />
-        </Box>
-    );
-  }
-
   return (
       <Box>
-        <Box display="flex" alignItems="center" mb={2} gap={2} flexWrap="wrap">
-          <Button startIcon={<ArrowBackIcon />} onClick={() => navigate('/auctions')}>Back</Button>
-          <Typography variant="h5" sx={{ flexGrow: 1 }}>{auction.name}</Typography>
-          <Chip label={auction.status?.name || ''} color={STATUS_COLORS[statusKey] || 'default'} />
-          <Button variant="outlined" onClick={() => setEditing(true)}>Edit</Button>
-          {statusKey === 'key.auctionStatus.draft' &&
-              <Button variant="outlined" color="error"
-                      onClick={async () => {
-                        if (window.confirm('Delete this auction?')) {
-                          try {
-                            await fetch(`http://localhost:8080/api/auctions/${id}`, {
-                              method: 'DELETE', headers
-                            });
-                            navigate('/auctions');
-                          } catch {
-                            setError('Delete failed');
+        {/* Header */}
+        <Box display="flex" alignItems="center" gap={2} mb={2} flexWrap="wrap">
+          <Button startIcon={<ArrowBackIcon />} onClick={() => navigate('/auctions')} variant="outlined">
+            Back
+          </Button>
+          <Box sx={{ flexGrow: 1 }}>
+            <Typography variant="h5" fontWeight="700">{auction.name}</Typography>
+            <Box display="flex" gap={1} mt={0.5} flexWrap="wrap">
+              <Chip label={auction.status?.name || ''} size="small"
+                    color={STATUS_COLORS[statusKey] || 'default'} />
+              {auction.project && <Chip label={auction.project.name} size="small" variant="outlined" />}
+              {auction.auctionType && <Chip label={auction.auctionType.name} size="small" variant="outlined" />}
+              {auction.currency && <Chip label={auction.currency.name} size="small" variant="outlined" />}
+            </Box>
+          </Box>
+          <Box display="flex" gap={1} flexWrap="wrap">
+            <Button variant="outlined" onClick={() => setEditing(true)}>Edit</Button>
+            {statusKey === 'key.auctionStatus.draft' && (
+                <Button variant="outlined" color="error"
+                        onClick={async () => {
+                          if (window.confirm('Delete this auction?')) {
+                            try {
+                              await fetch(`http://localhost:8080/api/auctions/${id}`, {
+                                method: 'DELETE', headers
+                              });
+                              navigate('/auctions');
+                            } catch {
+                              setError('Delete failed');
+                            }
                           }
-                        }
-                      }}>Delete</Button>}
-          {statusKey === 'key.auctionStatus.draft' &&
-              <Button variant="contained" color="success"
-                      onClick={() => handleAction('activate')}>Activate</Button>}
-          {statusKey === 'key.auctionStatus.active' &&
-              <Button variant="contained" color="warning"
-                      onClick={() => handleAction('close')}>Close</Button>}
-          {statusKey === 'key.auctionStatus.active' &&
-              <Button variant="contained" color="error"
-                      onClick={() => handleAction('cancel')}>Cancel</Button>}
+                        }}>Delete</Button>
+            )}
+            {statusKey === 'key.auctionStatus.draft' && (
+                <Button variant="contained" color="success"
+                        onClick={() => handleAction('activate')}>Activate</Button>
+            )}
+            {statusKey === 'key.auctionStatus.active' && (
+                <Button variant="contained" color="warning"
+                        onClick={() => handleAction('close')}>Close</Button>
+            )}
+            {statusKey === 'key.auctionStatus.active' && (
+                <Button variant="contained" color="error"
+                        onClick={() => handleAction('cancel')}>Cancel</Button>
+            )}
+          </Box>
         </Box>
 
-        {actionMsg && (
-            <Alert severity="info" sx={{ mb: 2 }} onClose={() => setActionMsg('')}>{actionMsg}</Alert>
-        )}
+        {actionMsg && <Alert severity="info" sx={{ mb: 2 }} onClose={() => setActionMsg('')}>{actionMsg}</Alert>}
 
-        <Tabs value={tab} onChange={(_, v) => setTab(v)} sx={{ mb: 2 }}>
+        <Tabs value={tab} onChange={(_, v) => setTab(v)} sx={{ mb: 2 }}
+              variant="scrollable" scrollButtons="auto">
           <Tab label="Details" />
           <Tab label="Bids" />
           <Tab label="Invitations" />
@@ -621,19 +650,24 @@ export default function AuctionDetail() {
           <Tab label="Revisions" />
         </Tabs>
 
+        {/* Details Tab */}
         {tab === 0 && (
-            <Paper sx={{ p: 3 }}>
-              <Grid container spacing={3}>
-                <Grid size={{ xs: 12, md: 6 }}>
-                  <Typography variant="subtitle1" fontWeight="bold" mb={1}>General</Typography>
+            <Grid container spacing={2}>
+              <Grid size={{ xs: 12, md: 6 }}>
+                <Paper sx={{ p: 2.5 }}>
+                  <SectionTitle icon={<InfoIcon color="primary" fontSize="small" />} title="General" />
                   <InfoRow label="ID" value={auction.id} />
+                  <InfoRow label="Name" value={auction.name} />
                   <InfoRow label="Type" value={auction.auctionType?.name} />
                   <InfoRow label="Project" value={auction.project?.name} />
+                  <InfoRow label="Administrator" value={auction.createUserId} />
                   <InfoRow label="Description" value={auction.desc} />
                   <InfoRow label="Invite Text" value={auction.inviteText} />
-                </Grid>
-                <Grid size={{ xs: 12, md: 6 }}>
-                  <Typography variant="subtitle1" fontWeight="bold" mb={1}>Bidding</Typography>
+                </Paper>
+              </Grid>
+              <Grid size={{ xs: 12, md: 6 }}>
+                <Paper sx={{ p: 2.5 }}>
+                  <SectionTitle icon={<AttachMoneyIcon color="primary" fontSize="small" />} title="Bidding" />
                   <InfoRow label="Start Bid Value" value={auction.startBidValue} />
                   <InfoRow label="Max Bid Value" value={auction.maxBidValue} />
                   <InfoRow label="Last Bid Value" value={auction.lastBidValue} />
@@ -641,29 +675,34 @@ export default function AuctionDetail() {
                   <InfoRow label="Quantity" value={auction.quantity} />
                   <InfoRow label="Currency" value={auction.currency?.name} />
                   <InfoRow label="Unit of Measure" value={auction.uom?.name} />
-                </Grid>
-                <Grid size={{ xs: 12, md: 6 }}>
-                  <Typography variant="subtitle1" fontWeight="bold" mb={1}>Schedule</Typography>
-                  <InfoRow label="Discuss Start" value={auction.discussStartDate ? new Date(auction.discussStartDate).toLocaleDateString() : null} />
-                  <InfoRow label="Discuss End" value={auction.discussEndDate ? new Date(auction.discussEndDate).toLocaleDateString() : null} />
-                  <InfoRow label="Auction Start" value={auction.auctionStartDate ? new Date(auction.auctionStartDate).toLocaleDateString() : null} />
-                  <InfoRow label="Auction End" value={auction.auctionEndDate ? new Date(auction.auctionEndDate).toLocaleDateString() : null} />
+                  <InfoRow label="Show Last Bid" value={auction.showLastBid ? 'Yes' : 'No'} />
+                </Paper>
+              </Grid>
+              <Grid size={{ xs: 12, md: 6 }}>
+                <Paper sx={{ p: 2.5 }}>
+                  <SectionTitle icon={<ScheduleIcon color="primary" fontSize="small" />} title="Schedule" />
+                  <InfoRow label="Discuss Start" value={fmt(auction.discussStartDate)} />
+                  <InfoRow label="Discuss End" value={fmt(auction.discussEndDate)} />
+                  <InfoRow label="Auction Start" value={fmt(auction.auctionStartDate)} />
+                  <InfoRow label="Auction End" value={fmt(auction.auctionEndDate)} />
                   <InfoRow label="Start Time" value={auction.startTime} />
                   <InfoRow label="End Time" value={auction.endTime} />
-                </Grid>
-                <Grid size={{ xs: 12, md: 6 }}>
-                  <Typography variant="subtitle1" fontWeight="bold" mb={1}>Bid Period</Typography>
-                  <InfoRow label="Bid Start Date" value={auction.bidStartDate ? new Date(auction.bidStartDate).toLocaleDateString() : null} />
-                  <InfoRow label="Bid End Date" value={auction.bidEndDate ? new Date(auction.bidEndDate).toLocaleDateString() : null} />
+                </Paper>
+              </Grid>
+              <Grid size={{ xs: 12, md: 6 }}>
+                <Paper sx={{ p: 2.5 }}>
+                  <SectionTitle icon={<GavelIcon color="primary" fontSize="small" />} title="Bid Period" />
+                  <InfoRow label="Bid Start Date" value={fmt(auction.bidStartDate)} />
+                  <InfoRow label="Bid End Date" value={fmt(auction.bidEndDate)} />
                   <InfoRow label="Bid Start Time" value={auction.bidStartTime} />
                   <InfoRow label="Bid End Time" value={auction.bidEndTime} />
                   <InfoRow label="Additional Minutes" value={auction.additionalMinute} />
-                  <InfoRow label="Show Last Bid" value={auction.showLastBid ? 'Yes' : 'No'} />
-                </Grid>
+                </Paper>
               </Grid>
-            </Paper>
+            </Grid>
         )}
 
+        {/* Bids Tab */}
         {tab === 1 && (
             <Box>
               {bids.length >= 2 && (() => {
@@ -674,32 +713,22 @@ export default function AuctionDetail() {
                   const second = activeBids[1].bidValue;
                   const gap = ((second - first) / second * 100).toFixed(1);
                   return (
-                      <Box mb={2} display="flex" gap={3} alignItems="center">
-                        <Box sx={{ p: 2, bgcolor: 'success.light', borderRadius: 1 }}>
-                          <Typography variant="body2" color="white">🥇 Best Bid</Typography>
-                          <Typography variant="h6" color="white" fontWeight="bold">
-                            {first.toLocaleString()} {auction.currency?.name}
-                          </Typography>
-                          <Typography variant="body2" color="white">
-                            {activeBids[0].user?.company?.companyName || activeBids[0].user?.email}
-                          </Typography>
-                        </Box>
-                        <Box sx={{ p: 2, bgcolor: 'info.light', borderRadius: 1 }}>
-                          <Typography variant="body2" color="white">🥈 2nd Place</Typography>
-                          <Typography variant="h6" color="white" fontWeight="bold">
-                            {second.toLocaleString()} {auction.currency?.name}
-                          </Typography>
-                          <Typography variant="body2" color="white">
-                            {activeBids[1].user?.company?.companyName || activeBids[1].user?.email}
-                          </Typography>
-                        </Box>
-                        <Box sx={{ p: 2, bgcolor: 'warning.light', borderRadius: 1 }}>
-                          <Typography variant="body2">Gap</Typography>
-                          <Typography variant="h4" fontWeight="bold" color="warning.dark">
-                            {gap}%
-                          </Typography>
-                          <Typography variant="body2">1st is ahead by</Typography>
-                        </Box>
+                      <Box mb={2} display="flex" gap={2} flexWrap="wrap">
+                        <Paper sx={{ p: 2, bgcolor: 'success.main', color: 'white', minWidth: 160 }}>
+                          <Typography variant="body2">🥇 Best Bid</Typography>
+                          <Typography variant="h6" fontWeight="bold">{first.toLocaleString()} {auction.currency?.name}</Typography>
+                          <Typography variant="body2">{activeBids[0].user?.company?.companyName || activeBids[0].user?.email}</Typography>
+                        </Paper>
+                        <Paper sx={{ p: 2, bgcolor: 'info.main', color: 'white', minWidth: 160 }}>
+                          <Typography variant="body2">🥈 2nd Place</Typography>
+                          <Typography variant="h6" fontWeight="bold">{second.toLocaleString()} {auction.currency?.name}</Typography>
+                          <Typography variant="body2">{activeBids[1].user?.company?.companyName || activeBids[1].user?.email}</Typography>
+                        </Paper>
+                        <Paper sx={{ p: 2, minWidth: 120, textAlign: 'center' }}>
+                          <Typography variant="body2" color="text.secondary">Gap</Typography>
+                          <Typography variant="h4" fontWeight="bold" color="warning.main">{gap}%</Typography>
+                          <Typography variant="body2" color="text.secondary">1st ahead by</Typography>
+                        </Paper>
                       </Box>
                   );
                 }
@@ -710,10 +739,11 @@ export default function AuctionDetail() {
             </Box>
         )}
 
+        {/* Invitations Tab */}
         {tab === 2 && (
             <Box>
-              <Box mb={2} display="flex" gap={2} alignItems="center">
-                <Typography variant="subtitle1">Invitations</Typography>
+              <Box mb={2} display="flex" gap={2} alignItems="center" flexWrap="wrap">
+                <Typography variant="subtitle1" fontWeight="bold">Invitations ({invitations.length})</Typography>
                 <Button variant="contained" size="small"
                         onClick={() => { loadCompanies(); setInviteDialog(true); }}>
                   Invite Companies
@@ -730,10 +760,11 @@ export default function AuctionDetail() {
             </Box>
         )}
 
+        {/* Participants Tab */}
         {tab === 3 && (
             <Box>
               <Box mb={2} display="flex" gap={2} alignItems="center">
-                <Typography variant="subtitle1">Participants</Typography>
+                <Typography variant="subtitle1" fontWeight="bold">Participants ({participants.length})</Typography>
                 <Button variant="outlined" size="small" color="success"
                         onClick={() => downloadFile(
                             `http://localhost:8080/api/export/auction/${id}/participants`,
@@ -746,97 +777,99 @@ export default function AuctionDetail() {
             </Box>
         )}
 
+        {/* Comments Tab */}
         {tab === 4 && (
             <DataGrid rows={comments} columns={commentColumns} autoHeight
                       pageSizeOptions={[10, 20, 50]} disableRowSelectionOnClick />
         )}
+
+        {/* Files Tab */}
         {tab === 5 && (
             <Box>
               <Box mb={2} display="flex" gap={2} alignItems="center" flexWrap="wrap">
-                <Typography variant="subtitle1">Revision Files</Typography>
-                <TextField size="small" label="Description (optional)"
-                           value={fileDescription}
-                           onChange={e => setFileDescription(e.target.value)}
-                           sx={{ width: 250 }} />
+                <Typography variant="subtitle1" fontWeight="bold">Revision Files</Typography>
+                <TextField size="small" label="Description (optional)" value={fileDescription}
+                           onChange={e => setFileDescription(e.target.value)} sx={{ width: 250 }} />
                 <Button variant="contained" component="label" disabled={uploadingFile}>
                   {uploadingFile ? 'Uploading...' : 'Upload File'}
                   <input type="file" hidden onChange={e => handleFileUpload(e, 'revision')} />
                 </Button>
               </Box>
-              <DataGrid
-                  rows={revisionFiles}
-                  columns={[
-                    { field: 'id', headerName: 'ID', width: 70 },
-                    { field: 'fileName', headerName: 'File Name', flex: 1 },
-                    { field: 'fileDescription', headerName: 'Description', width: 200 },
-                    { field: 'fileSize', headerName: 'Size (bytes)', width: 120 },
-                    { field: 'fileDate', headerName: 'Date', width: 160,
-                      renderCell: p => p.value ? new Date(p.value).toLocaleString() : '-' },
-                    { field: 'fileUser', headerName: 'Uploaded By', width: 150 },
-                    { field: 'actions', headerName: '', width: 160, sortable: false,
-                      renderCell: p => (
-                          <Box display="flex" gap={0.5}>
-                            <Button size="small"
-                                    onClick={() => downloadFile(`http://localhost:8080/api/auctions/files/${p.row.id}/download`, p.row.fileName)}>
-                              Download
-                            </Button>
-                            <Button size="small" color="error"
-                                    onClick={() => fetch(`http://localhost:8080/api/auctions/files/${p.row.id}`, {
-                                      method: 'DELETE', headers
-                                    }).then(() => loadTab(5))}>
-                              Delete
-                            </Button>
-                          </Box>
-                      )}
-                  ]}
-                  autoHeight pageSizeOptions={[10, 20]} disableRowSelectionOnClick
-              />
+              <DataGrid rows={revisionFiles}
+                        columns={[...fileColumns, {
+                          field: 'actions', headerName: '', width: 160, sortable: false,
+                          renderCell: p => (
+                              <Box display="flex" gap={0.5}>
+                                <Button size="small"
+                                        onClick={() => downloadFile(`http://localhost:8080/api/auctions/files/${p.row.id}/download`, p.row.fileName)}>
+                                  Download
+                                </Button>
+                                <Button size="small" color="error"
+                                        onClick={() => fetch(`http://localhost:8080/api/auctions/files/${p.row.id}`, {
+                                          method: 'DELETE', headers
+                                        }).then(() => loadTab(5))}>
+                                  Delete
+                                </Button>
+                              </Box>
+                          )
+                        }]}
+                        autoHeight pageSizeOptions={[10, 20]} disableRowSelectionOnClick />
             </Box>
         )}
 
+        {/* Internal Files Tab */}
         {tab === 6 && (
             <Box>
               <Box mb={2} display="flex" gap={2} alignItems="center" flexWrap="wrap">
-                <Typography variant="subtitle1">Internal Files</Typography>
-                <TextField size="small" label="Description (optional)"
-                           value={fileDescription}
-                           onChange={e => setFileDescription(e.target.value)}
-                           sx={{ width: 250 }} />
+                <Typography variant="subtitle1" fontWeight="bold">Internal Files</Typography>
+                <TextField size="small" label="Description (optional)" value={fileDescription}
+                           onChange={e => setFileDescription(e.target.value)} sx={{ width: 250 }} />
                 <Button variant="contained" component="label" disabled={uploadingFile}>
                   {uploadingFile ? 'Uploading...' : 'Upload File'}
                   <input type="file" hidden onChange={e => handleFileUpload(e, 'internal')} />
                 </Button>
               </Box>
-              <DataGrid
-                  rows={internalFiles}
-                  columns={[
-                    { field: 'id', headerName: 'ID', width: 70 },
-                    { field: 'fileName', headerName: 'File Name', flex: 1 },
-                    { field: 'fileDescription', headerName: 'Description', width: 200 },
-                    { field: 'fileSize', headerName: 'Size (bytes)', width: 120 },
-                    { field: 'fileDate', headerName: 'Date', width: 160,
-                      renderCell: p => p.value ? new Date(p.value).toLocaleString() : '-' },
-                    { field: 'fileUser', headerName: 'Uploaded By', width: 150 },
-                    { field: 'actions', headerName: '', width: 160, sortable: false,
-                      renderCell: p => (
-                          <Box display="flex" gap={0.5}>
-                            <Button size="small"
-                                    onClick={() => downloadFile(`http://localhost:8080/api/auctions/internal-files/${p.row.id}/download`, p.row.fileName)}>
-                              Download
-                            </Button>
-                            <Button size="small" color="error"
-                                    onClick={() => fetch(`http://localhost:8080/api/auctions/internal-files/${p.row.id}`, {
-                                      method: 'DELETE', headers
-                                    }).then(() => loadTab(6))}>
-                              Delete
-                            </Button>
-                          </Box>
-                      )}
-                  ]}
-                  autoHeight pageSizeOptions={[10, 20]} disableRowSelectionOnClick
-              />
+              <DataGrid rows={internalFiles}
+                        columns={[...fileColumns, {
+                          field: 'actions', headerName: '', width: 160, sortable: false,
+                          renderCell: p => (
+                              <Box display="flex" gap={0.5}>
+                                <Button size="small"
+                                        onClick={() => downloadFile(`http://localhost:8080/api/auctions/internal-files/${p.row.id}/download`, p.row.fileName)}>
+                                  Download
+                                </Button>
+                                <Button size="small" color="error"
+                                        onClick={() => fetch(`http://localhost:8080/api/auctions/internal-files/${p.row.id}`, {
+                                          method: 'DELETE', headers
+                                        }).then(() => loadTab(6))}>
+                                  Delete
+                                </Button>
+                              </Box>
+                          )
+                        }]}
+                        autoHeight pageSizeOptions={[10, 20]} disableRowSelectionOnClick />
             </Box>
         )}
+
+        {/* Revisions Tab */}
+        {tab === 7 && (
+            <Box>
+              <Typography variant="subtitle1" fontWeight="bold" mb={2}>Revisions</Typography>
+              <DataGrid rows={revisions}
+                        columns={[
+                          { field: 'id', headerName: 'ID', width: 70 },
+                          { field: 'revisionNum', headerName: 'Revision #', width: 110 },
+                          { field: 'revisionDate', headerName: 'Date', width: 180,
+                            renderCell: p => p.value ? new Date(p.value).toLocaleString() : '-' },
+                          { field: 'current', headerName: 'Current', width: 100,
+                            renderCell: p => p.value ? <Chip label="Current" color="success" size="small" /> : null },
+                          { field: 'createUserId', headerName: 'Created By', width: 150 },
+                        ]}
+                        autoHeight pageSizeOptions={[10, 20]} disableRowSelectionOnClick />
+            </Box>
+        )}
+
+        {/* Invite Dialog */}
         <Dialog open={inviteDialog} onClose={() => setInviteDialog(false)} maxWidth="md" fullWidth>
           <DialogTitle>
             Invite Companies to Auction
@@ -871,59 +904,6 @@ export default function AuctionDetail() {
             </Button>
           </DialogActions>
         </Dialog>
-              {tab === 7 && (
-                  <Box>
-                    <Typography variant="subtitle1" mb={2}>Revisions</Typography>
-                    <DataGrid
-                        rows={revisions}
-                        columns={[
-                          { field: 'id', headerName: 'ID', width: 70 },
-                          { field: 'revisionNum', headerName: 'Revision #', width: 110 },
-                          { field: 'revisionDate', headerName: 'Date', width: 180,
-                            renderCell: p => p.value ? new Date(p.value).toLocaleString() : '-' },
-                          { field: 'current', headerName: 'Current', width: 100,
-                            renderCell: p => p.value ? <Chip label="Current" color="success" size="small" /> : null },
-                          { field: 'createUserId', headerName: 'Created By', width: 150 },
-                        ]}
-                        autoHeight pageSizeOptions={[10, 20]} disableRowSelectionOnClick
-                    />
-                  </Box>
-              )}
-
-              <Dialog open={inviteDialog} onClose={() => setInviteDialog(false)} maxWidth="md" fullWidth>
-                <DialogTitle>
-                  Invite Companies to Auction
-                  <Typography variant="body2" color="text.secondary">{selectedCompanies.length} selected</Typography>
-                </DialogTitle>
-                <DialogContent dividers>
-                  <List dense sx={{ maxHeight: 400, overflow: 'auto' }}>
-                    {allCompanies.map(company => (
-                        <ListItem key={company.id} disablePadding>
-                          <ListItemButton onClick={() => {
-                            setSelectedCompanies(prev =>
-                                prev.includes(company.id)
-                                    ? prev.filter(cid => cid !== company.id)
-                                    : [...prev, company.id]
-                            );
-                          }}>
-                            <Checkbox checked={selectedCompanies.includes(company.id)} size="small" />
-                            <ListItemText
-                                primary={company.companyName}
-                                secondary={`${company.taxId || ''} | ${company.contactEmail || ''}`}
-                            />
-                          </ListItemButton>
-                        </ListItem>
-                    ))}
-                  </List>
-                </DialogContent>
-                <DialogActions>
-                  <Button onClick={() => { setInviteDialog(false); setSelectedCompanies([]); }}>Cancel</Button>
-                  <Button variant="contained" onClick={handleInvite}
-                          disabled={selectedCompanies.length === 0 || inviteLoading}>
-                    {inviteLoading ? 'Inviting...' : `Invite ${selectedCompanies.length} Companies`}
-                  </Button>
-                </DialogActions>
-              </Dialog>
-            </Box>
-        );
-        }
+      </Box>
+  );
+}
