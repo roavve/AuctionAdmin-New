@@ -227,6 +227,7 @@ function ProjectStatsTab({ companyId, headers }) {
 
     const columns = [
         { field: 'projectId', headerName: 'ID', width: 70 },
+
         { field: 'projectName', headerName: 'Project', flex: 1 },
         { field: 'auctionCount', headerName: 'Total Auctions', width: 130 },
         { field: 'wonCount', headerName: 'Won', width: 90,
@@ -397,6 +398,7 @@ function CompanyCategoriesTab({ companyId, headers }) {
                     <FormControl fullWidth disabled={!form.categoryId}>
                         <InputLabel>Sub Category</InputLabel>
                         <Select value={form.subCategoryId} label="Sub Category"
+
                                 onChange={e => setForm(f => ({ ...f, subCategoryId: e.target.value }))}>
                             {subCategories.map(c => (
                                 <MenuItem key={c.id} value={c.id}>{c.name}</MenuItem>
@@ -488,7 +490,7 @@ export default function CompanyDetail() {
         try {
             if (isNew) {
                 const res = await companyApi.create(form);
-                navigate(`/companies/${res.data.id}`);
+                window.location.href = `/companies/${res.data.id}`;
             } else {
                 await companyApi.update(id, form);
                 setEditing(false);

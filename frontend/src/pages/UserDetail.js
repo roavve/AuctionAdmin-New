@@ -175,7 +175,7 @@ export default function UserDetail() {
         try {
             if (isNew) {
                 const res = await userApi.create(form);
-                navigate(`/users/${res.data.id}`);
+                window.location.href = `/users/${res.data.id}`;
             } else {
                 await userApi.update(id, form);
                 setEditing(false);

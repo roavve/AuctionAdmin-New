@@ -148,11 +148,13 @@ export default function Comments() {
 
             <Dialog open={answerDialog} onClose={() => setAnswerDialog(false)} maxWidth="sm" fullWidth>
                 <DialogTitle>Answer Comment</DialogTitle>
+
                 <DialogContent>
                     <Typography variant="body2" color="text.secondary" mb={2}>
                         Original: {selectedComment?.commText}
                     </Typography>
                     <TextField fullWidth multiline rows={4} label="Your Answer"
+
                                value={answerText} onChange={e => setAnswerText(e.target.value)} />
                 </DialogContent>
                 <DialogActions>

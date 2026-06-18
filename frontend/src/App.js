@@ -53,6 +53,7 @@ function App() {
               <Route path="notifications" element={<Notifications />} />
               <Route path="templates" element={<TextTemplates />} />
               <Route path="comments" element={<Comments />} />
+
             </Route>
           </Routes>
         </BrowserRouter>

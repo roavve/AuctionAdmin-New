@@ -168,4 +168,6 @@ public class CompanyController {
         companyCategoryRepository.deleteById(categoryId);
         return ResponseEntity.ok(Map.of("success", true));
     }
+
+
 }

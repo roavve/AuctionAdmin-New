@@ -75,6 +75,7 @@ public class CompanyService {
         user.setExternal(true);
         user.setInternal(false);
         user.setRegisterDate(new Date());
+        user.setActivateDate(new Date());
         user.setCreateUserId(userId);
         user.setStatus(1);
         user.setLocked(false);
@@ -86,7 +87,10 @@ public class CompanyService {
 
         dictionaryItemRepository.findByKey("key.companyStatus.active")
                 .ifPresent(company::setStatus);
-        company.setFlowDateActivated(new Date());
+        Date now = new Date();
+        company.setFlowDateInvited(now);
+        company.setFlowInvitedBy(userId);
+        company.setFlowDateActivated(now);
         companyRepository.save(company);
 
         Map<String, String> vars = new HashMap<>();

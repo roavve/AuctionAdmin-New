@@ -36,10 +36,10 @@ public class Notification extends MainEntity implements Serializable {
     private String sendText;
 
     @Column(name = "SMS_STATUS")
-    private int smsStatus;
+    private Integer smsStatus;
 
     @Column(name = "EMAIL_STATUS")
-    private int emailStatus;
+    private Integer emailStatus;
 
     @Column(name = "SMS_SEND_DATE")
     private Date smsSendDate;
@@ -72,10 +72,10 @@ public class Notification extends MainEntity implements Serializable {
     public void setSendSubject(String sendSubject) { this.sendSubject = sendSubject; }
     public String getSendText() { return sendText; }
     public void setSendText(String sendText) { this.sendText = sendText; }
-    public int getSmsStatus() { return smsStatus; }
-    public void setSmsStatus(int smsStatus) { this.smsStatus = smsStatus; }
-    public int getEmailStatus() { return emailStatus; }
-    public void setEmailStatus(int emailStatus) { this.emailStatus = emailStatus; }
+    public Integer getSmsStatus() { return smsStatus; }
+    public void setSmsStatus(Integer smsStatus) { this.smsStatus = smsStatus; }
+    public Integer getEmailStatus() { return emailStatus; }
+    public void setEmailStatus(Integer emailStatus) { this.emailStatus = emailStatus; }
     public Date getSmsSendDate() { return smsSendDate; }
     public void setSmsSendDate(Date smsSendDate) { this.smsSendDate = smsSendDate; }
     public Date getEmailSendDate() { return emailSendDate; }

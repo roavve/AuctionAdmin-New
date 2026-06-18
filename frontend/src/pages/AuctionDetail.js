@@ -258,11 +258,12 @@ export default function AuctionDetail() {
   const [invitations, setInvitations] = useState([]);
   const [participants, setParticipants] = useState([]);
   const [comments, setComments] = useState([]);
+  const [allComments, setAllComments] = useState([]);
   const [revisions, setRevisions] = useState([]);
   const [revisionFiles, setRevisionFiles] = useState([]);
   const [internalFiles, setInternalFiles] = useState([]);
   const [tab, setTab] = useState(0);
-  const [loading, setLoading] = useState(!isNew);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [actionMsg, setActionMsg] = useState('');
   const [editing, setEditing] = useState(isNew);
@@ -285,7 +286,7 @@ export default function AuctionDetail() {
     try {
       const [auctionRes, projectsRes, dictRes] = await Promise.all([
         auctionApi.getById(id),
-        fetch('http://localhost:8080/api/projects', { headers }).then(r => r.json()),
+        fetch('http://localhost:8080/api/projects', { headers }).then(r => r.json()).then(d => d.content || d),
         fetch('http://localhost:8080/api/dictionary/items', { headers }).then(r => r.json()),
       ]);
       setAuction(auctionRes.data);
@@ -301,12 +302,13 @@ export default function AuctionDetail() {
   const loadNew = async () => {
     try {
       const [projectsRes, dictRes] = await Promise.all([
-        fetch('http://localhost:8080/api/projects', { headers }).then(r => r.json()),
+        fetch('http://localhost:8080/api/projects', { headers }).then(r => r.json()).then(d => d.content || d),
         fetch('http://localhost:8080/api/dictionary/items', { headers }).then(r => r.json()),
       ]);
       setProjects(projectsRes);
       setDictionaryItems(dictRes);
     } catch {}
+    setLoading(false);
   };
 
   const loadTab = async (t) => {
@@ -314,7 +316,11 @@ export default function AuctionDetail() {
       if (t === 1) setBids((await auctionApi.getBids(id)).data);
       if (t === 2) setInvitations((await auctionApi.getInvitations(id)).data);
       if (t === 3) setParticipants((await auctionApi.getParticipants(id)).data);
-      if (t === 4) setComments((await auctionApi.getComments(id)).data);
+      if (t === 4) {
+        const all = (await auctionApi.getComments(id)).data;
+        setAllComments(all);
+        setComments(all.filter(c => !c.answerToKey));
+      }
       if (t === 5) {
         const res = await fetch(`http://localhost:8080/api/auctions/${id}/files`, { headers });
         setRevisionFiles(await res.json());
@@ -360,7 +366,11 @@ export default function AuctionDetail() {
       };
       if (isNew) {
         const res = await auctionApi.create(payload);
-        navigate(`/auctions/${res.data.id}`);
+        if (res.data?.id) {
+          window.location.href = `/auctions/${res.data.id}`;
+        } else {
+          setSaveError('Created but no ID returned');
+        }
       } else {
         await auctionApi.update(id, payload);
         setEditing(false);
@@ -449,19 +459,16 @@ export default function AuctionDetail() {
   const fmt = (date) => date ? new Date(date).toLocaleDateString() : '-';
 
   if (isNew) {
+    if (loading) return <Box display="flex" justifyContent="center" mt={4}><CircularProgress /></Box>;
     return (
         <Box>
           <Box display="flex" alignItems="center" mb={2} gap={2}>
             <Button startIcon={<ArrowBackIcon />} onClick={() => navigate('/auctions')}>Back</Button>
             <Typography variant="h5">New Auction</Typography>
           </Box>
-          {dictionaryItems.length > 0 ? (
-              <AuctionForm projects={projects} dictionaryItems={dictionaryItems}
-                           onSave={handleSave} onCancel={() => navigate('/auctions')}
-                           saving={saving} saveError={saveError} />
-          ) : (
-              <Box display="flex" justifyContent="center" mt={4}><CircularProgress /></Box>
-          )}
+          <AuctionForm projects={projects} dictionaryItems={dictionaryItems}
+                       onSave={handleSave} onCancel={() => navigate('/auctions')}
+                       saving={saving} saveError={saveError} />
         </Box>
     );
   }
@@ -550,7 +557,22 @@ export default function AuctionDetail() {
 
   const commentColumns = [
     { field: 'id', headerName: 'ID', width: 70 },
-    { field: 'commText', headerName: 'Comment', flex: 1 },
+    {
+      field: 'commText', headerName: 'Comment', flex: 1,
+      renderCell: p => {
+        const reply = allComments.find(c => c.answerToKey === p.row.recordKey);
+        return (
+            <Box>
+              <Typography variant="body2">{p.value}</Typography>
+              {reply && (
+                  <Typography variant="body2" color="primary.main" sx={{ mt: 0.5 }}>
+                    ↳ {reply.commText}
+                  </Typography>
+              )}
+            </Box>
+        );
+      }
+    },
     { field: 'commCreated', headerName: 'Date', width: 160,
       renderCell: p => p.value ? new Date(p.value).toLocaleString() : '-' },
     { field: 'status', headerName: 'Status', width: 120,
@@ -589,7 +611,6 @@ export default function AuctionDetail() {
 
   return (
       <Box>
-        {/* Header */}
         <Box display="flex" alignItems="center" gap={2} mb={2} flexWrap="wrap">
           <Button startIcon={<ArrowBackIcon />} onClick={() => navigate('/auctions')} variant="outlined">
             Back
@@ -650,7 +671,6 @@ export default function AuctionDetail() {
           <Tab label="Revisions" />
         </Tabs>
 
-        {/* Details Tab */}
         {tab === 0 && (
             <Grid container spacing={2}>
               <Grid size={{ xs: 12, md: 6 }}>
@@ -702,7 +722,6 @@ export default function AuctionDetail() {
             </Grid>
         )}
 
-        {/* Bids Tab */}
         {tab === 1 && (
             <Box>
               {bids.length >= 2 && (() => {
@@ -739,7 +758,6 @@ export default function AuctionDetail() {
             </Box>
         )}
 
-        {/* Invitations Tab */}
         {tab === 2 && (
             <Box>
               <Box mb={2} display="flex" gap={2} alignItems="center" flexWrap="wrap">
@@ -760,7 +778,6 @@ export default function AuctionDetail() {
             </Box>
         )}
 
-        {/* Participants Tab */}
         {tab === 3 && (
             <Box>
               <Box mb={2} display="flex" gap={2} alignItems="center">
@@ -777,13 +794,12 @@ export default function AuctionDetail() {
             </Box>
         )}
 
-        {/* Comments Tab */}
         {tab === 4 && (
             <DataGrid rows={comments} columns={commentColumns} autoHeight
+                      getRowHeight={() => 'auto'}
                       pageSizeOptions={[10, 20, 50]} disableRowSelectionOnClick />
         )}
 
-        {/* Files Tab */}
         {tab === 5 && (
             <Box>
               <Box mb={2} display="flex" gap={2} alignItems="center" flexWrap="wrap">
@@ -817,7 +833,6 @@ export default function AuctionDetail() {
             </Box>
         )}
 
-        {/* Internal Files Tab */}
         {tab === 6 && (
             <Box>
               <Box mb={2} display="flex" gap={2} alignItems="center" flexWrap="wrap">
@@ -851,7 +866,6 @@ export default function AuctionDetail() {
             </Box>
         )}
 
-        {/* Revisions Tab */}
         {tab === 7 && (
             <Box>
               <Typography variant="subtitle1" fontWeight="bold" mb={2}>Revisions</Typography>
@@ -869,7 +883,6 @@ export default function AuctionDetail() {
             </Box>
         )}
 
-        {/* Invite Dialog */}
         <Dialog open={inviteDialog} onClose={() => setInviteDialog(false)} maxWidth="md" fullWidth>
           <DialogTitle>
             Invite Companies to Auction
