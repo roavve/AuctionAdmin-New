@@ -53,6 +53,43 @@ public class AuctionService {
         this.emailService = emailService;
     }
 
+    private void validateAuction(Auction auction) {
+        java.util.List<String> missing = new java.util.ArrayList<>();
+        if (auction.getName() == null || auction.getName().trim().isEmpty()) missing.add("Name");
+        if (auction.getAuctionType() == null || auction.getAuctionType().getKey() == null) missing.add("Auction Type");
+        if (auction.getProject() == null || auction.getProject().getId() == null) missing.add("Project");
+        if (auction.getInviteText() == null || auction.getInviteText().trim().isEmpty()) missing.add("Invitation Text");
+        if (auction.getValueType() == null || auction.getValueType().getKey() == null) missing.add("Value Type");
+        if (auction.getUom() == null || auction.getUom().getKey() == null) missing.add("Unit of Measure");
+        if (auction.getCurrency() == null || auction.getCurrency().getKey() == null) missing.add("Currency");
+        if (auction.getBidStep() == null) missing.add("Bid Step");
+        if (auction.getStartBidValue() == null) missing.add("Start Bid Value");
+        if (auction.getMaxBidValue() == null) missing.add("Max Bid Value");
+        if (auction.getAdditionalMinute() == null) missing.add("Additional Minutes");
+        if (auction.getDiscussStartDate() == null) missing.add("Discuss Start Date");
+        if (auction.getDiscussEndDate() == null) missing.add("Discuss End Date");
+        if (auction.getAuctionStartDate() == null) missing.add("Auction Start Date");
+        if (auction.getAuctionEndDate() == null) missing.add("Auction End Date");
+        if (auction.getStartTime() == null || auction.getStartTime().trim().isEmpty()) missing.add("Start Time");
+        if (auction.getEndTime() == null || auction.getEndTime().trim().isEmpty()) missing.add("End Time");
+        if (auction.getBidStartDate() == null) missing.add("Bid Start Date");
+        if (auction.getBidEndDate() == null) missing.add("Bid End Date");
+        if (auction.getBidStartTime() == null || auction.getBidStartTime().trim().isEmpty()) missing.add("Bid Start Time");
+        if (auction.getBidEndTime() == null || auction.getBidEndTime().trim().isEmpty()) missing.add("Bid End Time");
+
+        if (!missing.isEmpty()) {
+            throw new RuntimeException("Missing required fields: " + String.join(", ", missing));
+        }
+        if (auction.getStartBidValue() != null && auction.getMaxBidValue() != null
+                && auction.getMaxBidValue() <= auction.getStartBidValue()) {
+            throw new RuntimeException("Max Bid Value must be greater than Start Bid Value");
+        }
+        if (auction.getDiscussEndDate() != null && auction.getAuctionStartDate() != null
+                && !auction.getAuctionStartDate().after(auction.getDiscussEndDate())) {
+            throw new RuntimeException("Auction Start Date must be after Discuss End Date");
+        }
+    }
+
     private DictionaryItem getStatusByKey(String key) {
         return dictionaryItemRepository.findByKey(key)
                 .orElseThrow(() -> new RuntimeException("Status not found: " + key));
@@ -101,6 +138,7 @@ public class AuctionService {
 
     @Transactional
     public Auction createAuction(Auction auction, String userId) {
+        validateAuction(auction);
         auction.setRecordKey(UUID.randomUUID().toString());
         auction.setStatus(getStatusByKey("key.auctionStatus.draft"));
         auction.setCreateDate(new Date());
@@ -139,14 +177,9 @@ public class AuctionService {
 
     @Transactional
     public Auction updateAuction(Integer id, Auction auction, String userId) {
+        validateAuction(auction);
         Auction original = auctionRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Auction not found: " + id));
-
-        if (auction.getAuctionStartDate() != null && auction.getDiscussEndDate() != null) {
-            if (!auction.getAuctionStartDate().after(auction.getDiscussEndDate())) {
-                throw new RuntimeException("Auction Start Date must be after Discuss End Date");
-            }
-        }
 
         original.setName(auction.getName());
         original.setDesc(auction.getDesc());
