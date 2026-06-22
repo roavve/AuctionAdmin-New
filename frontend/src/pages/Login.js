@@ -21,7 +21,14 @@ export default function Login() {
             await login(email, password);
             navigate('/auctions');
         } catch (err) {
-            setError('Invalid email or password');
+            const serverError = err.response?.data?.error;
+            if (err.response?.status === 429) {
+                setError(serverError || 'Too many login attempts. Please try again in 15 minutes.');
+            } else if (serverError) {
+                setError(serverError);
+            } else {
+                setError('Invalid email or password');
+            }
         } finally {
             setLoading(false);
         }
