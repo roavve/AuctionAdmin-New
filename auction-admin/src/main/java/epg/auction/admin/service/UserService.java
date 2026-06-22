@@ -84,6 +84,7 @@ public class UserService {
                 .orElseThrow(() -> new RuntimeException("User not found"));
         original.setFirstName(user.getFirstName());
         original.setLastName(user.getLastName());
+
         original.setRole(user.getRole());
         original.setInternal(user.getInternal());
         original.setExternal(user.getExternal());
