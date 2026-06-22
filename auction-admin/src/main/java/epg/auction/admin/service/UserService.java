@@ -25,7 +25,31 @@ public class UserService {
         this.userRepository = userRepository;
         this.dictionaryItemRepository = dictionaryItemRepository;
     }
+    private void validateUser(User user, boolean isNew) {
+        java.util.List<String> missing = new java.util.ArrayList<>();
+        if (user.getFirstName() == null || user.getFirstName().trim().isEmpty()) missing.add("First Name");
+        if (user.getLastName() == null || user.getLastName().trim().isEmpty()) missing.add("Last Name");
+        if (user.getEmail() == null || user.getEmail().trim().isEmpty()) missing.add("Email");
+        if (isNew && (user.getPassword() == null || user.getPassword().trim().isEmpty())) missing.add("Password");
+        if (user.getContactPosition() == null || user.getContactPosition().trim().isEmpty()) missing.add("Contact Position");
+        if (user.getContactEmail() == null || user.getContactEmail().trim().isEmpty()) missing.add("Contact Email");
+        if (user.getContactPhone() == null || user.getContactPhone().trim().isEmpty()) missing.add("Contact Phone");
+        if (user.getContactMobile() == null || user.getContactMobile().trim().isEmpty()) missing.add("Contact Mobile");
 
+        if (!missing.isEmpty()) {
+            throw new RuntimeException("Missing required fields: " + String.join(", ", missing));
+        }
+        String emailRegex = "^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$";
+        if (!user.getEmail().matches(emailRegex)) {
+            throw new RuntimeException("Email is not a valid email address");
+        }
+        if (!user.getContactEmail().matches(emailRegex)) {
+            throw new RuntimeException("Contact Email is not a valid email address");
+        }
+        if (isNew && user.getPassword().length() < 6) {
+            throw new RuntimeException("Password must be at least 6 characters");
+        }
+    }
     public List<User> getAll() { return userRepository.findAll(); }
 
     public Optional<User> getById(Integer id) { return userRepository.findById(id); }
@@ -39,6 +63,7 @@ public class UserService {
 
     @Transactional
     public User createUser(User user, String createdBy) {
+        validateUser(user, true);
         user.setRecordKey(UUID.randomUUID().toString());
         user.setRegisterDate(new Date());
         user.setActive(true);
@@ -54,6 +79,7 @@ public class UserService {
 
     @Transactional
     public User updateUser(Integer id, User user, String modifiedBy) {
+        validateUser(user, false);
         User original = userRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("User not found"));
         original.setFirstName(user.getFirstName());
