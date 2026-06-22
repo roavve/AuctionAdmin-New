@@ -58,31 +58,70 @@ const ROLES = [
 
 function UserForm({ initial, onSave, onCancel, saving, saveError }) {
     const [form, setForm] = useState(initial || EMPTY_FORM);
+    const [validationError, setValidationError] = useState('');
     const set = (field, value) => setForm(f => ({ ...f, [field]: value }));
     const isNew = !initial;
+
+    const validate = () => {
+        const missing = [];
+        if (!form.firstName?.trim()) missing.push('First Name');
+        if (!form.lastName?.trim()) missing.push('Last Name');
+        if (!form.email?.trim()) missing.push('Email');
+        if (isNew && !form.password?.trim()) missing.push('Password');
+        if (!form.contactPosition?.trim()) missing.push('Contact Position');
+        if (!form.contactEmail?.trim()) missing.push('Contact Email');
+        if (!form.contactPhone?.trim()) missing.push('Contact Phone');
+        if (!form.contactMobile?.trim()) missing.push('Contact Mobile');
+
+        if (missing.length > 0) {
+            return 'Please fill in required fields: ' + missing.join(', ');
+        }
+        const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRe.test(form.email)) {
+            return 'Email is not a valid email address';
+        }
+        if (!emailRe.test(form.contactEmail)) {
+            return 'Contact Email is not a valid email address';
+        }
+        if (isNew && form.password.length < 6) {
+            return 'Password must be at least 6 characters';
+        }
+        return '';
+    };
+
+    const handleSaveClick = () => {
+        const err = validate();
+        if (err) {
+            setValidationError(err);
+            return;
+        }
+        setValidationError('');
+        onSave(form);
+    };
 
     return (
         <Paper sx={{ p: 3 }}>
             {saveError && <Alert severity="error" sx={{ mb: 2 }}>{saveError}</Alert>}
+            {validationError && <Alert severity="warning" sx={{ mb: 2 }} onClose={() => setValidationError('')}>{validationError}</Alert>}
             <Grid container spacing={2}>
                 <Grid size={{ xs: 12 }}>
                     <Typography variant="subtitle1" fontWeight="bold">User Info</Typography>
                 </Grid>
                 <Grid size={{ xs: 12, md: 6 }}>
-                    <TextField fullWidth label="First Name" value={form.firstName || ''}
-                               onChange={e => set('firstName', e.target.value)} />
+                    <TextField fullWidth label="First Name *" value={form.firstName || ''}
+                               onChange={e => set('firstName', e.target.value)} required />
                 </Grid>
                 <Grid size={{ xs: 12, md: 6 }}>
-                    <TextField fullWidth label="Last Name" value={form.lastName || ''}
-                               onChange={e => set('lastName', e.target.value)} />
+                    <TextField fullWidth label="Last Name *" value={form.lastName || ''}
+                               onChange={e => set('lastName', e.target.value)} required />
                 </Grid>
                 <Grid size={{ xs: 12, md: 6 }}>
-                    <TextField fullWidth label="Email" value={form.email || ''}
+                    <TextField fullWidth label="Email *" value={form.email || ''}
                                onChange={e => set('email', e.target.value)} required />
                 </Grid>
                 {isNew && (
                     <Grid size={{ xs: 12, md: 6 }}>
-                        <TextField fullWidth label="Password" type="password"
+                        <TextField fullWidth label="Password *" type="password"
                                    value={form.password || ''}
                                    onChange={e => set('password', e.target.value)} required />
                     </Grid>
@@ -112,25 +151,25 @@ function UserForm({ initial, onSave, onCancel, saving, saveError }) {
                     <Typography variant="subtitle1" fontWeight="bold" mt={1}>Contact</Typography>
                 </Grid>
                 <Grid size={{ xs: 12, md: 6 }}>
-                    <TextField fullWidth label="Contact Email" value={form.contactEmail || ''}
-                               onChange={e => set('contactEmail', e.target.value)} />
+                    <TextField fullWidth label="Contact Email *" value={form.contactEmail || ''}
+                               onChange={e => set('contactEmail', e.target.value)} required />
                 </Grid>
                 <Grid size={{ xs: 12, md: 6 }}>
-                    <TextField fullWidth label="Contact Phone" value={form.contactPhone || ''}
-                               onChange={e => set('contactPhone', e.target.value)} />
+                    <TextField fullWidth label="Contact Phone *" value={form.contactPhone || ''}
+                               onChange={e => set('contactPhone', e.target.value)} required />
                 </Grid>
                 <Grid size={{ xs: 12, md: 6 }}>
-                    <TextField fullWidth label="Contact Mobile" value={form.contactMobile || ''}
-                               onChange={e => set('contactMobile', e.target.value)} />
+                    <TextField fullWidth label="Contact Mobile *" value={form.contactMobile || ''}
+                               onChange={e => set('contactMobile', e.target.value)} required />
                 </Grid>
                 <Grid size={{ xs: 12, md: 6 }}>
-                    <TextField fullWidth label="Contact Position" value={form.contactPosition || ''}
-                               onChange={e => set('contactPosition', e.target.value)} />
+                    <TextField fullWidth label="Contact Position *" value={form.contactPosition || ''}
+                               onChange={e => set('contactPosition', e.target.value)} required />
                 </Grid>
                 <Grid size={{ xs: 12 }}>
-                    <Box display="flex" gap={2} mt={2}>
+                    <Box sx={{ display: 'flex', gap: 2, mt: 2 }}>
                         <Button variant="contained" startIcon={<SaveIcon />}
-                                onClick={() => onSave(form)} disabled={saving}>
+                                onClick={handleSaveClick} disabled={saving}>
                             {saving ? 'Saving...' : 'Save User'}
                         </Button>
                         <Button onClick={onCancel}>Cancel</Button>
@@ -218,7 +257,7 @@ export default function UserDetail() {
     if (isNew) {
         return (
             <Box>
-                <Box display="flex" sx={{ alignItems: 'center' }} mb={2} gap={2}>
+                <Box sx={{ display: 'flex', alignItems: 'center', mb: 2, gap: 2 }}>
                     <Button startIcon={<ArrowBackIcon />} onClick={() => navigate('/users')}>Back</Button>
                     <Typography variant="h5">New User</Typography>
                 </Box>
@@ -235,7 +274,7 @@ export default function UserDetail() {
     if (editing) {
         return (
             <Box>
-                <Box display="flex" sx={{ alignItems: 'center' }} mb={2} gap={2}>
+                <Box sx={{ display: 'flex', alignItems: 'center', mb: 2, gap: 2 }}>
                     <Button startIcon={<ArrowBackIcon />} onClick={() => setEditing(false)}>Back</Button>
                     <Typography variant="h5">Edit: {user.firstName} {user.lastName}</Typography>
                 </Box>
@@ -258,7 +297,7 @@ export default function UserDetail() {
                     <Typography variant="h5" fontWeight="700">
                         {user.firstName} {user.lastName}
                     </Typography>
-                    <Box display="flex" gap={1} mt={0.5} sx={{ flexWrap: 'wrap' }}>
+                    <Box sx={{ display: 'flex', gap: 1, mt: 0.5, flexWrap: 'wrap' }}>
                         <Chip label={user.active ? 'Active' : 'Inactive'}
                               color={user.active ? 'success' : 'default'} size="small" />
                         {user.locked && <Chip label="Locked" color="warning" size="small" />}
@@ -268,7 +307,7 @@ export default function UserDetail() {
                         {user.external && <Chip label="External" size="small" variant="outlined" />}
                     </Box>
                 </Box>
-                <Box display="flex" gap={1} sx={{ flexWrap: 'wrap' }}>
+                <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
                     <Button variant="outlined" onClick={() => setEditing(true)}>Edit</Button>
                     <Button variant="outlined" onClick={() => setPwDialog(true)}>Change Password</Button>
                     {!user.locked
