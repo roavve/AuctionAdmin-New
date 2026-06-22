@@ -57,17 +57,46 @@ function InfoRow({ label, value }) {
 
 function CompanyForm({ initial, categories, companyTypes, onSave, onCancel, saving, saveError }) {
     const [form, setForm] = useState(initial || EMPTY_FORM);
+    const [validationError, setValidationError] = useState('');
     const set = (field, value) => setForm(f => ({ ...f, [field]: value }));
+
+    const validate = () => {
+        const missing = [];
+        if (!form.companyName?.trim()) missing.push('Company Name');
+        if (!form.type?.id) missing.push('Type');
+        if (!form.businessDesc?.trim()) missing.push('Business Description');
+        if (!form.contactEmail?.trim()) missing.push('Contact Email');
+
+        if (missing.length > 0) {
+            return 'Please fill in required fields: ' + missing.join(', ');
+        }
+        const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRe.test(form.contactEmail)) {
+            return 'Contact Email is not a valid email address';
+        }
+        return '';
+    };
+
+    const handleSaveClick = () => {
+        const err = validate();
+        if (err) {
+            setValidationError(err);
+            return;
+        }
+        setValidationError('');
+        onSave(form);
+    };
 
     return (
         <Paper sx={{ p: 3 }}>
             {saveError && <Alert severity="error" sx={{ mb: 2 }}>{saveError}</Alert>}
+            {validationError && <Alert severity="warning" sx={{ mb: 2 }} onClose={() => setValidationError('')}>{validationError}</Alert>}
             <Grid container spacing={2}>
                 <Grid size={{ xs: 12 }}>
                     <Typography variant="subtitle1" fontWeight="bold">Company Info</Typography>
                 </Grid>
                 <Grid size={{ xs: 12, md: 6 }}>
-                    <TextField fullWidth label="Company Name" value={form.companyName || ''}
+                    <TextField fullWidth label="Company Name *" value={form.companyName || ''}
                                onChange={e => set('companyName', e.target.value)} required />
                 </Grid>
                 <Grid size={{ xs: 12, md: 6 }}>
@@ -75,9 +104,9 @@ function CompanyForm({ initial, categories, companyTypes, onSave, onCancel, savi
                                onChange={e => set('taxId', e.target.value)} />
                 </Grid>
                 <Grid size={{ xs: 12, md: 6 }}>
-                    <FormControl fullWidth>
-                        <InputLabel>Type</InputLabel>
-                        <Select value={form.type?.id || ''} label="Type"
+                    <FormControl fullWidth required>
+                        <InputLabel>Type *</InputLabel>
+                        <Select value={form.type?.id || ''} label="Type *"
                                 onChange={e => set('type', e.target.value ? { id: e.target.value } : null)}>
                             <MenuItem value="">None</MenuItem>
                             {companyTypes.map(t => <MenuItem key={t.id} value={t.id}>{t.name}</MenuItem>)}
@@ -95,8 +124,8 @@ function CompanyForm({ initial, categories, companyTypes, onSave, onCancel, savi
                     </FormControl>
                 </Grid>
                 <Grid size={{ xs: 12 }}>
-                    <TextField fullWidth label="Business Description" value={form.businessDesc || ''}
-                               onChange={e => set('businessDesc', e.target.value)} multiline rows={2} />
+                    <TextField fullWidth label="Business Description *" value={form.businessDesc || ''}
+                               onChange={e => set('businessDesc', e.target.value)} multiline rows={2} required />
                 </Grid>
                 <Grid size={{ xs: 12 }}>
                     <Typography variant="subtitle1" fontWeight="bold" mt={1}>Contact</Typography>
@@ -114,8 +143,8 @@ function CompanyForm({ initial, categories, companyTypes, onSave, onCancel, savi
                                onChange={e => set('contactPosition', e.target.value)} />
                 </Grid>
                 <Grid size={{ xs: 12, md: 4 }}>
-                    <TextField fullWidth label="Email" value={form.contactEmail || ''}
-                               onChange={e => set('contactEmail', e.target.value)} />
+                    <TextField fullWidth label="Email *" value={form.contactEmail || ''}
+                               onChange={e => set('contactEmail', e.target.value)} required />
                 </Grid>
                 <Grid size={{ xs: 12, md: 4 }}>
                     <TextField fullWidth label="Phone" value={form.contactPhone || ''}
@@ -153,9 +182,9 @@ function CompanyForm({ initial, categories, companyTypes, onSave, onCancel, savi
                                onChange={e => set('note', e.target.value)} multiline rows={2} />
                 </Grid>
                 <Grid size={{ xs: 12 }}>
-                    <Box display="flex" gap={2} mt={2}>
+                    <Box sx={{ display: 'flex', gap: 2, mt: 2 }}>
                         <Button variant="contained" startIcon={<SaveIcon />}
-                                onClick={() => onSave(form)} disabled={saving}>
+                                onClick={handleSaveClick} disabled={saving}>
                             {saving ? 'Saving...' : 'Save Company'}
                         </Button>
                         <Button onClick={onCancel}>Cancel</Button>
@@ -369,7 +398,7 @@ function CompanyCategoriesTab({ companyId, headers }) {
 
     return (
         <Box>
-            <Box display="flex" sx={{ alignItems: 'center' }} gap={2} mb={2}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
                 <Typography variant="subtitle1" fontWeight="bold">
                     Company Categories ({categories.length})
                 </Typography>
@@ -591,7 +620,7 @@ export default function CompanyDetail() {
         { field: 'fileUser', headerName: 'Uploaded By', width: 150 },
         { field: 'actions', headerName: '', width: 160, sortable: false,
             renderCell: p => (
-                <Box display="flex" gap={0.5}>
+                <Box sx={{ display: 'flex', gap: 0.5 }}>
                     <Button size="small"
                             onClick={() => downloadFile(`http://localhost:8080/api/companies/files/${p.row.id}/download`, p.row.fileName)}>
                         Download
@@ -609,7 +638,7 @@ export default function CompanyDetail() {
     if (isNew) {
         return (
             <Box>
-                <Box display="flex" sx={{ alignItems: 'center' }} mb={2} gap={2}>
+                <Box sx={{ display: 'flex', alignItems: 'center', mb: 2, gap: 2 }}>
                     <Button startIcon={<ArrowBackIcon />} onClick={() => navigate('/companies')}>Back</Button>
                     <Typography variant="h5">New Company</Typography>
                 </Box>
@@ -630,7 +659,7 @@ export default function CompanyDetail() {
     if (editing) {
         return (
             <Box>
-                <Box display="flex" sx={{ alignItems: 'center' }} mb={2} gap={2}>
+                <Box sx={{ display: 'flex', alignItems: 'center', mb: 2, gap: 2 }}>
                     <Button startIcon={<ArrowBackIcon />} onClick={() => setEditing(false)}>Back</Button>
                     <Typography variant="h5">Edit: {company?.companyName}</Typography>
                 </Box>
@@ -650,13 +679,13 @@ export default function CompanyDetail() {
                 </Button>
                 <Box sx={{ flexGrow: 1 }}>
                     <Typography variant="h5" fontWeight="700">{company?.companyName}</Typography>
-                    <Box display="flex" gap={1} mt={0.5} sx={{ flexWrap: 'wrap' }}>
+                    <Box sx={{ display: 'flex', gap: 1, mt: 0.5, flexWrap: 'wrap' }}>
                         <Chip label={company?.status?.name || 'Unknown'} size="small" color="primary" />
                         {company?.taxId && <Chip label={`Tax ID: ${company.taxId}`} size="small" variant="outlined" />}
                         {company?.category && <Chip label={company.category.name} size="small" variant="outlined" />}
                     </Box>
                 </Box>
-                <Box display="flex" gap={1}>
+                <Box sx={{ display: 'flex', gap: 1 }}>
                     <Button variant="outlined" onClick={() => setEditing(true)}>Edit</Button>
                     {company?.status?.key === 'key.companyStatus.created' && (
                         <Button variant="contained" color="success" onClick={handleInvite}>Invite</Button>
@@ -742,7 +771,7 @@ export default function CompanyDetail() {
 
             {tab === 2 && (
                 <Box>
-                    <Box mb={2} display="flex" gap={2} sx={{ alignItems: 'center' }}>
+                    <Box sx={{ mb: 2, display: 'flex', gap: 2, alignItems: 'center' }}>
                         <Typography variant="subtitle1">Company Files</Typography>
                         <TextField size="small" label="Description (optional)"
                                    value={fileDescription}
