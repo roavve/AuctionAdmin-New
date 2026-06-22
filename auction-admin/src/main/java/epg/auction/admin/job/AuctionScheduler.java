@@ -2,8 +2,10 @@ package epg.auction.admin.job;
 
 import epg.auction.admin.entity.Auction;
 import epg.auction.admin.entity.DictionaryItem;
+import epg.auction.admin.entity.SysAudit;
 import epg.auction.admin.repository.AuctionRepository;
 import epg.auction.admin.repository.DictionaryItemRepository;
+import epg.auction.admin.repository.SysAuditRepository;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,11 +20,28 @@ public class AuctionScheduler {
 
     private final AuctionRepository auctionRepository;
     private final DictionaryItemRepository dictionaryItemRepository;
+    private final SysAuditRepository sysAuditRepository;
 
     public AuctionScheduler(AuctionRepository auctionRepository,
-                            DictionaryItemRepository dictionaryItemRepository) {
+                            DictionaryItemRepository dictionaryItemRepository,
+                            SysAuditRepository sysAuditRepository) {
         this.auctionRepository = auctionRepository;
         this.dictionaryItemRepository = dictionaryItemRepository;
+        this.sysAuditRepository = sysAuditRepository;
+    }
+
+    private void audit(String action, String objectName, Integer objectId) {
+        try {
+            SysAudit log = new SysAudit();
+            log.setAction(action);
+            log.setObjectName(objectName);
+            log.setObjectId(objectId);
+            log.setUserId("system");
+            log.setAuditDate(new Date());
+            sysAuditRepository.save(log);
+        } catch (Exception e) {
+            System.err.println("Failed to write audit log: " + e.getMessage());
+        }
     }
 
     @Scheduled(fixedDelay = 60000)
@@ -49,6 +68,7 @@ public class AuctionScheduler {
                         auction.setCloseDate(now);
                         auction.setModifyUserId("system");
                         auctionRepository.save(auction);
+                        audit("CLOSE", "AUCTION", auction.getId());
                         System.out.println("Auto-closed auction: " + auction.getId() + " - " + auction.getName());
                     }
                 } catch (ParseException e) {
