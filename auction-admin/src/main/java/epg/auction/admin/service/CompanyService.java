@@ -32,7 +32,20 @@ public class CompanyService {
         this.smsService = smsService;
         this.companyRepository = companyRepository;
     }
+    private void validateCompany(Company company) {
+        java.util.List<String> missing = new java.util.ArrayList<>();
+        if (company.getCompanyName() == null || company.getCompanyName().trim().isEmpty()) missing.add("Company Name");
+        if (company.getType() == null || company.getType().getId() == null) missing.add("Type");
+        if (company.getBusinessDesc() == null || company.getBusinessDesc().trim().isEmpty()) missing.add("Business Description");
+        if (company.getContactEmail() == null || company.getContactEmail().trim().isEmpty()) missing.add("Contact Email");
 
+        if (!missing.isEmpty()) {
+            throw new RuntimeException("Missing required fields: " + String.join(", ", missing));
+        }
+        if (!company.getContactEmail().matches("^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$")) {
+            throw new RuntimeException("Contact Email is not a valid email address");
+        }
+    }
     private DictionaryItem getStatusByKey(String key) {
         return dictionaryItemRepository.findByKey(key)
                 .orElseThrow(() -> new RuntimeException("Status not found: " + key));
@@ -44,9 +57,9 @@ public class CompanyService {
 
     @Transactional
     public Company save(Company company) { return companyRepository.save(company); }
-
     @Transactional
     public Company createCompany(Company company, String userId) {
+        validateCompany(company);
         company.setRecordKey(UUID.randomUUID().toString());
         company.setFlowDateCreated(new Date());
         company.setFlowCreatedBy(userId);
@@ -109,6 +122,7 @@ public class CompanyService {
 
     @Transactional
     public Company updateCompany(Integer id, Company company, String userId) {
+        validateCompany(company);
         Company original = companyRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Company not found: " + id));
         original.setCompanyName(company.getCompanyName());
