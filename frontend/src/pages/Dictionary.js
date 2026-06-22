@@ -103,7 +103,7 @@ export default function Dictionary() {
 
     return (
         <Box>
-            <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
                 <Typography variant="h5">Dictionary Items</Typography>
                 <Button variant="contained" startIcon={<AddIcon />} onClick={() => handleOpen()}>
                     New Item

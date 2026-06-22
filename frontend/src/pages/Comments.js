@@ -144,7 +144,7 @@ export default function Comments() {
                       paginationMode="server"
                       paginationModel={{ page, pageSize }}
                       onPaginationModelChange={m => { setPage(m.page); setPageSize(m.pageSize); }}
-                      pageSizeOptions={[10, 20, 50]} autoHeight disableRowSelectionOnClick />
+                      pageSizeOptions={[10, 20, 50, 100]} autoHeight disableRowSelectionOnClick />
 
             <Dialog open={answerDialog} onClose={() => setAnswerDialog(false)} maxWidth="sm" fullWidth>
                 <DialogTitle>Answer Comment</DialogTitle>

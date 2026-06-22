@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { auctionApi } from '../api/auctions';
 import {
-    Box, Typography, Tabs, Tab, Chip, Button, CircularProgress
+    Box, Typography, Tabs, Tab, Button,
 } from '@mui/material';
 import { DataGrid } from '@mui/x-data-grid';
 import { useNavigate } from 'react-router-dom';
@@ -69,7 +69,7 @@ export default function Monitor() {
                 paginationMode="server"
                 paginationModel={{ page, pageSize }}
                 onPaginationModelChange={(m) => { setPage(m.page); setPageSize(m.pageSize); }}
-                pageSizeOptions={[10, 20, 50]}
+                pageSizeOptions={[10, 20, 50, 100]}
                 autoHeight disableRowSelectionOnClick
             />
         </Box>

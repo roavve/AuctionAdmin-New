@@ -49,6 +49,7 @@ export default function Notifications() {
     ];
 
     return (
+
         <Box>
             <Typography variant="h5" mb={2}>Notifications</Typography>
             {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
@@ -56,7 +57,7 @@ export default function Notifications() {
                       paginationMode="server"
                       paginationModel={{ page, pageSize }}
                       onPaginationModelChange={m => { setPage(m.page); setPageSize(m.pageSize); }}
-                      pageSizeOptions={[20, 50]} autoHeight disableRowSelectionOnClick />
+                      pageSizeOptions={[20, 50, 100]} autoHeight disableRowSelectionOnClick />
         </Box>
     );
 }

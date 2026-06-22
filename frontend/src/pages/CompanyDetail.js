@@ -26,7 +26,7 @@ const EMPTY_FORM = {
 
 function SectionTitle({ icon, title }) {
     return (
-        <Box display="flex" alignItems="center" gap={1} mb={2}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
             {icon}
             <Typography variant="subtitle1" fontWeight="700" color="primary.main">
                 {title}
@@ -38,7 +38,7 @@ function SectionTitle({ icon, title }) {
 
 function InfoRow({ label, value }) {
     return (
-        <Box display="flex" alignItems="flex-start" py={0.6}>
+        <Box sx={{ display: 'flex', alignItems: 'flex-start', py: 0.6 }}>
             <Typography variant="body2" sx={{
                 width: 160, flexShrink: 0, color: 'text.secondary',
                 fontWeight: 500, fontSize: '0.78rem', pt: 0.1
@@ -208,7 +208,7 @@ function BidHistoryTab({ companyId, headers }) {
                 Bid History ({history.length} auctions participated)
             </Typography>
             <DataGrid rows={history} columns={columns} autoHeight
-                      loading={loading} pageSizeOptions={[10, 20, 50]}
+                      loading={loading} pageSizeOptions={[10, 20, 50, 100]}
                       disableRowSelectionOnClick />
         </Box>
     );
@@ -251,7 +251,7 @@ function ProjectStatsTab({ companyId, headers }) {
                 columns={columns}
                 autoHeight
                 loading={loading}
-                pageSizeOptions={[10, 20]}
+                pageSizeOptions={[10, 20, 100]}
                 disableRowSelectionOnClick
             />
         </Box>
@@ -292,7 +292,7 @@ function AuctionInvitationsTab({ companyId, headers }) {
                 Auction Invitations ({invitations.length})
             </Typography>
             <DataGrid rows={invitations} columns={columns} autoHeight
-                      loading={loading} pageSizeOptions={[10, 20]}
+                      loading={loading} pageSizeOptions={[10, 20, 100]}
                       disableRowSelectionOnClick />
         </Box>
     );
@@ -369,7 +369,7 @@ function CompanyCategoriesTab({ companyId, headers }) {
 
     return (
         <Box>
-            <Box display="flex" alignItems="center" gap={2} mb={2}>
+            <Box display="flex" sx={{ alignItems: 'center' }} gap={2} mb={2}>
                 <Typography variant="subtitle1" fontWeight="bold">
                     Company Categories ({categories.length})
                 </Typography>
@@ -380,7 +380,7 @@ function CompanyCategoriesTab({ companyId, headers }) {
             </Box>
 
             <DataGrid rows={categories} columns={columns} autoHeight
-                      loading={loading} pageSizeOptions={[10, 20]}
+                      loading={loading} pageSizeOptions={[10, 20, 100]}
                       disableRowSelectionOnClick />
 
             <Dialog open={addDialog} onClose={() => setAddDialog(false)} maxWidth="sm" fullWidth>
@@ -609,7 +609,7 @@ export default function CompanyDetail() {
     if (isNew) {
         return (
             <Box>
-                <Box display="flex" alignItems="center" mb={2} gap={2}>
+                <Box display="flex" sx={{ alignItems: 'center' }} mb={2} gap={2}>
                     <Button startIcon={<ArrowBackIcon />} onClick={() => navigate('/companies')}>Back</Button>
                     <Typography variant="h5">New Company</Typography>
                 </Box>
@@ -618,19 +618,19 @@ export default function CompanyDetail() {
                                  onSave={handleSave} onCancel={() => navigate('/companies')}
                                  saving={saving} saveError={saveError} />
                 ) : (
-                    <Box display="flex" justifyContent="center" mt={4}><CircularProgress /></Box>
+                    <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}><CircularProgress /></Box>
                 )}
             </Box>
         );
     }
 
-    if (loading) return <Box display="flex" justifyContent="center" mt={4}><CircularProgress /></Box>;
+    if (loading) return <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}><CircularProgress /></Box>;
     if (error) return <Alert severity="error">{error}</Alert>;
 
     if (editing) {
         return (
             <Box>
-                <Box display="flex" alignItems="center" mb={2} gap={2}>
+                <Box display="flex" sx={{ alignItems: 'center' }} mb={2} gap={2}>
                     <Button startIcon={<ArrowBackIcon />} onClick={() => setEditing(false)}>Back</Button>
                     <Typography variant="h5">Edit: {company?.companyName}</Typography>
                 </Box>
@@ -644,13 +644,13 @@ export default function CompanyDetail() {
     return (
         <Box>
             {/* Header Banner */}
-            <Box display="flex" alignItems="center" gap={2} mb={2} flexWrap="wrap">
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2, flexWrap: 'wrap' }}>
                 <Button startIcon={<ArrowBackIcon />} onClick={() => navigate('/companies')} variant="outlined">
                     Back
                 </Button>
                 <Box sx={{ flexGrow: 1 }}>
                     <Typography variant="h5" fontWeight="700">{company?.companyName}</Typography>
-                    <Box display="flex" gap={1} mt={0.5} flexWrap="wrap">
+                    <Box display="flex" gap={1} mt={0.5} sx={{ flexWrap: 'wrap' }}>
                         <Chip label={company?.status?.name || 'Unknown'} size="small" color="primary" />
                         {company?.taxId && <Chip label={`Tax ID: ${company.taxId}`} size="small" variant="outlined" />}
                         {company?.category && <Chip label={company.category.name} size="small" variant="outlined" />}
@@ -737,12 +737,12 @@ export default function CompanyDetail() {
 
             {tab === 1 && (
                 <DataGrid rows={users} columns={userColumns} autoHeight
-                          pageSizeOptions={[10, 20]} disableRowSelectionOnClick />
+                          pageSizeOptions={[10, 20, 100]} disableRowSelectionOnClick />
             )}
 
             {tab === 2 && (
                 <Box>
-                    <Box mb={2} display="flex" gap={2} alignItems="center">
+                    <Box mb={2} display="flex" gap={2} sx={{ alignItems: 'center' }}>
                         <Typography variant="subtitle1">Company Files</Typography>
                         <TextField size="small" label="Description (optional)"
                                    value={fileDescription}
@@ -754,7 +754,7 @@ export default function CompanyDetail() {
                         </Button>
                     </Box>
                     <DataGrid rows={files} columns={fileColumns} autoHeight
-                              pageSizeOptions={[10, 20]} disableRowSelectionOnClick />
+                              pageSizeOptions={[10, 20, 100]} disableRowSelectionOnClick />
                 </Box>
             )}
 

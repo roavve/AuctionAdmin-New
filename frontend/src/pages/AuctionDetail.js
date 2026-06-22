@@ -25,7 +25,7 @@ const STATUS_COLORS = {
 
 function SectionTitle({ icon, title }) {
   return (
-      <Box display="flex" alignItems="center" gap={1} mb={2}>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
         {icon}
         <Typography variant="subtitle1" fontWeight="700" color="primary.main">{title}</Typography>
         <Divider sx={{ flex: 1, ml: 1 }} />
@@ -35,7 +35,7 @@ function SectionTitle({ icon, title }) {
 
 function InfoRow({ label, value }) {
   return (
-      <Box display="flex" alignItems="flex-start" py={0.6}>
+      <Box sx={{ display: 'flex', alignItems: 'flex-start', py: 0.6 }}>
         <Typography variant="body2" sx={{
           width: 160, flexShrink: 0, color: 'text.secondary',
           fontWeight: 500, fontSize: '0.78rem', pt: 0.1
@@ -174,25 +174,25 @@ function AuctionForm({ initial, projects, dictionaryItems, onSave, onCancel, sav
             <TextField fullWidth label="Discuss Start Date" type="date"
                        value={form.discussStartDate?.substring(0, 10) || ''}
                        onChange={e => set('discussStartDate', e.target.value)}
-                       InputLabelProps={{ shrink: true }} />
+                       slotProps={{ inputLabel: { shrink: true } }} />
           </Grid>
           <Grid size={{ xs: 12, md: 6 }}>
             <TextField fullWidth label="Discuss End Date" type="date"
                        value={form.discussEndDate?.substring(0, 10) || ''}
                        onChange={e => set('discussEndDate', e.target.value)}
-                       InputLabelProps={{ shrink: true }} />
+                       slotProps={{ inputLabel: { shrink: true } }} />
           </Grid>
           <Grid size={{ xs: 12, md: 4 }}>
             <TextField fullWidth label="Auction Start Date" type="date"
                        value={form.auctionStartDate?.substring(0, 10) || ''}
                        onChange={e => set('auctionStartDate', e.target.value)}
-                       InputLabelProps={{ shrink: true }} />
+                       slotProps={{ inputLabel: { shrink: true } }} />
           </Grid>
           <Grid size={{ xs: 12, md: 4 }}>
             <TextField fullWidth label="Auction End Date" type="date"
                        value={form.auctionEndDate?.substring(0, 10) || ''}
                        onChange={e => set('auctionEndDate', e.target.value)}
-                       InputLabelProps={{ shrink: true }} />
+                       slotProps={{ inputLabel: { shrink: true } }} />
           </Grid>
           <Grid size={{ xs: 12, md: 2 }}>
             <TextField fullWidth label="Start Time (HH:mm)"
@@ -211,13 +211,13 @@ function AuctionForm({ initial, projects, dictionaryItems, onSave, onCancel, sav
             <TextField fullWidth label="Bid Start Date" type="date"
                        value={form.bidStartDate?.substring(0, 10) || ''}
                        onChange={e => set('bidStartDate', e.target.value)}
-                       InputLabelProps={{ shrink: true }} />
+                       slotProps={{ inputLabel: { shrink: true } }} />
           </Grid>
           <Grid size={{ xs: 12, md: 4 }}>
             <TextField fullWidth label="Bid End Date" type="date"
                        value={form.bidEndDate?.substring(0, 10) || ''}
                        onChange={e => set('bidEndDate', e.target.value)}
-                       InputLabelProps={{ shrink: true }} />
+                       slotProps={{ inputLabel: { shrink: true } }} />
           </Grid>
           <Grid size={{ xs: 12, md: 2 }}>
             <TextField fullWidth label="Bid Start Time"
@@ -459,10 +459,10 @@ export default function AuctionDetail() {
   const fmt = (date) => date ? new Date(date).toLocaleDateString() : '-';
 
   if (isNew) {
-    if (loading) return <Box display="flex" justifyContent="center" mt={4}><CircularProgress /></Box>;
+    if (loading) return <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}><CircularProgress /></Box>;
     return (
         <Box>
-          <Box display="flex" alignItems="center" mb={2} gap={2}>
+          <Box display="flex" sx={{ alignItems: 'center' }} mb={2} gap={2}>
             <Button startIcon={<ArrowBackIcon />} onClick={() => navigate('/auctions')}>Back</Button>
             <Typography variant="h5">New Auction</Typography>
           </Box>
@@ -473,14 +473,14 @@ export default function AuctionDetail() {
     );
   }
 
-  if (loading) return <Box display="flex" justifyContent="center" mt={4}><CircularProgress /></Box>;
+  if (loading) return <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}><CircularProgress /></Box>;
   if (error) return <Alert severity="error">{error}</Alert>;
   if (!auction) return null;
 
   if (editing) {
     return (
         <Box>
-          <Box display="flex" alignItems="center" mb={2} gap={2}>
+          <Box display="flex" sx={{ alignItems: 'center' }} mb={2} gap={2}>
             <Button startIcon={<ArrowBackIcon />} onClick={() => setEditing(false)}>Back</Button>
             <Typography variant="h5">Edit: {auction.name}</Typography>
           </Box>
@@ -601,23 +601,25 @@ export default function AuctionDetail() {
                   Answer
                 </Button>
             )}
-            <Button size="small" color="error"
-                    onClick={() => auctionApi.cancelComment(p.row.id).then(() => loadTab(4))}>
-              Cancel
-            </Button>
+            {p.row.status?.key !== 'key.coment.cancelled' && (
+                <Button size="small" color="error"
+                        onClick={() => auctionApi.cancelComment(p.row.id).then(() => loadTab(4))}>
+                  Cancel
+                </Button>
+            )}
           </Box>
       )}
   ];
 
   return (
       <Box>
-        <Box display="flex" alignItems="center" gap={2} mb={2} flexWrap="wrap">
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2, flexWrap: 'wrap' }}>
           <Button startIcon={<ArrowBackIcon />} onClick={() => navigate('/auctions')} variant="outlined">
             Back
           </Button>
           <Box sx={{ flexGrow: 1 }}>
             <Typography variant="h5" fontWeight="700">{auction.name}</Typography>
-            <Box display="flex" gap={1} mt={0.5} flexWrap="wrap">
+            <Box display="flex" gap={1} mt={0.5} sx={{ flexWrap: 'wrap' }}>
               <Chip label={auction.status?.name || ''} size="small"
                     color={STATUS_COLORS[statusKey] || 'default'} />
               {auction.project && <Chip label={auction.project.name} size="small" variant="outlined" />}
@@ -625,7 +627,7 @@ export default function AuctionDetail() {
               {auction.currency && <Chip label={auction.currency.name} size="small" variant="outlined" />}
             </Box>
           </Box>
-          <Box display="flex" gap={1} flexWrap="wrap">
+          <Box display="flex" gap={1} sx={{ flexWrap: 'wrap' }}>
             <Button variant="outlined" onClick={() => setEditing(true)}>Edit</Button>
             {statusKey === 'key.auctionStatus.draft' && (
                 <Button variant="outlined" color="error"
@@ -732,7 +734,7 @@ export default function AuctionDetail() {
                   const second = activeBids[1].bidValue;
                   const gap = ((second - first) / second * 100).toFixed(1);
                   return (
-                      <Box mb={2} display="flex" gap={2} flexWrap="wrap">
+                      <Box mb={2} display="flex" gap={2} sx={{ flexWrap: 'wrap' }}>
                         <Paper sx={{ p: 2, bgcolor: 'success.main', color: 'white', minWidth: 160 }}>
                           <Typography variant="body2">🥇 Best Bid</Typography>
                           <Typography variant="h6" fontWeight="bold">{first.toLocaleString()} {auction.currency?.name}</Typography>
@@ -754,13 +756,13 @@ export default function AuctionDetail() {
                 return null;
               })()}
               <DataGrid rows={bids} columns={bidColumns} autoHeight
-                        pageSizeOptions={[10, 20, 50]} disableRowSelectionOnClick />
+                        pageSizeOptions={[10, 20, 50, 100]} disableRowSelectionOnClick />
             </Box>
         )}
 
         {tab === 2 && (
             <Box>
-              <Box mb={2} display="flex" gap={2} alignItems="center" flexWrap="wrap">
+              <Box sx={{ mb: 2, display: 'flex', gap: 2, alignItems: 'center', flexWrap: 'wrap' }}>
                 <Typography variant="subtitle1" fontWeight="bold">Invitations ({invitations.length})</Typography>
                 <Button variant="contained" size="small"
                         onClick={() => { loadCompanies(); setInviteDialog(true); }}>
@@ -774,13 +776,13 @@ export default function AuctionDetail() {
                 </Button>
               </Box>
               <DataGrid rows={invitations} columns={invColumns} autoHeight
-                        pageSizeOptions={[10, 20, 50]} disableRowSelectionOnClick />
+                        pageSizeOptions={[10, 20, 50, 100]} disableRowSelectionOnClick />
             </Box>
         )}
 
         {tab === 3 && (
             <Box>
-              <Box mb={2} display="flex" gap={2} alignItems="center">
+              <Box mb={2} display="flex" gap={2} sx={{ alignItems: 'center' }}>
                 <Typography variant="subtitle1" fontWeight="bold">Participants ({participants.length})</Typography>
                 <Button variant="outlined" size="small" color="success"
                         onClick={() => downloadFile(
@@ -790,19 +792,19 @@ export default function AuctionDetail() {
                 </Button>
               </Box>
               <DataGrid rows={participants} columns={partColumns} autoHeight
-                        pageSizeOptions={[10, 20, 50]} disableRowSelectionOnClick />
+                        pageSizeOptions={[10, 20, 50, 100]} disableRowSelectionOnClick />
             </Box>
         )}
 
         {tab === 4 && (
             <DataGrid rows={comments} columns={commentColumns} autoHeight
                       getRowHeight={() => 'auto'}
-                      pageSizeOptions={[10, 20, 50]} disableRowSelectionOnClick />
+                      pageSizeOptions={[10, 20, 50, 100]} disableRowSelectionOnClick />
         )}
 
         {tab === 5 && (
             <Box>
-              <Box mb={2} display="flex" gap={2} alignItems="center" flexWrap="wrap">
+              <Box sx={{ mb: 2, display: 'flex', gap: 2, alignItems: 'center', flexWrap: 'wrap' }}>
                 <Typography variant="subtitle1" fontWeight="bold">Revision Files</Typography>
                 <TextField size="small" label="Description (optional)" value={fileDescription}
                            onChange={e => setFileDescription(e.target.value)} sx={{ width: 250 }} />
@@ -829,13 +831,13 @@ export default function AuctionDetail() {
                               </Box>
                           )
                         }]}
-                        autoHeight pageSizeOptions={[10, 20]} disableRowSelectionOnClick />
+                        autoHeight pageSizeOptions={[10, 20, 100]} disableRowSelectionOnClick />
             </Box>
         )}
 
         {tab === 6 && (
             <Box>
-              <Box mb={2} display="flex" gap={2} alignItems="center" flexWrap="wrap">
+              <Box sx={{ mb: 2, display: 'flex', gap: 2, alignItems: 'center', flexWrap: 'wrap' }}>
                 <Typography variant="subtitle1" fontWeight="bold">Internal Files</Typography>
                 <TextField size="small" label="Description (optional)" value={fileDescription}
                            onChange={e => setFileDescription(e.target.value)} sx={{ width: 250 }} />
@@ -862,7 +864,7 @@ export default function AuctionDetail() {
                               </Box>
                           )
                         }]}
-                        autoHeight pageSizeOptions={[10, 20]} disableRowSelectionOnClick />
+                        autoHeight pageSizeOptions={[10, 20, 100]} disableRowSelectionOnClick />
             </Box>
         )}
 
@@ -879,7 +881,7 @@ export default function AuctionDetail() {
                             renderCell: p => p.value ? <Chip label="Current" color="success" size="small" /> : null },
                           { field: 'createUserId', headerName: 'Created By', width: 150 },
                         ]}
-                        autoHeight pageSizeOptions={[10, 20]} disableRowSelectionOnClick />
+                        autoHeight pageSizeOptions={[10, 20, 100]} disableRowSelectionOnClick />
             </Box>
         )}
 

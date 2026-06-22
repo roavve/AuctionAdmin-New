@@ -16,7 +16,7 @@ import HistoryIcon from '@mui/icons-material/History';
 
 function SectionTitle({ icon, title }) {
     return (
-        <Box display="flex" alignItems="center" gap={1} mb={2}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
             {icon}
             <Typography variant="subtitle1" fontWeight="700" color="primary.main">{title}</Typography>
             <Divider sx={{ flex: 1, ml: 1 }} />
@@ -26,7 +26,7 @@ function SectionTitle({ icon, title }) {
 
 function InfoRow({ label, value }) {
     return (
-        <Box display="flex" alignItems="flex-start" py={0.6}>
+        <Box sx={{ display: 'flex', alignItems: 'flex-start', py: 0.6 }}>
             <Typography variant="body2" sx={{
                 width: 160, flexShrink: 0, color: 'text.secondary',
                 fontWeight: 500, fontSize: '0.78rem', pt: 0.1
@@ -218,7 +218,7 @@ export default function UserDetail() {
     if (isNew) {
         return (
             <Box>
-                <Box display="flex" alignItems="center" mb={2} gap={2}>
+                <Box display="flex" sx={{ alignItems: 'center' }} mb={2} gap={2}>
                     <Button startIcon={<ArrowBackIcon />} onClick={() => navigate('/users')}>Back</Button>
                     <Typography variant="h5">New User</Typography>
                 </Box>
@@ -228,14 +228,14 @@ export default function UserDetail() {
         );
     }
 
-    if (loading) return <Box display="flex" justifyContent="center" mt={4}><CircularProgress /></Box>;
+    if (loading) return <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}><CircularProgress /></Box>;
     if (error) return <Alert severity="error">{error}</Alert>;
     if (!user) return null;
 
     if (editing) {
         return (
             <Box>
-                <Box display="flex" alignItems="center" mb={2} gap={2}>
+                <Box display="flex" sx={{ alignItems: 'center' }} mb={2} gap={2}>
                     <Button startIcon={<ArrowBackIcon />} onClick={() => setEditing(false)}>Back</Button>
                     <Typography variant="h5">Edit: {user.firstName} {user.lastName}</Typography>
                 </Box>
@@ -250,7 +250,7 @@ export default function UserDetail() {
     return (
         <Box>
             {/* Header */}
-            <Box display="flex" alignItems="center" gap={2} mb={2} flexWrap="wrap">
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2, flexWrap: 'wrap' }}>
                 <Button startIcon={<ArrowBackIcon />} onClick={() => navigate('/users')} variant="outlined">
                     Back
                 </Button>
@@ -258,7 +258,7 @@ export default function UserDetail() {
                     <Typography variant="h5" fontWeight="700">
                         {user.firstName} {user.lastName}
                     </Typography>
-                    <Box display="flex" gap={1} mt={0.5} flexWrap="wrap">
+                    <Box display="flex" gap={1} mt={0.5} sx={{ flexWrap: 'wrap' }}>
                         <Chip label={user.active ? 'Active' : 'Inactive'}
                               color={user.active ? 'success' : 'default'} size="small" />
                         {user.locked && <Chip label="Locked" color="warning" size="small" />}
@@ -268,7 +268,7 @@ export default function UserDetail() {
                         {user.external && <Chip label="External" size="small" variant="outlined" />}
                     </Box>
                 </Box>
-                <Box display="flex" gap={1} flexWrap="wrap">
+                <Box display="flex" gap={1} sx={{ flexWrap: 'wrap' }}>
                     <Button variant="outlined" onClick={() => setEditing(true)}>Edit</Button>
                     <Button variant="outlined" onClick={() => setPwDialog(true)}>Change Password</Button>
                     {!user.locked

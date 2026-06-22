@@ -21,7 +21,7 @@ public class AuthController {
     private final UserRepository userRepository;
     private final JwtUtil jwtUtil;
 
-    // Simple in-memory rate limiter: max 10 attempts per IP per 15 minutes
+    // max 10 attempts 15 min
     private final ConcurrentHashMap<String, AtomicInteger> attemptCounts = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<String, Long> lockoutTimes = new ConcurrentHashMap<>();
     private static final int MAX_ATTEMPTS = 10;

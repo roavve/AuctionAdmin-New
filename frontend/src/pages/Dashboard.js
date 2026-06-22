@@ -17,7 +17,7 @@ function StatCard({ title, value, color, icon, onClick }) {
             '&:hover': onClick ? { boxShadow: 4 } : {},
             transition: 'box-shadow 0.2s'
         }} onClick={onClick}>
-            <Box display="flex" justifyContent="space-between" alignItems="center">
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <Box>
                     <Typography variant="body2" color="text.secondary">{title}</Typography>
                     <Typography variant="h3" fontWeight="bold" color={color}>

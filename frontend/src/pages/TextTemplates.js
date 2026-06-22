@@ -83,7 +83,7 @@ export default function TextTemplates() {
             {actionMsg && <Alert severity="info" sx={{ mb: 2 }} onClose={() => setActionMsg('')}>{actionMsg}</Alert>}
 
             <DataGrid rows={rows} columns={columns} loading={loading}
-                      autoHeight pageSizeOptions={[10, 20]} disableRowSelectionOnClick />
+                      pageSizeOptions={[10, 20, 100]} disableRowSelectionOnClick />
 
             <Dialog open={editDialog} onClose={() => setEditDialog(false)} maxWidth="md" fullWidth>
                 <DialogTitle>

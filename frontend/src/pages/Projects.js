@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { projectApi } from '../api/projects';
 import {
-    Box, Button, Chip, Alert, Paper,
+    Box, Button, Chip, Alert,
     TextField, Grid
 } from '@mui/material';
 import { DataGrid } from '@mui/x-data-grid';
@@ -170,7 +170,7 @@ export default function Projects() {
 
     return (
         <Box>
-            <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
                 <Typography variant="h5">Projects</Typography>
                 <Button variant="contained" startIcon={<AddIcon />}
                         onClick={() => { setEditProject(null); setDialog(true); }}>
@@ -182,7 +182,7 @@ export default function Projects() {
             {actionMsg && <Alert severity="info" sx={{ mb: 2 }} onClose={() => setActionMsg('')}>{actionMsg}</Alert>}
 
             <DataGrid rows={rows} columns={columns} loading={loading}
-                      autoHeight disableRowSelectionOnClick pageSizeOptions={[20, 50]} />
+                      autoHeight disableRowSelectionOnClick pageSizeOptions={[20, 50, 100]} />
 
             <Dialog open={dialog} onClose={() => { setDialog(false); setEditProject(null); }}
                     maxWidth="sm" fullWidth>
@@ -208,7 +208,7 @@ export default function Projects() {
                 </DialogTitle>
                 <DialogContent>
                     <DataGrid rows={projectAuctions} columns={auctionColumns}
-                              autoHeight disableRowSelectionOnClick pageSizeOptions={[10, 20, 50]} />
+                              autoHeight disableRowSelectionOnClick pageSizeOptions={[10, 20, 50, 100]} />
                 </DialogContent>
                 <DialogActions>
                     <Button onClick={() => setAuctionsDialog(false)}>Close</Button>

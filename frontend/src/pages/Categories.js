@@ -109,7 +109,7 @@ export default function Categories() {
 
     return (
         <Box>
-            <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
                 <Typography variant="h5">Categories</Typography>
                 <Button variant="contained" startIcon={<AddIcon />} onClick={() => handleOpen()}>
                     New Category
@@ -120,7 +120,7 @@ export default function Categories() {
             {actionMsg && <Alert severity="info" sx={{ mb: 2 }} onClose={() => setActionMsg('')}>{actionMsg}</Alert>}
 
             <DataGrid rows={rows} columns={columns} loading={loading}
-                      autoHeight disableRowSelectionOnClick pageSizeOptions={[20, 50]} />
+                      autoHeight disableRowSelectionOnClick pageSizeOptions={[20, 50, 100]} />
 
             <Dialog open={dialog} onClose={() => setDialog(false)} maxWidth="sm" fullWidth>
                 <DialogTitle>{editItem ? 'Edit Category' : 'New Category'}</DialogTitle>

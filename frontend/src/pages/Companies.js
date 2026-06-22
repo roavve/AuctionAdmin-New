@@ -133,7 +133,7 @@ export default function Companies() {
 
     return (
         <Box>
-            <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
                 <Typography variant="h5">Companies</Typography>
                 <Box display="flex" gap={1}>
                     <Button variant="outlined" startIcon={<FilterListIcon />}
@@ -156,7 +156,7 @@ export default function Companies() {
 
             <Collapse in={showFilters}>
                 <Paper sx={{ p: 2, mb: 2 }}>
-                    <Grid container spacing={2} alignItems="center">
+                    <Grid container spacing={2} sx={{ alignItems: 'center' }}>
                         <Grid size={{ xs: 12, md: 3 }}>
                             <TextField fullWidth size="small" label="Company Name"
                                        value={filters.name}
@@ -206,7 +206,7 @@ export default function Companies() {
                 paginationMode="server"
                 paginationModel={{ page, pageSize }}
                 onPaginationModelChange={m => { setPage(m.page); setPageSize(m.pageSize); }}
-                pageSizeOptions={[10, 20, 50]}
+                pageSizeOptions={[10, 20, 50, 100]}
                 autoHeight
                 disableRowSelectionOnClick
             />

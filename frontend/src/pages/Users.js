@@ -86,7 +86,7 @@ export default function Users() {
 
     return (
         <Box>
-            <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
                 <Typography variant="h5">Users</Typography>
                 <Box display="flex" gap={1}>
                     <Button variant="outlined" startIcon={<FilterListIcon />}
@@ -103,7 +103,7 @@ export default function Users() {
 
             <Collapse in={showFilters}>
                 <Paper sx={{ p: 2, mb: 2 }}>
-                    <Grid container spacing={2} alignItems="center">
+                    <Grid container spacing={2} sx={{ alignItems: 'center' }}>
                         <Grid size={{ xs: 12, md: 3 }}>
                             <TextField fullWidth size="small" label="Email"
                                        value={filters.email}
@@ -168,7 +168,7 @@ export default function Users() {
                 paginationMode="server"
                 paginationModel={{ page, pageSize }}
                 onPaginationModelChange={m => { setPage(m.page); setPageSize(m.pageSize); }}
-                pageSizeOptions={[10, 20, 50]}
+                pageSizeOptions={[10, 20, 50, 100]}
                 autoHeight
                 disableRowSelectionOnClick
             />

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import {
-    Box, Typography, Button, Chip, Alert, Tabs, Tab,
+    Box, Typography, Button, Alert, Tabs, Tab,
     Dialog, DialogTitle, DialogContent, DialogActions, TextField
 } from '@mui/material';
 import { DataGrid } from '@mui/x-data-grid';
@@ -19,10 +19,8 @@ export default function Registrations() {
     const [regFiles, setRegFiles] = useState([]);
     const [uploadingFile, setUploadingFile] = useState(false);
     const [fileDescription, setFileDescription] = useState('');
-
     const token = localStorage.getItem('token');
     const headers = { Authorization: `Bearer ${token}` };
-
     const tabKeys = ['new', 'processed', 'cancelled'];
 
     const load = async (t, p, s) => {
@@ -82,6 +80,7 @@ export default function Registrations() {
             setRegFiles(await res.json());
         } catch {
             setRegFiles([]);
+
         }
     };
 
@@ -197,7 +196,7 @@ export default function Registrations() {
                       paginationMode="server"
                       paginationModel={{ page, pageSize }}
                       onPaginationModelChange={m => { setPage(m.page); setPageSize(m.pageSize); }}
-                      pageSizeOptions={[10, 20, 50]} autoHeight disableRowSelectionOnClick />
+                      pageSizeOptions={[10, 20, 50, 100]} autoHeight disableRowSelectionOnClick />
 
             <Dialog open={detailDialog} onClose={() => setDetailDialog(false)} maxWidth="md" fullWidth>
                 <DialogTitle>
@@ -216,8 +215,11 @@ export default function Registrations() {
                             <Typography variant="body2">Address: {selectedReg.phisAddress}</Typography>
                             <Typography variant="body2">Tax ID: {selectedReg.taxId}</Typography>
                             <Typography variant="body2">VAT Payer: {selectedReg.vatPayer ? 'Yes' : 'No'}</Typography>
-                            <Box mt={1} p={1} bgcolor={selectedReg.policyAccepted ? 'success.light' : 'error.light'}
-                                 borderRadius={1} display="inline-block">
+                            <Box sx={{
+                                mt: 1, p: 1,
+                                bgcolor: selectedReg.policyAccepted ? 'success.light' : 'error.light',
+                                borderRadius: 1, display: 'inline-block'
+                            }}>
                                 <Typography variant="body2" color="white" fontWeight="bold">
                                     {selectedReg.policyAccepted ? '✓ Policy Accepted' : '✗ Policy Not Accepted'}
                                 </Typography>
@@ -239,7 +241,7 @@ export default function Registrations() {
                     )}
 
                     <Typography variant="subtitle2" fontWeight="bold" mb={1}>Files</Typography>
-                    <Box mb={2} display="flex" gap={2} alignItems="center">
+                    <Box mb={2} display="flex" gap={2} sx={{ alignItems: 'center' }}>
                         <TextField size="small" label="Description (optional)"
                                    value={fileDescription}
                                    onChange={e => setFileDescription(e.target.value)}
@@ -253,7 +255,7 @@ export default function Registrations() {
                         <Typography variant="body2" color="text.secondary">No files attached</Typography>
                     ) : (
                         <DataGrid rows={regFiles} columns={fileColumns} autoHeight
-                                  pageSizeOptions={[10]} disableRowSelectionOnClick />
+                                  pageSizeOptions={[10, 20, 50, 100]} disableRowSelectionOnClick />
                     )}
                 </DialogContent>
                 <DialogActions>

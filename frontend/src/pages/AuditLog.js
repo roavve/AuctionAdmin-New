@@ -60,7 +60,7 @@ export default function AuditLog() {
 
     return (
         <Box>
-            <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
                 <Typography variant="h5">Audit Log</Typography>
                 <Button variant="outlined" startIcon={<FilterListIcon />}
                         onClick={() => setShowFilters(!showFilters)}>
@@ -70,7 +70,7 @@ export default function AuditLog() {
 
             <Collapse in={showFilters}>
                 <Paper sx={{ p: 2, mb: 2 }}>
-                    <Grid container spacing={2} alignItems="center">
+                    <Grid container spacing={2} sx={{ alignItems: 'center' }}>
                         <Grid size={{ xs: 12, md: 3 }}>
                             <TextField fullWidth size="small" label="User"
                                        value={filters.userId}

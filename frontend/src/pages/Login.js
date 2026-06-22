@@ -28,7 +28,7 @@ export default function Login() {
     };
 
     return (
-        <Box display="flex" justifyContent="center" alignItems="center" minHeight="100vh" bgcolor="#f5f5f5">
+        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh', bgcolor: '#f5f5f5' }}>
             <Paper elevation={3} sx={{ p: 4, width: 400 }}>
                 <Typography variant="h5" mb={3} textAlign="center" fontWeight="bold">
                     Auction Admin

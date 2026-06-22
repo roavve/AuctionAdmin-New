@@ -68,7 +68,6 @@ public class AuctionService {
             log.setAuditDate(new Date());
             sysAuditRepository.save(log);
         } catch (Exception e) {
-            // never let audit failure break the main action
         }
     }
 

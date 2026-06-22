@@ -139,7 +139,7 @@ export default function Auctions() {
 
     return (
         <Box>
-            <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
                 <Typography variant="h5">Auctions</Typography>
                 <Box display="flex" gap={1}>
                     <Button
@@ -159,7 +159,7 @@ export default function Auctions() {
 
             <Collapse in={showFilters}>
                 <Paper sx={{ p: 2, mb: 2 }}>
-                    <Grid container spacing={2} alignItems="center">
+                    <Grid container spacing={2} sx={{ alignItems: 'center' }}>
                         <Grid size={{ xs: 12, md: 3 }}>
                             <FormControl fullWidth size="small">
                                 <InputLabel>Status</InputLabel>
@@ -201,7 +201,7 @@ export default function Auctions() {
                             <TextField fullWidth size="small" label="Start Date From" type="date"
                                        value={filters.rangeStartDate}
                                        onChange={e => setFilters(f => ({ ...f, rangeStartDate: e.target.value }))}
-                                       InputLabelProps={{ shrink: true }} />
+                                       slotProps={{ inputLabel: { shrink: true } }} />
                         </Grid>
                         <Grid size={{ xs: 12, md: 2 }}>
                             <Box display="flex" gap={1}>
@@ -231,7 +231,7 @@ export default function Auctions() {
                     setPage(model.page);
                     setPageSize(model.pageSize);
                 }}
-                pageSizeOptions={[10, 20, 50]}
+                pageSizeOptions={[10, 20, 50, 100]}
                 autoHeight
                 disableRowSelectionOnClick
             />
