@@ -71,25 +71,73 @@ const EMPTY_FORM = {
 
 function AuctionForm({ initial, projects, dictionaryItems, onSave, onCancel, saving, saveError }) {
   const [form, setForm] = useState(initial || EMPTY_FORM);
+  const [validationError, setValidationError] = useState('');
   const set = (field, value) => setForm(f => ({ ...f, [field]: value }));
   const setObj = (field, key) => setForm(f => ({ ...f, [field]: { key } }));
   const itemsForKey = (prefix) => dictionaryItems.filter(d => d.key.startsWith(prefix));
 
+  const validate = () => {
+    const missing = [];
+    if (!form.name?.trim()) missing.push('Name');
+    if (!form.auctionType?.key) missing.push('Auction Type');
+    if (!form.project?.id) missing.push('Project');
+    if (!form.inviteText?.trim()) missing.push('Invitation Text');
+    if (!form.valueType?.key) missing.push('Value Type');
+    if (!form.uom?.key) missing.push('Unit of Measure');
+    if (!form.currency?.key) missing.push('Currency');
+    if (form.bidStep === '' || form.bidStep == null) missing.push('Bid Step');
+    if (form.startBidValue === '' || form.startBidValue == null) missing.push('Start Bid Value');
+    if (form.maxBidValue === '' || form.maxBidValue == null) missing.push('Max Bid Value');
+    if (form.additionalMinute === '' || form.additionalMinute == null) missing.push('Additional Minutes');
+    if (!form.discussStartDate) missing.push('Discuss Start Date');
+    if (!form.discussEndDate) missing.push('Discuss End Date');
+    if (!form.auctionStartDate) missing.push('Auction Start Date');
+    if (!form.auctionEndDate) missing.push('Auction End Date');
+    if (!form.startTime?.trim()) missing.push('Start Time');
+    if (!form.endTime?.trim()) missing.push('End Time');
+    if (!form.bidStartDate) missing.push('Bid Start Date');
+    if (!form.bidEndDate) missing.push('Bid End Date');
+    if (!form.bidStartTime?.trim()) missing.push('Bid Start Time');
+    if (!form.bidEndTime?.trim()) missing.push('Bid End Time');
+
+    if (missing.length > 0) {
+      return 'Please fill in required fields: ' + missing.join(', ');
+    }
+    if (form.startBidValue && form.maxBidValue && Number(form.maxBidValue) <= Number(form.startBidValue)) {
+      return 'Max Bid Value must be greater than Start Bid Value';
+    }
+    if (form.discussEndDate && form.auctionStartDate && new Date(form.auctionStartDate) <= new Date(form.discussEndDate)) {
+      return 'Auction Start Date must be after Discuss End Date';
+    }
+    return '';
+  };
+
+  const handleSaveClick = () => {
+    const err = validate();
+    if (err) {
+      setValidationError(err);
+      return;
+    }
+    setValidationError('');
+    onSave(form);
+  };
+
   return (
       <Paper sx={{ p: 3 }}>
         {saveError && <Alert severity="error" sx={{ mb: 2 }}>{saveError}</Alert>}
+        {validationError && <Alert severity="warning" sx={{ mb: 2 }} onClose={() => setValidationError('')}>{validationError}</Alert>}
         <Grid container spacing={2}>
           <Grid size={{ xs: 12 }}>
             <Typography variant="subtitle1" fontWeight="bold">Basic Info</Typography>
           </Grid>
           <Grid size={{ xs: 12, md: 6 }}>
-            <TextField fullWidth label="Name" value={form.name}
+            <TextField fullWidth label="Name *" value={form.name}
                        onChange={e => set('name', e.target.value)} required />
           </Grid>
           <Grid size={{ xs: 12, md: 6 }}>
-            <FormControl fullWidth>
-              <InputLabel>Project</InputLabel>
-              <Select value={form.project?.id || ''} label="Project"
+            <FormControl fullWidth required>
+              <InputLabel>Project *</InputLabel>
+              <Select value={form.project?.id || ''} label="Project *"
                       onChange={e => set('project', e.target.value ? { id: e.target.value } : null)}>
                 <MenuItem value="">No Project</MenuItem>
                 {projects.map(p => <MenuItem key={p.id} value={p.id}>{p.name}</MenuItem>)}
@@ -97,9 +145,9 @@ function AuctionForm({ initial, projects, dictionaryItems, onSave, onCancel, sav
             </FormControl>
           </Grid>
           <Grid size={{ xs: 12, md: 6 }}>
-            <FormControl fullWidth>
-              <InputLabel>Auction Type</InputLabel>
-              <Select value={form.auctionType?.key || ''} label="Auction Type"
+            <FormControl fullWidth required>
+              <InputLabel>Auction Type *</InputLabel>
+              <Select value={form.auctionType?.key || ''} label="Auction Type *"
                       onChange={e => setObj('auctionType', e.target.value)}>
                 {itemsForKey('key.auctionType').map(d =>
                     <MenuItem key={d.key} value={d.key}>{d.name}</MenuItem>)}
@@ -107,9 +155,9 @@ function AuctionForm({ initial, projects, dictionaryItems, onSave, onCancel, sav
             </FormControl>
           </Grid>
           <Grid size={{ xs: 12, md: 6 }}>
-            <FormControl fullWidth>
-              <InputLabel>Currency</InputLabel>
-              <Select value={form.currency?.key || ''} label="Currency"
+            <FormControl fullWidth required>
+              <InputLabel>Currency *</InputLabel>
+              <Select value={form.currency?.key || ''} label="Currency *"
                       onChange={e => setObj('currency', e.target.value)}>
                 {itemsForKey('key.currency').map(d =>
                     <MenuItem key={d.key} value={d.key}>{d.name}</MenuItem>)}
@@ -121,24 +169,24 @@ function AuctionForm({ initial, projects, dictionaryItems, onSave, onCancel, sav
                        onChange={e => set('desc', e.target.value)} multiline rows={2} />
           </Grid>
           <Grid size={{ xs: 12 }}>
-            <TextField fullWidth label="Invite Text" value={form.inviteText || ''}
-                       onChange={e => set('inviteText', e.target.value)} multiline rows={2} />
+            <TextField fullWidth label="Invite Text *" value={form.inviteText || ''}
+                       onChange={e => set('inviteText', e.target.value)} multiline rows={2} required />
           </Grid>
           <Grid size={{ xs: 12 }}>
             <Typography variant="subtitle1" fontWeight="bold" mt={1}>Bidding</Typography>
           </Grid>
           <Grid size={{ xs: 12, md: 3 }}>
-            <TextField fullWidth label="Start Bid Value" type="number"
+            <TextField fullWidth label="Start Bid Value *" type="number" required
                        value={form.startBidValue || ''}
                        onChange={e => set('startBidValue', e.target.value)} />
           </Grid>
           <Grid size={{ xs: 12, md: 3 }}>
-            <TextField fullWidth label="Max Bid Value" type="number"
+            <TextField fullWidth label="Max Bid Value *" type="number" required
                        value={form.maxBidValue || ''}
                        onChange={e => set('maxBidValue', e.target.value)} />
           </Grid>
           <Grid size={{ xs: 12, md: 3 }}>
-            <TextField fullWidth label="Bid Step" type="number"
+            <TextField fullWidth label="Bid Step *" type="number" required
                        value={form.bidStep || ''}
                        onChange={e => set('bidStep', e.target.value)} />
           </Grid>
@@ -148,9 +196,9 @@ function AuctionForm({ initial, projects, dictionaryItems, onSave, onCancel, sav
                        onChange={e => set('quantity', e.target.value)} />
           </Grid>
           <Grid size={{ xs: 12, md: 6 }}>
-            <FormControl fullWidth>
-              <InputLabel>Value Type</InputLabel>
-              <Select value={form.valueType?.key || ''} label="Value Type"
+            <FormControl fullWidth required>
+              <InputLabel>Value Type *</InputLabel>
+              <Select value={form.valueType?.key || ''} label="Value Type *"
                       onChange={e => setObj('valueType', e.target.value)}>
                 {itemsForKey('key.valueType').map(d =>
                     <MenuItem key={d.key} value={d.key}>{d.name}</MenuItem>)}
@@ -158,9 +206,9 @@ function AuctionForm({ initial, projects, dictionaryItems, onSave, onCancel, sav
             </FormControl>
           </Grid>
           <Grid size={{ xs: 12, md: 6 }}>
-            <FormControl fullWidth>
-              <InputLabel>Unit of Measure</InputLabel>
-              <Select value={form.uom?.key || ''} label="Unit of Measure"
+            <FormControl fullWidth required>
+              <InputLabel>Unit of Measure *</InputLabel>
+              <Select value={form.uom?.key || ''} label="Unit of Measure *"
                       onChange={e => setObj('uom', e.target.value)}>
                 {itemsForKey('key.uom').map(d =>
                     <MenuItem key={d.key} value={d.key}>{d.name}</MenuItem>)}
@@ -171,36 +219,36 @@ function AuctionForm({ initial, projects, dictionaryItems, onSave, onCancel, sav
             <Typography variant="subtitle1" fontWeight="bold" mt={1}>Schedule</Typography>
           </Grid>
           <Grid size={{ xs: 12, md: 6 }}>
-            <TextField fullWidth label="Discuss Start Date" type="date"
+            <TextField fullWidth label="Discuss Start Date *" type="date" required
                        value={form.discussStartDate?.substring(0, 10) || ''}
                        onChange={e => set('discussStartDate', e.target.value)}
                        slotProps={{ inputLabel: { shrink: true } }} />
           </Grid>
           <Grid size={{ xs: 12, md: 6 }}>
-            <TextField fullWidth label="Discuss End Date" type="date"
+            <TextField fullWidth label="Discuss End Date *" type="date" required
                        value={form.discussEndDate?.substring(0, 10) || ''}
                        onChange={e => set('discussEndDate', e.target.value)}
                        slotProps={{ inputLabel: { shrink: true } }} />
           </Grid>
           <Grid size={{ xs: 12, md: 4 }}>
-            <TextField fullWidth label="Auction Start Date" type="date"
+            <TextField fullWidth label="Auction Start Date *" type="date" required
                        value={form.auctionStartDate?.substring(0, 10) || ''}
                        onChange={e => set('auctionStartDate', e.target.value)}
                        slotProps={{ inputLabel: { shrink: true } }} />
           </Grid>
           <Grid size={{ xs: 12, md: 4 }}>
-            <TextField fullWidth label="Auction End Date" type="date"
+            <TextField fullWidth label="Auction End Date *" type="date" required
                        value={form.auctionEndDate?.substring(0, 10) || ''}
                        onChange={e => set('auctionEndDate', e.target.value)}
                        slotProps={{ inputLabel: { shrink: true } }} />
           </Grid>
           <Grid size={{ xs: 12, md: 2 }}>
-            <TextField fullWidth label="Start Time (HH:mm)"
+            <TextField fullWidth label="Start Time *" required
                        value={form.startTime || ''} onChange={e => set('startTime', e.target.value)}
                        placeholder="14:00" />
           </Grid>
           <Grid size={{ xs: 12, md: 2 }}>
-            <TextField fullWidth label="End Time (HH:mm)"
+            <TextField fullWidth label="End Time *" required
                        value={form.endTime || ''} onChange={e => set('endTime', e.target.value)}
                        placeholder="16:00" />
           </Grid>
@@ -208,36 +256,36 @@ function AuctionForm({ initial, projects, dictionaryItems, onSave, onCancel, sav
             <Typography variant="subtitle1" fontWeight="bold" mt={1}>Bid Period</Typography>
           </Grid>
           <Grid size={{ xs: 12, md: 4 }}>
-            <TextField fullWidth label="Bid Start Date" type="date"
+            <TextField fullWidth label="Bid Start Date *" type="date" required
                        value={form.bidStartDate?.substring(0, 10) || ''}
                        onChange={e => set('bidStartDate', e.target.value)}
                        slotProps={{ inputLabel: { shrink: true } }} />
           </Grid>
           <Grid size={{ xs: 12, md: 4 }}>
-            <TextField fullWidth label="Bid End Date" type="date"
+            <TextField fullWidth label="Bid End Date *" type="date" required
                        value={form.bidEndDate?.substring(0, 10) || ''}
                        onChange={e => set('bidEndDate', e.target.value)}
                        slotProps={{ inputLabel: { shrink: true } }} />
           </Grid>
           <Grid size={{ xs: 12, md: 2 }}>
-            <TextField fullWidth label="Bid Start Time"
+            <TextField fullWidth label="Bid Start Time *" required
                        value={form.bidStartTime || ''} onChange={e => set('bidStartTime', e.target.value)}
                        placeholder="14:00" />
           </Grid>
           <Grid size={{ xs: 12, md: 2 }}>
-            <TextField fullWidth label="Bid End Time"
+            <TextField fullWidth label="Bid End Time *" required
                        value={form.bidEndTime || ''} onChange={e => set('bidEndTime', e.target.value)}
                        placeholder="16:00" />
           </Grid>
           <Grid size={{ xs: 12, md: 3 }}>
-            <TextField fullWidth label="Additional Minutes" type="number"
+            <TextField fullWidth label="Additional Minutes *" type="number" required
                        value={form.additionalMinute || ''}
                        onChange={e => set('additionalMinute', e.target.value)} />
           </Grid>
           <Grid size={{ xs: 12 }}>
-            <Box display="flex" gap={2} mt={2}>
+            <Box sx={{ display: 'flex', gap: 2, mt: 2 }}>
               <Button variant="contained" startIcon={<SaveIcon />}
-                      onClick={() => onSave(form)} disabled={saving}>
+                      onClick={handleSaveClick} disabled={saving}>
                 {saving ? 'Saving...' : 'Save Auction'}
               </Button>
               <Button onClick={onCancel}>Cancel</Button>
@@ -462,7 +510,7 @@ export default function AuctionDetail() {
     if (loading) return <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}><CircularProgress /></Box>;
     return (
         <Box>
-          <Box display="flex" sx={{ alignItems: 'center' }} mb={2} gap={2}>
+          <Box sx={{ display: 'flex', alignItems: 'center', mb: 2, gap: 2 }}>
             <Button startIcon={<ArrowBackIcon />} onClick={() => navigate('/auctions')}>Back</Button>
             <Typography variant="h5">New Auction</Typography>
           </Box>
@@ -480,7 +528,7 @@ export default function AuctionDetail() {
   if (editing) {
     return (
         <Box>
-          <Box display="flex" sx={{ alignItems: 'center' }} mb={2} gap={2}>
+          <Box sx={{ display: 'flex', alignItems: 'center', mb: 2, gap: 2 }}>
             <Button startIcon={<ArrowBackIcon />} onClick={() => setEditing(false)}>Back</Button>
             <Typography variant="h5">Edit: {auction.name}</Typography>
           </Box>
@@ -531,7 +579,7 @@ export default function AuctionDetail() {
       renderCell: p => p.value ? new Date(p.value).toLocaleDateString() : '-' },
     { field: 'actions', headerName: '', width: 160,
       renderCell: p => (
-          <Box display="flex" gap={0.5}>
+          <Box sx={{ display: 'flex', gap: 0.5 }}>
             <Button size="small" color="warning"
                     onClick={() => auctionApi.cancelInvitation(p.row.id).then(() => loadTab(2))}>Cancel</Button>
             <Button size="small"
@@ -579,7 +627,7 @@ export default function AuctionDetail() {
       renderCell: p => <Chip label={p.value?.name || ''} size="small" /> },
     { field: 'actions', headerName: '', width: 240,
       renderCell: p => (
-          <Box display="flex" gap={0.5}>
+          <Box sx={{ display: 'flex', gap: 0.5 }}>
             {p.row.status?.key === 'key.coment.new' && (
                 <Button size="small" color="success"
                         onClick={() => auctionApi.approveComment(p.row.id).then(() => loadTab(4))}>
@@ -619,7 +667,7 @@ export default function AuctionDetail() {
           </Button>
           <Box sx={{ flexGrow: 1 }}>
             <Typography variant="h5" fontWeight="700">{auction.name}</Typography>
-            <Box display="flex" gap={1} mt={0.5} sx={{ flexWrap: 'wrap' }}>
+            <Box sx={{ display: 'flex', gap: 1, mt: 0.5, flexWrap: 'wrap' }}>
               <Chip label={auction.status?.name || ''} size="small"
                     color={STATUS_COLORS[statusKey] || 'default'} />
               {auction.project && <Chip label={auction.project.name} size="small" variant="outlined" />}
@@ -627,7 +675,7 @@ export default function AuctionDetail() {
               {auction.currency && <Chip label={auction.currency.name} size="small" variant="outlined" />}
             </Box>
           </Box>
-          <Box display="flex" gap={1} sx={{ flexWrap: 'wrap' }}>
+          <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
             <Button variant="outlined" onClick={() => setEditing(true)}>Edit</Button>
             {statusKey === 'key.auctionStatus.draft' && (
                 <Button variant="outlined" color="error"
@@ -734,7 +782,7 @@ export default function AuctionDetail() {
                   const second = activeBids[1].bidValue;
                   const gap = ((second - first) / second * 100).toFixed(1);
                   return (
-                      <Box mb={2} display="flex" gap={2} sx={{ flexWrap: 'wrap' }}>
+                      <Box sx={{ mb: 2, display: 'flex', gap: 2, flexWrap: 'wrap' }}>
                         <Paper sx={{ p: 2, bgcolor: 'success.main', color: 'white', minWidth: 160 }}>
                           <Typography variant="body2">🥇 Best Bid</Typography>
                           <Typography variant="h6" fontWeight="bold">{first.toLocaleString()} {auction.currency?.name}</Typography>
@@ -782,7 +830,7 @@ export default function AuctionDetail() {
 
         {tab === 3 && (
             <Box>
-              <Box mb={2} display="flex" gap={2} sx={{ alignItems: 'center' }}>
+              <Box sx={{ mb: 2, display: 'flex', gap: 2, alignItems: 'center' }}>
                 <Typography variant="subtitle1" fontWeight="bold">Participants ({participants.length})</Typography>
                 <Button variant="outlined" size="small" color="success"
                         onClick={() => downloadFile(
@@ -817,7 +865,7 @@ export default function AuctionDetail() {
                         columns={[...fileColumns, {
                           field: 'actions', headerName: '', width: 160, sortable: false,
                           renderCell: p => (
-                              <Box display="flex" gap={0.5}>
+                              <Box sx={{ display: 'flex', gap: 0.5 }}>
                                 <Button size="small"
                                         onClick={() => downloadFile(`http://localhost:8080/api/auctions/files/${p.row.id}/download`, p.row.fileName)}>
                                   Download
@@ -850,7 +898,7 @@ export default function AuctionDetail() {
                         columns={[...fileColumns, {
                           field: 'actions', headerName: '', width: 160, sortable: false,
                           renderCell: p => (
-                              <Box display="flex" gap={0.5}>
+                              <Box sx={{ display: 'flex', gap: 0.5 }}>
                                 <Button size="small"
                                         onClick={() => downloadFile(`http://localhost:8080/api/auctions/internal-files/${p.row.id}/download`, p.row.fileName)}>
                                   Download
