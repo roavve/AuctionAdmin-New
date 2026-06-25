@@ -105,6 +105,7 @@ public class UserService {
         user.setLockDate(new Date());
         user.setModifyUserId(modifiedBy);
         userRepository.save(user);
+
     }
 
     @Transactional

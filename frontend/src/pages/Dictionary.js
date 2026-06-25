@@ -12,7 +12,7 @@ export default function Dictionary() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const [actionMsg, setActionMsg] = useState('');
-    const [dialog, setDialog] = useState(false);
+     const [dialog, setDialog] = useState(false);
     const [editItem, setEditItem] = useState(null);
     const [form, setForm] = useState({ key: '', name: '', nameGE: '', sortOrder: '', disabled: false });
     const [saving, setSaving] = useState(false);
