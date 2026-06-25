@@ -1,0 +1,71 @@
+<h1 class="page-title">Dashboard</h1>
+
+<div class="stat-grid">
+  @for (stat of stats(); track stat.title) {
+    <mat-card class="stat-card" [style.border-left-color]="stat.color" (click)="go(stat.route)">
+      <mat-card-content class="stat-content">
+        <div>
+          <div class="stat-title">{{ stat.title }}</div>
+          @if (stat.value !== null) {
+            <div class="stat-value" [style.color]="stat.color">{{ stat.value }}</div>
+          } @else {
+            <mat-spinner diameter="32"></mat-spinner>
+          }
+        </div>
+        <mat-icon class="stat-icon" [style.color]="stat.color">{{ stat.icon }}</mat-icon>
+      </mat-card-content>
+    </mat-card>
+  }
+</div>
+
+<div class="panels">
+  <mat-card class="panel">
+    <mat-card-content>
+      <h3 class="panel-title">Recent Auctions</h3>
+      @if (loading()) {
+        <mat-spinner diameter="24"></mat-spinner>
+      } @else if (recentAuctions().length === 0) {
+        <p class="empty">No auctions found</p>
+      } @else {
+        <mat-list>
+          @for (a of recentAuctions(); track a.id; let i = $index) {
+            <mat-list-item (click)="goAuction(a.id)" class="list-item-clickable">
+              <div matListItemTitle>{{ a.name }}</div>
+              <div matListItemLine>ID: {{ a.id }} | Start Bid: {{ a.startBidValue || '-' }} | Last Bid: {{ a.lastBidValue || '-' }}</div>
+              <span matListItemMeta>
+                <mat-chip [style.background-color]="STATUS_COLORS[a.status?.key] || '#9e9e9e'" [style.color]="'white'">
+                  {{ a.status?.name || '' }}
+                </mat-chip>
+              </span>
+            </mat-list-item>
+            @if (i < recentAuctions().length - 1) { <mat-divider></mat-divider> }
+          }
+        </mat-list>
+      }
+    </mat-card-content>
+  </mat-card>
+
+  <mat-card class="panel">
+    <mat-card-content>
+      <h3 class="panel-title">Pending Registrations</h3>
+      @if (loading()) {
+        <mat-spinner diameter="24"></mat-spinner>
+      } @else if (recentRegistrations().length === 0) {
+        <p class="empty">No pending registrations</p>
+      } @else {
+        <mat-list>
+          @for (r of recentRegistrations(); track r.id; let i = $index) {
+            <mat-list-item (click)="go('/registrations')" class="list-item-clickable">
+              <div matListItemTitle>{{ r.companyName || r.name || ('Request #' + r.id) }}</div>
+              <div matListItemLine>{{ r.contactEmail || '' }} | {{ r.taxId || '' }}</div>
+              <span matListItemMeta>
+                <mat-chip color="warn">New</mat-chip>
+              </span>
+            </mat-list-item>
+            @if (i < recentRegistrations().length - 1) { <mat-divider></mat-divider> }
+          }
+        </mat-list>
+      }
+    </mat-card-content>
+  </mat-card>
+</div>
