@@ -1,0 +1,73 @@
+<div class="paper">
+  @if (saveError) { <div class="alert-error">{{ saveError }}</div> }
+  @if (validationError()) { <div class="alert-error">{{ validationError() }}</div> }
+
+  <div class="grid">
+    <mat-form-field appearance="outline" class="c6"><mat-label>Name *</mat-label><input matInput [(ngModel)]="form.name" /></mat-form-field>
+    <mat-form-field appearance="outline" class="c6">
+      <mat-label>Project *</mat-label>
+      <mat-select [(ngModel)]="form.projectId">
+        <mat-option value="">No Project</mat-option>
+        @for (p of projects; track p.id) { <mat-option [value]="p.id">{{ p.name }}</mat-option> }
+      </mat-select>
+    </mat-form-field>
+    <mat-form-field appearance="outline" class="c6">
+      <mat-label>Auction Type *</mat-label>
+      <mat-select [(ngModel)]="form.auctionTypeKey">
+        @for (d of itemsForKey('key.auctionType'); track d.key) { <mat-option [value]="d.key">{{ d.name }}</mat-option> }
+      </mat-select>
+    </mat-form-field>
+    <mat-form-field appearance="outline" class="c6">
+      <mat-label>Currency *</mat-label>
+      <mat-select [(ngModel)]="form.currencyKey">
+        @for (d of itemsForKey('key.currency'); track d.key) { <mat-option [value]="d.key">{{ d.name }}</mat-option> }
+      </mat-select>
+    </mat-form-field>
+    <mat-form-field appearance="outline" class="c12"><mat-label>Description</mat-label><textarea matInput rows="2" [(ngModel)]="form.desc"></textarea></mat-form-field>
+    <mat-form-field appearance="outline" class="c12"><mat-label>Invite Text *</mat-label><textarea matInput rows="2" [(ngModel)]="form.inviteText"></textarea></mat-form-field>
+  </div>
+
+  <div class="subtitle">Bidding</div>
+  <div class="grid">
+    <mat-form-field appearance="outline" class="c3"><mat-label>Start Bid Value *</mat-label><input matInput type="number" [(ngModel)]="form.startBidValue" /></mat-form-field>
+    <mat-form-field appearance="outline" class="c3"><mat-label>Max Bid Value *</mat-label><input matInput type="number" [(ngModel)]="form.maxBidValue" /></mat-form-field>
+    <mat-form-field appearance="outline" class="c3"><mat-label>Bid Step *</mat-label><input matInput type="number" [(ngModel)]="form.bidStep" /></mat-form-field>
+    <mat-form-field appearance="outline" class="c3"><mat-label>Quantity</mat-label><input matInput type="number" [(ngModel)]="form.quantity" /></mat-form-field>
+    <mat-form-field appearance="outline" class="c6">
+      <mat-label>Value Type *</mat-label>
+      <mat-select [(ngModel)]="form.valueTypeKey">
+        @for (d of itemsForKey('key.valueType'); track d.key) { <mat-option [value]="d.key">{{ d.name }}</mat-option> }
+      </mat-select>
+    </mat-form-field>
+    <mat-form-field appearance="outline" class="c6">
+      <mat-label>Unit of Measure *</mat-label>
+      <mat-select [(ngModel)]="form.uomKey">
+        @for (d of itemsForKey('key.uom'); track d.key) { <mat-option [value]="d.key">{{ d.name }}</mat-option> }
+      </mat-select>
+    </mat-form-field>
+  </div>
+
+  <div class="subtitle">Schedule</div>
+  <div class="grid">
+    <mat-form-field appearance="outline" class="c6"><mat-label>Discuss Start Date *</mat-label><input matInput type="date" [(ngModel)]="form.discussStartDate" /></mat-form-field>
+    <mat-form-field appearance="outline" class="c6"><mat-label>Discuss End Date *</mat-label><input matInput type="date" [(ngModel)]="form.discussEndDate" /></mat-form-field>
+    <mat-form-field appearance="outline" class="c4"><mat-label>Auction Start Date *</mat-label><input matInput type="date" [(ngModel)]="form.auctionStartDate" /></mat-form-field>
+    <mat-form-field appearance="outline" class="c4"><mat-label>Auction End Date *</mat-label><input matInput type="date" [(ngModel)]="form.auctionEndDate" /></mat-form-field>
+    <mat-form-field appearance="outline" class="c2"><mat-label>Start Time *</mat-label><input matInput placeholder="14:00" [(ngModel)]="form.startTime" /></mat-form-field>
+    <mat-form-field appearance="outline" class="c2"><mat-label>End Time *</mat-label><input matInput placeholder="16:00" [(ngModel)]="form.endTime" /></mat-form-field>
+    <mat-form-field appearance="outline" class="c4"><mat-label>Bid Start Date *</mat-label><input matInput type="date" [(ngModel)]="form.bidStartDate" /></mat-form-field>
+    <mat-form-field appearance="outline" class="c4"><mat-label>Bid End Date *</mat-label><input matInput type="date" [(ngModel)]="form.bidEndDate" /></mat-form-field>
+    <mat-form-field appearance="outline" class="c2"><mat-label>Bid Start Time *</mat-label><input matInput placeholder="14:00" [(ngModel)]="form.bidStartTime" /></mat-form-field>
+    <mat-form-field appearance="outline" class="c2"><mat-label>Bid End Time *</mat-label><input matInput placeholder="16:00" [(ngModel)]="form.bidEndTime" /></mat-form-field>
+    <mat-form-field appearance="outline" class="c3"><mat-label>Additional Minutes *</mat-label><input matInput type="number" [(ngModel)]="form.additionalMinute" /></mat-form-field>
+  </div>
+
+  <div class="toggles">
+    <mat-slide-toggle [(ngModel)]="form.showLastBid">Show Last Bid</mat-slide-toggle>
+  </div>
+
+  <div class="form-actions">
+    <button mat-raised-button color="primary" [disabled]="saving" (click)="submit()">{{ saving ? 'Saving...' : 'Save Auction' }}</button>
+    <button mat-button (click)="cancelForm.emit()">Cancel</button>
+  </div>
+</div>

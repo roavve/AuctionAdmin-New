@@ -3,12 +3,8 @@ import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { forkJoin } from 'rxjs';
 
-import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatListModule } from '@angular/material/list';
-import { MatChipsModule } from '@angular/material/chips';
-import { MatDividerModule } from '@angular/material/divider';
 
 import { AuctionService } from '../../services/auction.service';
 import { CompanyService } from '../../services/company.service';
@@ -27,13 +23,9 @@ interface StatCard {
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [
-    CommonModule,
-    MatCardModule, MatIconModule, MatProgressSpinnerModule,
-    MatListModule, MatChipsModule, MatDividerModule
-  ],
+  imports: [CommonModule, MatIconModule, MatProgressSpinnerModule],
   templateUrl: './dashboard.component.html',
-  styleUrl: './dashboard.component.css'
+  styleUrl: './dashboard.component.css',
 })
 export class DashboardComponent implements OnInit {
   stats = signal<StatCard[]>([
@@ -92,10 +84,9 @@ export class DashboardComponent implements OnInit {
         this.recentRegistrations.set((res.registrations.content || []).slice(0, 5));
         this.loading.set(false);
       },
-      error: (err) => {
-        console.error('Dashboard load error', err);
+      error: () => {
         this.loading.set(false);
-      }
+      },
     });
   }
 

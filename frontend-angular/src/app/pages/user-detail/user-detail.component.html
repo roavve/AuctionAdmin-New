@@ -1,0 +1,117 @@
+<div class="page">
+  <div class="topbar">
+    <button mat-icon-button (click)="back()" aria-label="Back"><mat-icon>arrow_back</mat-icon></button>
+    <h1 class="title">{{ isNew ? 'New User' : (user()?.firstName + ' ' + user()?.lastName) }}</h1>
+  </div>
+
+  @if (error()) {
+    <div class="alert-error">{{ error() }}</div>
+  }
+
+  @if (loading()) {
+    <mat-spinner diameter="40"></mat-spinner>
+  } @else if (editing()) {
+    <div class="paper form">
+      @if (saveError()) { <div class="alert-error">{{ saveError() }}</div> }
+      @if (validationError()) { <div class="alert-error">{{ validationError() }}</div> }
+
+      <div class="form-grid">
+        <mat-form-field appearance="outline"><mat-label>First Name *</mat-label><input matInput [(ngModel)]="form.firstName" /></mat-form-field>
+        <mat-form-field appearance="outline"><mat-label>Last Name *</mat-label><input matInput [(ngModel)]="form.lastName" /></mat-form-field>
+        <mat-form-field appearance="outline"><mat-label>Email *</mat-label><input matInput [(ngModel)]="form.email" /></mat-form-field>
+        @if (isNew) {
+          <mat-form-field appearance="outline"><mat-label>Password *</mat-label><input matInput type="password" [(ngModel)]="form.password" /></mat-form-field>
+        }
+        <mat-form-field appearance="outline">
+          <mat-label>Role</mat-label>
+          <mat-select [(ngModel)]="form.role">
+            @for (r of roles; track r.value) { <mat-option [value]="r.value">{{ r.label }}</mat-option> }
+          </mat-select>
+        </mat-form-field>
+        <mat-form-field appearance="outline"><mat-label>Contact Email *</mat-label><input matInput [(ngModel)]="form.contactEmail" /></mat-form-field>
+        <mat-form-field appearance="outline"><mat-label>Contact Phone *</mat-label><input matInput [(ngModel)]="form.contactPhone" /></mat-form-field>
+        <mat-form-field appearance="outline"><mat-label>Contact Mobile *</mat-label><input matInput [(ngModel)]="form.contactMobile" /></mat-form-field>
+        <mat-form-field appearance="outline"><mat-label>Contact Position *</mat-label><input matInput [(ngModel)]="form.contactPosition" /></mat-form-field>
+      </div>
+
+      <div class="toggles">
+        <mat-slide-toggle [(ngModel)]="form.internal">Internal User</mat-slide-toggle>
+        <mat-slide-toggle [(ngModel)]="form.external">External</mat-slide-toggle>
+      </div>
+
+      <div class="form-actions">
+        <button mat-raised-button color="primary" [disabled]="saving()" (click)="save()">
+          {{ saving() ? 'Saving...' : 'Save User' }}
+        </button>
+        <button mat-button (click)="cancelEdit()">Cancel</button>
+      </div>
+    </div>
+  } @else if (user()) {
+    <div class="view-header">
+      <div>
+        <div class="email">{{ user().email }}</div>
+        <div class="chips">
+          @if (user().active) { <span class="chip success">Active</span> } @else { <span class="chip">Inactive</span> }
+          @if (user().locked) { <span class="chip warning">Locked</span> }
+          @if (user().cancelled) { <span class="chip error">Cancelled</span> }
+          <span class="chip-outline">{{ roleLabel(user().role) }}</span>
+          @if (user().internal) { <span class="chip-outline">Internal</span> }
+          @if (user().external) { <span class="chip-outline">External</span> }
+        </div>
+      </div>
+      <div class="header-actions">
+        <button mat-stroked-button (click)="startEdit()">Edit</button>
+        <button mat-stroked-button (click)="openPasswordDialog()">Change Password</button>
+        @if (!user().locked) {
+          <button mat-raised-button class="btn-warn" (click)="handleAction('lock')">Lock</button>
+        } @else {
+          <button mat-raised-button class="btn-success" (click)="handleAction('unlock')">Unlock</button>
+        }
+        @if (!user().cancelled) {
+          <button mat-raised-button color="warn" (click)="handleAction('cancel')">Cancel</button>
+        }
+      </div>
+    </div>
+
+    @if (actionMsg()) {
+      <div class="alert-info">
+        <span>{{ actionMsg() }}</span>
+        <button class="alert-close" (click)="actionMsg.set('')" aria-label="Close">&times;</button>
+      </div>
+    }
+
+    <div class="panels">
+      <div class="paper">
+        <div class="section-title"><mat-icon>person</mat-icon><span>User Info</span><span class="sec-line"></span></div>
+        <div class="info-row"><span class="info-label">ID</span><span class="info-value">{{ user().id }}</span></div>
+        <div class="info-row"><span class="info-label">First Name</span><span class="info-value">{{ user().firstName || '-' }}</span></div>
+        <div class="info-row"><span class="info-label">Last Name</span><span class="info-value">{{ user().lastName || '-' }}</span></div>
+        <div class="info-row"><span class="info-label">Email</span><span class="info-value">{{ user().email || '-' }}</span></div>
+        <div class="info-row"><span class="info-label">Role</span><span class="info-value">{{ roleLabel(user().role) }}</span></div>
+        <div class="info-row"><span class="info-label">Internal</span><span class="info-value">{{ user().internal ? 'Yes' : 'No' }}</span></div>
+        <div class="info-row"><span class="info-label">External</span><span class="info-value">{{ user().external ? 'Yes' : 'No' }}</span></div>
+        <div class="info-row"><span class="info-label">Status</span><span class="info-value">{{ user().status || '-' }}</span></div>
+        @if (user().company) {
+          <div class="info-row"><span class="info-label">Company</span><span class="info-value">{{ user().company.companyName || ('ID: ' + user().company.id) }}</span></div>
+        }
+      </div>
+
+      <div class="paper">
+        <div class="section-title"><mat-icon>contact_mail</mat-icon><span>Contact</span><span class="sec-line"></span></div>
+        <div class="info-row"><span class="info-label">Contact Email</span><span class="info-value">{{ user().contactEmail || '-' }}</span></div>
+        <div class="info-row"><span class="info-label">Contact Phone</span><span class="info-value">{{ user().contactPhone || '-' }}</span></div>
+        <div class="info-row"><span class="info-label">Contact Mobile</span><span class="info-value">{{ user().contactMobile || '-' }}</span></div>
+        <div class="info-row"><span class="info-label">Contact Position</span><span class="info-value">{{ user().contactPosition || '-' }}</span></div>
+      </div>
+
+      <div class="paper">
+        <div class="section-title"><mat-icon>history</mat-icon><span>Dates</span><span class="sec-line"></span></div>
+        <div class="info-row"><span class="info-label">Register Date</span><span class="info-value">{{ fmt(user().registerDate) }}</span></div>
+        <div class="info-row"><span class="info-label">Activate Date</span><span class="info-value">{{ fmt(user().activateDate) }}</span></div>
+        <div class="info-row"><span class="info-label">Last Login</span><span class="info-value">{{ fmtTime(user().loginDate) }}</span></div>
+        <div class="info-row"><span class="info-label">Lock Date</span><span class="info-value">{{ fmt(user().lockDate) }}</span></div>
+        <div class="info-row"><span class="info-label">Cancel Date</span><span class="info-value">{{ fmt(user().cancelledDate) }}</span></div>
+      </div>
+    </div>
+  }
+</div>

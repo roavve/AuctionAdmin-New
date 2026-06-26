@@ -1,0 +1,35 @@
+.paper {
+  padding: 24px;
+  background: #fff;
+  border-radius: 4px;
+  box-shadow: 0 2px 1px -1px rgba(0,0,0,.2), 0 1px 1px 0 rgba(0,0,0,.14), 0 1px 3px 0 rgba(0,0,0,.12);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: 16px;
+}
+
+.c12 { grid-column: span 12; }
+.c6 { grid-column: span 6; }
+.c4 { grid-column: span 4; }
+.c3 { grid-column: span 3; }
+.c2 { grid-column: span 2; }
+
+@media (max-width: 900px) {
+  .c6, .c4, .c3, .c2 { grid-column: span 12; }
+}
+
+.subtitle { font-weight: 700; margin: 24px 0 8px; }
+.toggles { margin: 16px 0; }
+.form-actions { display: flex; gap: 12px; margin-top: 8px; }
+
+.alert-error {
+  margin-bottom: 16px;
+  padding: 6px 16px;
+  border-radius: 4px;
+  background: #fdeded;
+  color: #5f2120;
+  font-size: .875rem;
+}

@@ -1,0 +1,22 @@
+.page {
+  display: block;
+}
+
+.title {
+  margin: 0 0 16px 0;
+  font-size: 1.5rem;
+  font-weight: 400;
+  line-height: 1.334;
+}
+
+.tabs {
+  margin-bottom: 16px;
+}
+
+.tabs ::ng-deep .mat-mdc-tab-body-wrapper {
+  display: none;
+}
+
+.grid {
+  width: 100%;
+}

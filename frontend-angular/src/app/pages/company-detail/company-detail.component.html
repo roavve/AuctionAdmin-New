@@ -1,0 +1,173 @@
+<div class="page">
+  @if (loading()) {
+    <mat-spinner diameter="40"></mat-spinner>
+  } @else if (error()) {
+    <div class="alert-error">{{ error() }}</div>
+  } @else if (editing()) {
+    <div class="topbar">
+      <button mat-button (click)="cancelEdit()"><mat-icon>arrow_back</mat-icon> Back</button>
+      <h1 class="title">{{ isNew ? 'New Company' : ('Edit: ' + company()?.companyName) }}</h1>
+    </div>
+
+    <div class="paper">
+      @if (saveError()) { <div class="alert-error">{{ saveError() }}</div> }
+      @if (validationError()) { <div class="alert-error">{{ validationError() }}</div> }
+
+      <div class="form-grid">
+        <mat-form-field appearance="outline"><mat-label>Company Name *</mat-label><input matInput [(ngModel)]="form.companyName" /></mat-form-field>
+        <mat-form-field appearance="outline"><mat-label>Tax ID</mat-label><input matInput [(ngModel)]="form.taxId" /></mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Type *</mat-label>
+          <mat-select [(ngModel)]="form.type" [compareWith]="compareById">
+            @for (t of companyTypes(); track t.id) { <mat-option [value]="t">{{ t.name }}</mat-option> }
+          </mat-select>
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Category</mat-label>
+          <mat-select [(ngModel)]="form.category" [compareWith]="compareById">
+            <mat-option [value]="null">None</mat-option>
+            @for (c of categories(); track c.id) { <mat-option [value]="c">{{ c.name }}</mat-option> }
+          </mat-select>
+        </mat-form-field>
+        <mat-form-field appearance="outline"><mat-label>Contact Name</mat-label><input matInput [(ngModel)]="form.contactName" /></mat-form-field>
+        <mat-form-field appearance="outline"><mat-label>Contact Surname</mat-label><input matInput [(ngModel)]="form.contactSurname" /></mat-form-field>
+        <mat-form-field appearance="outline"><mat-label>Contact Position</mat-label><input matInput [(ngModel)]="form.contactPosition" /></mat-form-field>
+        <mat-form-field appearance="outline"><mat-label>Contact Email *</mat-label><input matInput [(ngModel)]="form.contactEmail" /></mat-form-field>
+        <mat-form-field appearance="outline"><mat-label>Contact Phone</mat-label><input matInput [(ngModel)]="form.contactPhone" /></mat-form-field>
+        <mat-form-field appearance="outline"><mat-label>Contact Mobile</mat-label><input matInput [(ngModel)]="form.contactMobile" /></mat-form-field>
+        <mat-form-field appearance="outline"><mat-label>Physical Address</mat-label><input matInput [(ngModel)]="form.phisAddress" /></mat-form-field>
+        <mat-form-field appearance="outline"><mat-label>Legal Address</mat-label><input matInput [(ngModel)]="form.legalAddress" /></mat-form-field>
+        <mat-form-field appearance="outline"><mat-label>Bank Code</mat-label><input matInput [(ngModel)]="form.bankCode1" /></mat-form-field>
+        <mat-form-field appearance="outline"><mat-label>Bank Account</mat-label><input matInput [(ngModel)]="form.bankAccount1" /></mat-form-field>
+        <mat-form-field appearance="outline"><mat-label>Website</mat-label><input matInput [(ngModel)]="form.webSite" /></mat-form-field>
+      </div>
+
+      <mat-form-field appearance="outline" class="full">
+        <mat-label>Business Description *</mat-label>
+        <textarea matInput rows="2" [(ngModel)]="form.businessDesc"></textarea>
+      </mat-form-field>
+      <mat-form-field appearance="outline" class="full">
+        <mat-label>Note</mat-label>
+        <textarea matInput rows="2" [(ngModel)]="form.note"></textarea>
+      </mat-form-field>
+
+      <div class="toggles">
+        <mat-slide-toggle [(ngModel)]="form.vatPayer">VAT Payer</mat-slide-toggle>
+      </div>
+
+      <div class="form-actions">
+        <button mat-raised-button color="primary" [disabled]="saving()" (click)="save()">{{ saving() ? 'Saving...' : 'Save Company' }}</button>
+        <button mat-button (click)="cancelEdit()">Cancel</button>
+      </div>
+    </div>
+  } @else if (company()) {
+    <div class="header">
+      <button mat-stroked-button (click)="back()"><mat-icon>arrow_back</mat-icon> Back</button>
+      <div class="header-main">
+        <div class="cname">{{ company().companyName }}</div>
+        <div class="chips">
+          <span class="chip primary">{{ company().status?.name || 'Unknown' }}</span>
+          @if (company().taxId) { <span class="chip-outline">Tax ID: {{ company().taxId }}</span> }
+          @if (company().category) { <span class="chip-outline">{{ company().category.name }}</span> }
+        </div>
+      </div>
+      <div class="header-actions">
+        <button mat-stroked-button (click)="startEdit()">Edit</button>
+        @if (company().status?.key === 'key.companyStatus.created') {
+          <button mat-raised-button class="btn-success" (click)="handleInvite()">Invite</button>
+        }
+        @if (company().status?.key !== 'key.companyStatus.cancelled') {
+          <button mat-raised-button color="warn" (click)="handleCancel()">Cancel</button>
+        }
+      </div>
+    </div>
+
+    @if (actionMsg()) {
+      <div class="alert-info"><span>{{ actionMsg() }}</span><button class="alert-close" (click)="actionMsg.set('')" aria-label="Close">&times;</button></div>
+    }
+
+    <mat-tab-group class="tabs" [selectedIndex]="tab()" (selectedIndexChange)="onTab($event)">
+      <mat-tab label="Details"></mat-tab>
+      <mat-tab label="Users"></mat-tab>
+      <mat-tab label="Files"></mat-tab>
+      <mat-tab label="Bid History"></mat-tab>
+      <mat-tab label="Project Stats"></mat-tab>
+      <mat-tab label="Auction Invitations"></mat-tab>
+      <mat-tab label="Categories"></mat-tab>
+    </mat-tab-group>
+
+    @switch (tab()) {
+      @case (0) {
+        <div class="details-grid">
+          <div class="paper">
+            <div class="section-title"><mat-icon>business</mat-icon><span>Company Info</span><span class="sec-line"></span></div>
+            <div class="info-row"><span class="info-label">ID</span><span class="info-value">{{ company().id }}</span></div>
+            <div class="info-row"><span class="info-label">Company Name</span><span class="info-value">{{ company().companyName || '-' }}</span></div>
+            <div class="info-row"><span class="info-label">Tax ID</span><span class="info-value">{{ company().taxId || '-' }}</span></div>
+            <div class="info-row"><span class="info-label">Type</span><span class="info-value">{{ company().type?.name || '-' }}</span></div>
+            <div class="info-row"><span class="info-label">Status</span><span class="info-value">{{ company().status?.name || '-' }}</span></div>
+            <div class="info-row"><span class="info-label">Category</span><span class="info-value">{{ company().category?.name || '-' }}</span></div>
+            <div class="info-row"><span class="info-label">Sub Category</span><span class="info-value">{{ company().subCategory?.name || '-' }}</span></div>
+            <div class="info-row"><span class="info-label">VAT Payer</span><span class="info-value">{{ company().vatPayer ? 'Yes' : 'No' }}</span></div>
+            <div class="info-row"><span class="info-label">Website</span><span class="info-value">{{ company().webSite || '-' }}</span></div>
+            <div class="info-row"><span class="info-label">Business Desc</span><span class="info-value">{{ company().businessDesc || '-' }}</span></div>
+            <div class="info-row"><span class="info-label">Note</span><span class="info-value">{{ company().note || '-' }}</span></div>
+          </div>
+
+          <div class="mid">
+            <div class="paper">
+              <div class="section-title"><mat-icon>person</mat-icon><span>Contact</span><span class="sec-line"></span></div>
+              <div class="info-row"><span class="info-label">Name</span><span class="info-value">{{ contactName(company()) }}</span></div>
+              <div class="info-row"><span class="info-label">Position</span><span class="info-value">{{ company().contactPosition || '-' }}</span></div>
+              <div class="info-row"><span class="info-label">Email</span><span class="info-value">{{ company().contactEmail || '-' }}</span></div>
+              <div class="info-row"><span class="info-label">Phone</span><span class="info-value">{{ company().contactPhone || '-' }}</span></div>
+              <div class="info-row"><span class="info-label">Mobile</span><span class="info-value">{{ company().contactMobile || '-' }}</span></div>
+            </div>
+            <div class="paper">
+              <div class="section-title"><mat-icon>location_on</mat-icon><span>Address & Banking</span><span class="sec-line"></span></div>
+              <div class="info-row"><span class="info-label">Physical Address</span><span class="info-value">{{ company().phisAddress || '-' }}</span></div>
+              <div class="info-row"><span class="info-label">Legal Address</span><span class="info-value">{{ company().legalAddress || '-' }}</span></div>
+              <div class="info-row"><span class="info-label">Bank Code</span><span class="info-value">{{ company().bankCode1 || '-' }}</span></div>
+              <div class="info-row"><span class="info-label">Bank Account</span><span class="info-value">{{ company().bankAccount1 || '-' }}</span></div>
+            </div>
+          </div>
+
+          <div class="paper">
+            <div class="section-title"><mat-icon>history</mat-icon><span>Dates & History</span><span class="sec-line"></span></div>
+            <div class="info-row"><span class="info-label">Created By</span><span class="info-value">{{ company().flowCreatedBy || '-' }}</span></div>
+            <div class="info-row"><span class="info-label">Admin User</span><span class="info-value">{{ company().adminUser || '-' }}</span></div>
+            <div class="info-row"><span class="info-label">Create Date</span><span class="info-value">{{ fmt(company().flowDateCreated) }}</span></div>
+            <div class="info-row"><span class="info-label">Invite Date</span><span class="info-value">{{ fmt(company().flowDateInvited) }}</span></div>
+            <div class="info-row"><span class="info-label">Invited By</span><span class="info-value">{{ company().flowInvitedBy || '-' }}</span></div>
+            <div class="info-row"><span class="info-label">Register Date</span><span class="info-value">{{ fmt(company().flowDateRegistered) }}</span></div>
+            <div class="info-row"><span class="info-label">Activation Date</span><span class="info-value">{{ fmt(company().flowDateActivated) }}</span></div>
+            <div class="info-row"><span class="info-label">Cancel Date</span><span class="info-value">{{ fmt(company().flowDateCancelled) }}</span></div>
+            <div class="info-row"><span class="info-label">Cancelled By</span><span class="info-value">{{ company().flowCancelledBy || '-' }}</span></div>
+            <div class="info-row"><span class="info-label">Request ID</span><span class="info-value">{{ company().fromReqId || '-' }}</span></div>
+          </div>
+        </div>
+      }
+      @case (1) {
+        <ag-grid-angular class="grid" [theme]="theme" [rowData]="users()" [columnDefs]="userColumns" [domLayout]="'autoHeight'" [suppressCellFocus]="true"></ag-grid-angular>
+      }
+      @case (2) {
+        <div class="files-bar">
+          <span class="files-title">Company Files</span>
+          <mat-form-field appearance="outline" subscriptSizing="dynamic" class="desc">
+            <mat-label>Description (optional)</mat-label>
+            <input matInput [(ngModel)]="fileDescription" />
+          </mat-form-field>
+          <button mat-raised-button color="primary" [disabled]="uploadingFile()" (click)="fileInput.click()">
+            {{ uploadingFile() ? 'Uploading...' : 'Upload File' }}
+          </button>
+          <input #fileInput type="file" hidden (change)="onFileSelected($event)" />
+        </div>
+        <ag-grid-angular class="grid" [theme]="theme" [rowData]="files()" [columnDefs]="fileColumns" [domLayout]="'autoHeight'" [suppressCellFocus]="true"></ag-grid-angular>
+      }
+      @case (3) { <app-bid-history-tab [companyId]="id!"></app-bid-history-tab> }
+      @case (4) { <app-project-stats-tab [companyId]="id!"></app-project-stats-tab> }
+      @case (5) { <app-auction-invitations-tab [companyId]="id!"></app-auction-invitations-tab> }
+      @case (6) { <app-company-categories-tab [companyId]="id!"></app-company-categories-tab> }
+    }
+  }
+</div>

@@ -1,0 +1,25 @@
+<div class="page">
+  <h1 class="title">Notifications</h1>
+
+  @if (error()) {
+    <div class="alert-error">{{ error() }}</div>
+  }
+
+  <ag-grid-angular
+    class="grid"
+    [theme]="theme"
+    [rowData]="rows()"
+    [columnDefs]="columnDefs"
+    [domLayout]="'autoHeight'"
+    [loading]="loading()"
+    [suppressCellFocus]="true">
+  </ag-grid-angular>
+
+  <mat-paginator
+    [length]="total()"
+    [pageIndex]="page()"
+    [pageSize]="pageSize()"
+    [pageSizeOptions]="[20, 50, 100]"
+    (page)="onPage($event)">
+  </mat-paginator>
+</div>

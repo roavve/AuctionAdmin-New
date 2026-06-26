@@ -2,18 +2,18 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
-const API = 'http://localhost:8080/api/projects';
+const API = 'http://localhost:8080/api/categories';
 
 @Injectable({ providedIn: 'root' })
-export class ProjectService {
+export class CategoryService {
   constructor(private http: HttpClient) {}
 
   getAll(): Observable<any[]> {
     return this.http.get<any[]>(`${API}`);
   }
 
-  getById(id: number | string): Observable<any> {
-    return this.http.get(`${API}/${id}`);
+  getParents(): Observable<any[]> {
+    return this.http.get<any[]>(`${API}/parents`);
   }
 
   create(data: any): Observable<any> {
@@ -26,9 +26,5 @@ export class ProjectService {
 
   delete(id: number | string): Observable<any> {
     return this.http.delete(`${API}/${id}`);
-  }
-
-  inviteCompanies(projectId: number | string, companyIds: number[]): Observable<any> {
-    return this.http.post(`http://localhost:8080/api/auctions/project/${projectId}/invite-companies`, { companyIds });
   }
 }

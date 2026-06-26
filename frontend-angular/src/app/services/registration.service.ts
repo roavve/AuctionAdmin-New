@@ -8,8 +8,36 @@ const API = 'http://localhost:8080/api/registrations';
 export class RegistrationService {
   constructor(private http: HttpClient) {}
 
-  getByStatus(status: 'new' | 'processed' | 'cancelled', page: number = 0, size: number = 20): Observable<any> {
+  getByStatus(status: string, page: number, size: number): Observable<any> {
     const params = new HttpParams().set('page', page).set('size', size);
     return this.http.get(`${API}/${status}`, { params });
+  }
+
+  createCompany(id: number | string): Observable<any> {
+    return this.http.post(`${API}/${id}/createCompany`, {});
+  }
+
+  reject(id: number | string): Observable<any> {
+    return this.http.post(`${API}/${id}/reject`, {});
+  }
+
+  acceptPolicy(id: number | string): Observable<any> {
+    return this.http.post(`${API}/${id}/acceptPolicy`, {});
+  }
+
+  getFiles(id: number | string): Observable<any[]> {
+    return this.http.get<any[]>(`${API}/${id}/files`);
+  }
+
+  uploadFile(id: number | string, formData: FormData): Observable<any> {
+    return this.http.post(`${API}/${id}/files`, formData);
+  }
+
+  deleteFile(fileId: number | string): Observable<any> {
+    return this.http.delete(`${API}/files/${fileId}`);
+  }
+
+  download(url: string): Observable<Blob> {
+    return this.http.get(url, { responseType: 'blob' });
   }
 }

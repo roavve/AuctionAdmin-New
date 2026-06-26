@@ -1,0 +1,19 @@
+.page { display: block; }
+
+.title {
+  margin: 0 0 16px 0;
+  font-size: 1.5rem;
+  font-weight: 400;
+  line-height: 1.334;
+}
+
+.alert-error {
+  margin-bottom: 16px;
+  padding: 6px 16px;
+  border-radius: 4px;
+  background: #fdeded;
+  color: #5f2120;
+  font-size: .875rem;
+}
+
+.grid { width: 100%; }

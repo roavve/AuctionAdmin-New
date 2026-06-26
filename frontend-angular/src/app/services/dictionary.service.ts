@@ -11,4 +11,16 @@ export class DictionaryService {
   getItems(): Observable<any[]> {
     return this.http.get<any[]>(`${API}/items`);
   }
+
+  create(data: any): Observable<any> {
+    return this.http.post(`${API}/items`, data);
+  }
+
+  update(id: number | string, data: any): Observable<any> {
+    return this.http.put(`${API}/items/${id}`, data);
+  }
+
+  delete(id: number | string): Observable<any> {
+    return this.http.delete(`${API}/items/${id}`);
+  }
 }

@@ -1,0 +1,82 @@
+<div class="page">
+  <div class="header">
+    <h1 class="title">Companies</h1>
+    <div class="header-actions">
+      <button
+        mat-stroked-button
+        [color]="activeFilterCount() > 0 ? 'primary' : ''"
+        (click)="showFilters.set(!showFilters())">
+        <mat-icon>filter_list</mat-icon>
+        Filters{{ activeFilterCount() > 0 ? ' (' + activeFilterCount() + ')' : '' }}
+      </button>
+      <button mat-raised-button color="primary" (click)="router.navigate(['/companies/new'])">
+        <mat-icon>add</mat-icon>
+        New Company
+      </button>
+    </div>
+  </div>
+
+  <mat-tab-group class="tabs" [selectedIndex]="tab()" (selectedIndexChange)="onTab($event)">
+    <mat-tab label="New Companies"></mat-tab>
+    <mat-tab label="Active Companies"></mat-tab>
+    <mat-tab label="Cancelled Companies"></mat-tab>
+  </mat-tab-group>
+
+  <div class="filters" [class.open]="showFilters()">
+    <div class="filters-paper">
+      <div class="filters-grid">
+        <mat-form-field appearance="outline" subscriptSizing="dynamic" class="field">
+          <mat-label>Company Name</mat-label>
+          <input matInput [(ngModel)]="filters.name" (keydown.enter)="handleSearch()" />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" subscriptSizing="dynamic" class="field sm">
+          <mat-label>Tax ID</mat-label>
+          <input matInput [(ngModel)]="filters.taxId" (keydown.enter)="handleSearch()" />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" subscriptSizing="dynamic" class="field">
+          <mat-label>Category</mat-label>
+          <mat-select [(ngModel)]="filters.categoryId">
+            <mat-option value="">All Categories</mat-option>
+            @for (c of categories(); track c.id) {
+            <mat-option [value]="c.id">{{ c.name }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+
+        <div class="search-actions">
+          <button mat-raised-button color="primary" (click)="handleSearch()">
+            <mat-icon>search</mat-icon>
+            Search
+          </button>
+          <button mat-icon-button (click)="handleClear()" title="Clear">
+            <mat-icon>clear</mat-icon>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  @if (error()) {
+  <div class="alert-error">{{ error() }}</div>
+  }
+
+  <ag-grid-angular
+    class="grid"
+    [theme]="theme"
+    [rowData]="rows()"
+    [columnDefs]="columnDefs"
+    [domLayout]="'autoHeight'"
+    [loading]="loading()"
+    [suppressCellFocus]="true">
+  </ag-grid-angular>
+
+  <mat-paginator
+    [length]="total()"
+    [pageIndex]="page()"
+    [pageSize]="pageSize()"
+    [pageSizeOptions]="[10, 20, 50, 100]"
+    (page)="onPage($event)">
+  </mat-paginator>
+</div>

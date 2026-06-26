@@ -1,0 +1,93 @@
+<div class="page">
+  @if (loading()) {
+    <mat-spinner diameter="40"></mat-spinner>
+  } @else if (error()) {
+    <div class="alert-error">{{ error() }}</div>
+  } @else if (editing()) {
+    <div class="topbar">
+      <button mat-button (click)="onFormCancel()"><mat-icon>arrow_back</mat-icon> Back</button>
+      <h1 class="title">{{ isNew ? 'New Auction' : ('Edit: ' + auction()?.name) }}</h1>
+    </div>
+    <app-auction-form
+      [initial]="isNew ? null : auction()"
+      [projects]="projects()"
+      [dictionaryItems]="dictionaryItems()"
+      [saving]="saving()"
+      [saveError]="saveError()"
+      (save)="onFormSave($event)"
+      (cancelForm)="onFormCancel()">
+    </app-auction-form>
+  } @else if (auction()) {
+    <div class="header">
+      <button mat-stroked-button (click)="back()"><mat-icon>arrow_back</mat-icon> Back</button>
+      <div class="header-main">
+        <div class="aname">{{ auction().name }}</div>
+        <div class="chips">
+          <span class="chip primary">{{ auction().status?.name || 'Unknown' }}</span>
+          @if (auction().project) { <span class="chip-outline">{{ auction().project.name }}</span> }
+        </div>
+      </div>
+      <div class="header-actions">
+        <button mat-stroked-button (click)="startEdit()">Edit</button>
+        @if (statusKey === 'key.auctionStatus.draft') {
+          <button mat-raised-button color="warn" (click)="handleDelete()">Delete</button>
+          <button mat-raised-button class="btn-success" (click)="handleAction('activate')">Activate</button>
+        }
+        @if (statusKey === 'key.auctionStatus.active') {
+          <button mat-raised-button class="btn-warn" (click)="handleAction('close')">Close</button>
+          <button mat-raised-button color="warn" (click)="handleAction('cancel')">Cancel</button>
+        }
+      </div>
+    </div>
+
+    @if (actionMsg()) {
+      <div class="alert-info"><span>{{ actionMsg() }}</span><button class="alert-close" (click)="actionMsg.set('')" aria-label="Close">&times;</button></div>
+    }
+
+    <mat-tab-group class="tabs" [selectedIndex]="tab()" (selectedIndexChange)="onTab($event)">
+      <mat-tab label="Details"></mat-tab>
+      <mat-tab label="Bids"></mat-tab>
+      <mat-tab label="Invitations"></mat-tab>
+      <mat-tab label="Participants"></mat-tab>
+      <mat-tab label="Comments"></mat-tab>
+      <mat-tab label="Files"></mat-tab>
+      <mat-tab label="Internal Files"></mat-tab>
+      <mat-tab label="Revisions"></mat-tab>
+    </mat-tab-group>
+
+    @switch (tab()) {
+      @case (0) {
+        <div class="details-grid">
+          <div class="paper">
+            <div class="section-title"><mat-icon>info</mat-icon><span>General</span><span class="sec-line"></span></div>
+            <div class="info-row"><span class="info-label">ID</span><span class="info-value">{{ auction().id }}</span></div>
+            <div class="info-row"><span class="info-label">Name</span><span class="info-value">{{ auction().name || '-' }}</span></div>
+            <div class="info-row"><span class="info-label">Type</span><span class="info-value">{{ auction().auctionType?.name || '-' }}</span></div>
+            <div class="info-row"><span class="info-label">Project</span><span class="info-value">{{ auction().project?.name || '-' }}</span></div>
+            <div class="info-row"><span class="info-label">Status</span><span class="info-value">{{ auction().status?.name || '-' }}</span></div>
+            <div class="info-row"><span class="info-label">Value Type</span><span class="info-value">{{ auction().valueType?.name || '-' }}</span></div>
+            <div class="info-row"><span class="info-label">UOM</span><span class="info-value">{{ auction().uom?.name || '-' }}</span></div>
+            <div class="info-row"><span class="info-label">Currency</span><span class="info-value">{{ auction().currency?.name || '-' }}</span></div>
+            <div class="info-row"><span class="info-label">Administrator</span><span class="info-value">{{ auction().createUserId || '-' }}</span></div>
+          </div>
+          <div class="paper">
+            <div class="section-title"><mat-icon>gavel</mat-icon><span>Bidding</span><span class="sec-line"></span></div>
+            <div class="info-row"><span class="info-label">Start Bid</span><span class="info-value">{{ auction().startBidValue ?? '-' }}</span></div>
+            <div class="info-row"><span class="info-label">Last Bid</span><span class="info-value">{{ auction().lastBidValue ?? '-' }}</span></div>
+            <div class="info-row"><span class="info-label">Start Date</span><span class="info-value">{{ fmt(auction().auctionStartDate) }}</span></div>
+            <div class="info-row"><span class="info-label">End Date</span><span class="info-value">{{ fmt(auction().auctionEndDate) }}</span></div>
+            <div class="info-row"><span class="info-label">All Participants</span><span class="info-value">{{ auction().allParticipants ?? 0 }}</span></div>
+            <div class="info-row"><span class="info-label">Active Participants</span><span class="info-value">{{ auction().activeParticipants ?? 0 }}</span></div>
+          </div>
+        </div>
+      }
+      @case (1) { <app-auction-bids-tab [auctionId]="id!"></app-auction-bids-tab> }
+      @case (2) { <app-auction-invitations-tab [auctionId]="id!"></app-auction-invitations-tab> }
+      @case (3) { <app-auction-participants-tab [auctionId]="id!"></app-auction-participants-tab> }
+      @case (4) { <app-auction-comments-tab [auctionId]="id!"></app-auction-comments-tab> }
+      @case (5) { <app-auction-files-tab [auctionId]="id!" type="files"></app-auction-files-tab> }
+      @case (6) { <app-auction-files-tab [auctionId]="id!" type="internal"></app-auction-files-tab> }
+      @case (7) { <app-auction-revisions-tab [auctionId]="id!"></app-auction-revisions-tab> }
+    }
+  }
+</div>

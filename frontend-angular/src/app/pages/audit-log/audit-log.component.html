@@ -1,0 +1,62 @@
+<div class="page">
+  <div class="header">
+    <h1 class="title">Audit Log</h1>
+    <button mat-stroked-button (click)="showFilters.set(!showFilters())">
+      <mat-icon>filter_list</mat-icon>
+      Filters
+    </button>
+  </div>
+
+  <div class="filters" [class.open]="showFilters()">
+    <div class="filters-paper">
+      <div class="filters-grid">
+        <mat-form-field appearance="outline" subscriptSizing="dynamic" class="field">
+          <mat-label>User</mat-label>
+          <input matInput [(ngModel)]="filters.userId" (keydown.enter)="handleSearch()" />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" subscriptSizing="dynamic" class="field">
+          <mat-label>Action</mat-label>
+          <input matInput [(ngModel)]="filters.action" (keydown.enter)="handleSearch()" />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" subscriptSizing="dynamic" class="field">
+          <mat-label>Object Name</mat-label>
+          <input matInput [(ngModel)]="filters.objectName" (keydown.enter)="handleSearch()" />
+        </mat-form-field>
+
+        <div class="search-actions">
+          <button mat-raised-button color="primary" (click)="handleSearch()">
+            <mat-icon>search</mat-icon>
+            Search
+          </button>
+          <button mat-icon-button (click)="handleClear()" title="Clear">
+            <mat-icon>clear</mat-icon>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  @if (error()) {
+    <div class="alert-error">{{ error() }}</div>
+  }
+
+  <ag-grid-angular
+    class="grid"
+    [theme]="theme"
+    [rowData]="rows()"
+    [columnDefs]="columnDefs"
+    [domLayout]="'autoHeight'"
+    [loading]="loading()"
+    [suppressCellFocus]="true">
+  </ag-grid-angular>
+
+  <mat-paginator
+    [length]="total()"
+    [pageIndex]="page()"
+    [pageSize]="pageSize()"
+    [pageSizeOptions]="[20, 50, 100]"
+    (page)="onPage($event)">
+  </mat-paginator>
+</div>

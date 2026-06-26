@@ -1,0 +1,31 @@
+<div class="page">
+  <h1 class="title">Text Templates</h1>
+
+  @if (error()) {
+    <div class="alert-error">{{ error() }}</div>
+  }
+  @if (actionMsg()) {
+    <div class="alert-info">
+      <span>{{ actionMsg() }}</span>
+      <button class="alert-close" (click)="actionMsg.set('')" aria-label="Close">&times;</button>
+    </div>
+  }
+
+  <ag-grid-angular
+    class="grid"
+    [theme]="theme"
+    [rowData]="rows()"
+    [columnDefs]="columnDefs"
+    [domLayout]="'autoHeight'"
+    [loading]="loading()"
+    [suppressCellFocus]="true">
+  </ag-grid-angular>
+
+  <mat-paginator
+    [length]="allRows().length"
+    [pageIndex]="page()"
+    [pageSize]="pageSize()"
+    [pageSizeOptions]="[10, 20, 100]"
+    (page)="onPage($event)">
+  </mat-paginator>
+</div>
