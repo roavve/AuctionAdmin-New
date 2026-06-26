@@ -1,34 +1,58 @@
-.layout-container {
-  height: 100vh;
+.root {
+  min-height: 100vh;
 }
 
-.sidenav {
-  width: 240px;
-  background: #fafafa;
-  border-right: 1px solid #e0e0e0;
-}
-
-.sidenav-header {
-  padding: 16px;
-  font-size: 18px;
-  font-weight: bold;
-  border-bottom: 1px solid #e0e0e0;
-}
-
-.topbar {
-  position: sticky;
+.appbar {
+  position: fixed;
   top: 0;
-  z-index: 10;
+  left: 0;
+  right: 0;
+  z-index: 1101;
+}
+
+.app-title {
+  font-size: 1.25rem;
+  font-weight: 500;
 }
 
 .spacer {
-  flex: 1;
+  flex: 1 1 auto;
 }
 
-.page-content {
+.user-email {
+  font-size: 0.875rem;
+  margin-right: 16px;
+}
+
+.drawer {
+  position: fixed;
+  top: 64px;
+  left: 0;
+  bottom: 0;
+  width: 240px;
+  overflow-y: auto;
+  box-sizing: border-box;
+  background: #fff;
+  border-right: 1px solid rgba(0, 0, 0, 0.12);
+  z-index: 1100;
+}
+
+.content {
+  margin-left: 240px;
   padding: 24px;
+  padding-top: calc(64px + 24px);
+}
+
+.drawer .mat-mdc-list-item {
+  border-radius: 0;
 }
 
 .active-link {
   background-color: rgba(0, 0, 0, 0.08);
+  border-radius: 0;
+}
+
+@media (max-width: 599.98px) {
+  .drawer { top: 56px; }
+  .content { padding-top: calc(56px + 24px); }
 }

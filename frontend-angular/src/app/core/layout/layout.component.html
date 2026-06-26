@@ -1,6 +1,14 @@
-<mat-sidenav-container class="layout-container">
-  <mat-sidenav mode="side" opened class="sidenav">
-    <div class="sidenav-header">Auction Admin</div>
+<div class="root">
+  <mat-toolbar color="primary" class="appbar">
+    <span class="app-title">Auction Admin</span>
+    <span class="spacer"></span>
+    <span class="user-email">{{ auth.user()?.email }}</span>
+    <button mat-icon-button (click)="logout()" title="Logout" aria-label="Logout">
+      <mat-icon>logout</mat-icon>
+    </button>
+  </mat-toolbar>
+
+  <nav class="drawer">
     <mat-nav-list>
       @for (item of navItems; track item.path) {
         <a mat-list-item [routerLink]="item.path" routerLinkActive="active-link">
@@ -9,25 +17,9 @@
         </a>
       }
     </mat-nav-list>
-  </mat-sidenav>
+  </nav>
 
-  <mat-sidenav-content>
-    <mat-toolbar color="primary" class="topbar">
-      <span class="spacer"></span>
-      <button mat-button [matMenuTriggerFor]="userMenu">
-        <mat-icon>account_circle</mat-icon>
-        {{ auth.user()?.email }}
-      </button>
-      <mat-menu #userMenu="matMenu">
-        <button mat-menu-item (click)="logout()">
-          <mat-icon>logout</mat-icon>
-          Logout
-        </button>
-      </mat-menu>
-    </mat-toolbar>
-
-    <div class="page-content">
-      <router-outlet></router-outlet>
-    </div>
-  </mat-sidenav-content>
-</mat-sidenav-container>
+  <main class="content">
+    <router-outlet></router-outlet>
+  </main>
+</div>

@@ -1,0 +1,97 @@
+<div class="page">
+  <div class="header">
+    <h1 class="title">Auctions</h1>
+    <div class="header-actions">
+      <button
+        mat-stroked-button
+        [color]="activeFilterCount() > 0 ? 'primary' : ''"
+        (click)="showFilters.set(!showFilters())">
+        <mat-icon>filter_list</mat-icon>
+        Filters{{ activeFilterCount() > 0 ? ' (' + activeFilterCount() + ')' : '' }}
+      </button>
+      <button mat-raised-button color="primary" (click)="router.navigate(['/auctions/new'])">
+        <mat-icon>add</mat-icon>
+        New Auction
+      </button>
+    </div>
+  </div>
+
+  <div class="filters" [class.open]="showFilters()">
+    <div class="filters-paper">
+      <div class="filters-grid">
+        <mat-form-field appearance="outline" subscriptSizing="dynamic" class="field">
+          <mat-label>Status</mat-label>
+          <mat-select [(ngModel)]="filters.statusId">
+            <mat-option value="">All Statuses</mat-option>
+            @for (s of statuses(); track s.id) {
+              <mat-option [value]="s.id">
+                <span
+                  class="opt-chip"
+                  [style.background-color]="(statusColor(s.key)?.bg) || '#e0e0e0'"
+                  [style.color]="(statusColor(s.key)?.fg) || 'rgba(0,0,0,0.87)'">{{ s.name }}</span>
+                {{ s.name }}
+              </mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" subscriptSizing="dynamic" class="field">
+          <mat-label>Project</mat-label>
+          <mat-select [(ngModel)]="filters.projectId">
+            <mat-option value="">All Projects</mat-option>
+            @for (p of projects(); track p.id) {
+              <mat-option [value]="p.id">{{ p.name }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" subscriptSizing="dynamic" class="field small">
+          <mat-label>Min Bid Value</mat-label>
+          <input matInput type="number" [(ngModel)]="filters.rangeStartAmount" />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" subscriptSizing="dynamic" class="field small">
+          <mat-label>Max Bid Value</mat-label>
+          <input matInput type="number" [(ngModel)]="filters.rangeEndAmount" />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" subscriptSizing="dynamic" class="field small">
+          <mat-label>Start Date From</mat-label>
+          <input matInput type="date" [(ngModel)]="filters.rangeStartDate" />
+        </mat-form-field>
+
+        <div class="search-actions">
+          <button mat-raised-button color="primary" (click)="handleSearch()">
+            <mat-icon>search</mat-icon>
+            Search
+          </button>
+          <button mat-icon-button (click)="handleClear()" title="Clear filters">
+            <mat-icon>clear</mat-icon>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  @if (error()) {
+    <div class="alert-error">{{ error() }}</div>
+  }
+
+  <ag-grid-angular
+    class="grid"
+    [theme]="theme"
+    [rowData]="rows()"
+    [columnDefs]="columnDefs"
+    [domLayout]="'autoHeight'"
+    [loading]="loading()"
+    [suppressCellFocus]="true">
+  </ag-grid-angular>
+
+  <mat-paginator
+    [length]="total()"
+    [pageIndex]="page()"
+    [pageSize]="pageSize()"
+    [pageSizeOptions]="[10, 20, 50, 100]"
+    (page)="onPage($event)">
+  </mat-paginator>
+</div>

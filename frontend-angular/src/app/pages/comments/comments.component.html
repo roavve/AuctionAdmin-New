@@ -1,0 +1,42 @@
+<div class="page">
+  <h1 class="title">Auction Comments</h1>
+
+  @if (error()) {
+    <div class="alert-error">{{ error() }}</div>
+  }
+  @if (actionMsg()) {
+    <div class="alert-info">
+      <span>{{ actionMsg() }}</span>
+      <button class="alert-close" (click)="actionMsg.set('')" aria-label="Close">&times;</button>
+    </div>
+  }
+
+  <mat-tab-group
+    class="tabs"
+    [selectedIndex]="tab()"
+    (selectedIndexChange)="onTab($event)">
+    <mat-tab label="New"></mat-tab>
+    <mat-tab label="Answered"></mat-tab>
+    <mat-tab label="Approved"></mat-tab>
+    <mat-tab label="Cancelled"></mat-tab>
+  </mat-tab-group>
+
+  <ag-grid-angular
+    class="grid"
+    [theme]="theme"
+    [rowData]="rows()"
+    [columnDefs]="columnDefs"
+    [domLayout]="'autoHeight'"
+    [rowHeight]="52"
+    [loading]="loading()"
+    [suppressCellFocus]="true">
+  </ag-grid-angular>
+
+  <mat-paginator
+    [length]="total()"
+    [pageIndex]="page()"
+    [pageSize]="pageSize()"
+    [pageSizeOptions]="[10, 20, 50, 100]"
+    (page)="onPage($event)">
+  </mat-paginator>
+</div>
