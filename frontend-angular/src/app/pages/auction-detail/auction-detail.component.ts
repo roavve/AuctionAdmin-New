@@ -11,7 +11,7 @@ import { AuctionService } from '../../services/auction.service';
 import { ProjectService } from '../../services/project.service';
 import { DictionaryService } from '../../services/dictionary.service';
 import { AuctionBidsTabComponent } from './auction-bids-tab.component';
-import { AuctionInvitationsTabComponent } from './auction-invitations-tab.component';
+import { AuctionInvitesTabComponent } from './auction-invitations-tab.component';
 import { AuctionParticipantsTabComponent } from './auction-participants-tab.component';
 import { AuctionCommentsTabComponent } from './auction-comments-tab.component';
 import { AuctionFilesTabComponent } from './auction-files-tab.component';
@@ -23,7 +23,7 @@ import { AuctionFormComponent } from './auction-form.component';
   standalone: true,
   imports: [
     CommonModule, MatButtonModule, MatIconModule, MatTabsModule, MatProgressSpinnerModule,
-    AuctionBidsTabComponent, AuctionInvitationsTabComponent, AuctionParticipantsTabComponent,
+    AuctionBidsTabComponent, AuctionInvitesTabComponent, AuctionParticipantsTabComponent,
     AuctionCommentsTabComponent, AuctionFilesTabComponent, AuctionRevisionsTabComponent, AuctionFormComponent,
   ],
   templateUrl: './auction-detail.component.html',

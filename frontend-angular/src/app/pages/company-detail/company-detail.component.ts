@@ -14,7 +14,6 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 
 import { AgGridAngular } from 'ag-grid-angular';
 import { ColDef, themeQuartz } from 'ag-grid-community';
-
 import { CompanyService } from '../../services/company.service';
 import { CategoryService } from '../../services/category.service';
 import { DictionaryService } from '../../services/dictionary.service';
@@ -23,7 +22,7 @@ import { ButtonCellRenderer } from '../../shared/ag-grid/button-cell.renderer';
 import { DownloadDeleteActionsCellRenderer } from '../../shared/ag-grid/download-delete-actions.renderer';
 import { BidHistoryTabComponent } from './bid-history-tab.component';
 import { ProjectStatsTabComponent } from './project-stats-tab.component';
-import { AuctionInvitationsTabComponent } from '../auction-detail/auction-invitations-tab.component';
+import { AuctionInvitationsTabComponent } from './auction-invitations-tab.component';
 import { CompanyCategoriesTabComponent } from './company-categories-tab.component';
 
 const SUCCESS = { bg: '#2e7d32', fg: '#ffffff' };
