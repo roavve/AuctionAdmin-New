@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, signal } from '@angular/core';
+import { Component, Input, OnInit, computed, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { AgGridAngular } from 'ag-grid-angular';
 import { ColDef, themeQuartz } from 'ag-grid-community';
@@ -12,16 +12,70 @@ import { ButtonCellRenderer } from '../../shared/ag-grid/button-cell.renderer';
   standalone: true,
   imports: [CommonModule, AgGridAngular],
   template: `
+    @if (summary(); as s) {
+      <div class="cards">
+        <div class="card best">
+          <div class="label">🥇 Best Bid</div>
+          <div class="value">{{ s.first.toLocaleString() }} {{ currencyName }}</div>
+          <div class="who">{{ s.firstName }}</div>
+        </div>
+        <div class="card second">
+          <div class="label">🥈 2nd Place</div>
+          <div class="value">{{ s.second.toLocaleString() }} {{ currencyName }}</div>
+          <div class="who">{{ s.secondName }}</div>
+        </div>
+        <div class="card gap">
+          <div class="gap-label">Gap</div>
+          <div class="gap-value">{{ s.gap }}%</div>
+          <div class="gap-label">1st ahead by</div>
+        </div>
+      </div>
+    }
+
     <ag-grid-angular class="grid" [theme]="theme" [rowData]="rows()" [columnDefs]="columnDefs"
-      [domLayout]="'autoHeight'" [loading]="loading()" [suppressCellFocus]="true"></ag-grid-angular>
+                     [domLayout]="'autoHeight'" [loading]="loading()" [suppressCellFocus]="true"></ag-grid-angular>
   `,
-  styles: [`.grid { width: 100%; }`]
+  styles: [`
+    .cards { display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 16px; }
+    .card {
+      padding: 16px; border-radius: 4px;
+      box-shadow: 0 2px 1px -1px rgba(0,0,0,.2), 0 1px 1px 0 rgba(0,0,0,.14), 0 1px 3px 0 rgba(0,0,0,.12);
+    }
+    .card.best { background: #2e7d32; color: #fff; min-width: 160px; }
+    .card.second { background: #0288d1; color: #fff; min-width: 160px; }
+    .card.gap { min-width: 120px; text-align: center; background: #fff; }
+    .label { font-size: 0.875rem; }
+    .value { font-size: 1.25rem; font-weight: 700; margin: 2px 0; }
+    .who { font-size: 0.875rem; }
+    .gap-label { font-size: 0.875rem; color: rgba(0,0,0,.6); }
+    .gap-value { font-size: 2.125rem; font-weight: 700; color: #ed6c02; line-height: 1.2; }
+    .grid { width: 100%; }
+  `]
 })
 export class AuctionBidsTabComponent implements OnInit {
   @Input() auctionId!: string;
+  @Input() currencyName = '';
+
   rows = signal<any[]>([]);
   loading = signal(true);
   theme = themeQuartz;
+
+  summary = computed(() => {
+    const active = this.rows()
+      .filter(b => b.status?.key === 'key.bid.active')
+      .sort((a, b) => a.bidValue - b.bidValue);
+    if (active.length < 2) return null;
+    const first = active[0].bidValue;
+    const second = active[1].bidValue;
+    const gap = ((second - first) / second * 100).toFixed(1);
+    return {
+      first,
+      second,
+      gap,
+      firstName: active[0].user?.company?.companyName || active[0].user?.email || '-',
+      secondName: active[1].user?.company?.companyName || active[1].user?.email || '-',
+    };
+  });
 
   columnDefs: ColDef[] = [
     { field: 'id', headerName: 'ID', width: 70 },

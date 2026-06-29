@@ -81,7 +81,7 @@
           </div>
         </div>
       }
-      @case (1) { <app-auction-bids-tab [auctionId]="id!"></app-auction-bids-tab> }
+      @case (1) { <app-auction-bids-tab [auctionId]="id!" [currencyName]="auction()?.currency?.name || ''"></app-auction-bids-tab> }
       @case (2) { <app-auction-invites-tab [auctionId]="id!"></app-auction-invites-tab> }
       @case (3) { <app-auction-participants-tab [auctionId]="id!"></app-auction-participants-tab> }
       @case (4) { <app-auction-comments-tab [auctionId]="id!"></app-auction-comments-tab> }
