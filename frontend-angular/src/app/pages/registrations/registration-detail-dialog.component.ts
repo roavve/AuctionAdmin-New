@@ -5,14 +5,14 @@ import { MAT_DIALOG_DATA, MatDialogRef, MatDialogModule } from '@angular/materia
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
-
+import { environment } from '../../../environments/environment';
 import { AgGridAngular } from 'ag-grid-angular';
 import { ColDef, themeQuartz } from 'ag-grid-community';
 import { ICellRendererAngularComp } from 'ag-grid-angular';
 import { ICellRendererParams } from 'ag-grid-community';
 
 import { RegistrationService } from '../../services/registration.service';
-
+const FILES_API = `${environment.apiUrl}/api/registrations`;
 @Component({
   selector: 'app-reg-file-actions-cell',
   standalone: true,
@@ -40,7 +40,6 @@ export class RegistrationFileActionsCellRenderer implements ICellRendererAngular
   del(): void { this.params.onDelete?.(this.params.data); }
 }
 
-const FILES_API = 'http://localhost:8080/api/registrations';
 
 @Component({
   selector: 'app-registration-detail-dialog',

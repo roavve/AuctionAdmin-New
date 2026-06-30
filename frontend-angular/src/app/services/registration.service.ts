@@ -1,8 +1,8 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
-
-const API = 'http://localhost:8080/api/registrations';
+import { environment } from '../../environments/environment';
+const API = `${environment.apiUrl}/api/registrations`;
 
 @Injectable({ providedIn: 'root' })
 export class RegistrationService {

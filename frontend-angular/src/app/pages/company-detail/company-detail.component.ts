@@ -24,10 +24,10 @@ import { BidHistoryTabComponent } from './bid-history-tab.component';
 import { ProjectStatsTabComponent } from './project-stats-tab.component';
 import { AuctionInvitationsTabComponent } from './auction-invitations-tab.component';
 import { CompanyCategoriesTabComponent } from './company-categories-tab.component';
-
+import { environment } from '../../../environments/environment';
 const SUCCESS = { bg: '#2e7d32', fg: '#ffffff' };
 const DEFAULT = { bg: '#e0e0e0', fg: 'rgba(0, 0, 0, 0.87)' };
-const FILES_API = 'http://localhost:8080/api/companies';
+const FILES_API = `${environment.apiUrl}/api/companies`;
 
 const EMPTY_FORM: any = {
   companyName: '', taxId: '', businessDesc: '',
@@ -202,8 +202,7 @@ export class CompanyDetailComponent implements OnInit {
 
     if (this.isNew) {
       this.companyService.create(this.form).subscribe({
-        next: (res: any) => { this.saving.set(false); this.router.navigate(['/companies', res.id]); },
-        error: (e: any) => { this.saveError.set(e.error?.error || e.message || 'Save failed'); this.saving.set(false); },
+        next: () => { this.saving.set(false); this.router.navigate(['/companies']); },        error: (e: any) => { this.saveError.set(e.error?.error || e.message || 'Save failed'); this.saving.set(false); },
       });
     } else {
       this.companyService.update(this.id!, this.form).subscribe({

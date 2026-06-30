@@ -1,8 +1,9 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { environment } from '../../environments/environment';
 
-const API = 'http://localhost:8080/api/projects';
+const API = `${environment.apiUrl}/api/projects`;
 
 @Injectable({ providedIn: 'root' })
 export class ProjectService {
@@ -29,6 +30,6 @@ export class ProjectService {
   }
 
   inviteCompanies(projectId: number | string, companyIds: number[]): Observable<any> {
-    return this.http.post(`http://localhost:8080/api/auctions/project/${projectId}/invite-companies`, { companyIds });
+    return this.http.post(`${environment.apiUrl}/api/auctions/project/${projectId}/invite-companies`, { companyIds });
   }
 }

@@ -105,10 +105,9 @@ export class AuctionDetailComponent implements OnInit {
     this.saveError.set('');
     if (this.isNew) {
       this.auctionService.create(payload).subscribe({
-        next: (res: any) => {
+        next: () => {
           this.saving.set(false);
-          if (res?.id) this.router.navigate(['/auctions', res.id]);
-          else this.saveError.set('Created but no ID returned');
+          this.router.navigate(['/auctions']);
         },
         error: (e: any) => { this.saveError.set(e.error?.error || e.message || 'Save failed'); this.saving.set(false); },
       });

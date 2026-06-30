@@ -1,9 +1,8 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-
-const API = 'http://localhost:8080/api/templates';
-
+import { environment } from '../../environments/environment';
+const API = `${environment.apiUrl}/api/templates`;
 @Injectable({ providedIn: 'root' })
 export class TemplateService {
   constructor(private http: HttpClient) {}

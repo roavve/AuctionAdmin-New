@@ -6,11 +6,11 @@ import { MatInputModule } from '@angular/material/input';
 import { FormsModule } from '@angular/forms';
 import { AgGridAngular } from 'ag-grid-angular';
 import { ColDef, themeQuartz } from 'ag-grid-community';
-
+import { environment } from '../../../environments/environment';
 import { AuctionService } from '../../services/auction.service';
 import { DownloadDeleteActionsCellRenderer } from '../../shared/ag-grid/download-delete-actions.renderer';
 
-const API = 'http://localhost:8080/api/auctions';
+const API = `${environment.apiUrl}/api/auctions`;
 
 @Component({
   selector: 'app-auction-files-tab',

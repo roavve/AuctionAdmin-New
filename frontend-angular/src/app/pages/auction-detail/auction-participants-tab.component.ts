@@ -8,10 +8,9 @@ import { ICellRendererParams } from 'ag-grid-community';
 
 import { AuctionService } from '../../services/auction.service';
 import { ChipCellRenderer } from '../../shared/ag-grid/chip-cell.renderer';
-
+import { environment } from '../../../environments/environment';
 const SUCCESS = { bg: '#2e7d32', fg: '#ffffff' };
-const EXPORT_API = 'http://localhost:8080/api/export/auction';
-
+const EXPORT_API = `${environment.apiUrl}/api/export/auction`;
 @Component({
   selector: 'app-set-winner-cell',
   standalone: true,

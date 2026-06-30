@@ -2,12 +2,12 @@ import { Injectable, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, tap } from 'rxjs';
 import { LoginResponse } from '../models/user.model';
+import { environment } from '../../environments/environment';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
-  private readonly API = 'http://localhost:8080/auth';
+  private readonly API = `${environment.apiUrl}/auth`;
 
-  // signal-based state (Angular 18 style)
   readonly user = signal<{ email: string; role: string; firstName?: string; lastName?: string } | null>(
     this.loadUserFromStorage()
   );
